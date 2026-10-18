@@ -1,0 +1,115 @@
+name: job-platform
+
+x-app-environment: &app-environment
+  SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/jobs
+  SPRING_DATASOURCE_USERNAME: jobs
+  SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-jobs-local}
+  SPRING_RABBITMQ_HOST: rabbitmq
+  SPRING_RABBITMQ_USERNAME: jobs
+  SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-jobs-local}
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: jobs
+      POSTGRES_USER: jobs
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-jobs-local}
+    ports: ["127.0.0.1:${POSTGRES_PORT:-5432}:5432"]
+    volumes: ["postgres-data:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jobs -d jobs"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  rabbitmq:
+    image: rabbitmq:4.1-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: jobs
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-jobs-local}
+    ports:
+      - "127.0.0.1:${RABBITMQ_PORT:-5672}:5672"
+      - "127.0.0.1:${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
+    volumes: ["rabbitmq-data:/var/lib/rabbitmq"]
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  api:
+    image: job-platform:local
+    build: .
+    environment:
+      <<: *app-environment
+      JOBS_WORKER_ENABLED: "false"
+    ports: ["127.0.0.1:${API_PORT:-8080}:8080"]
+    depends_on:
+      postgres: {condition: service_healthy}
+      rabbitmq: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/actuator/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 20s
+
+  worker:
+    image: job-platform:local
+    build: .
+    environment:
+      <<: *app-environment
+      JOBS_WORKER_ENABLED: "true"
+      JOBS_DISPATCHER_ENABLED: "false"
+      SPRING_MAIN_WEB_APPLICATION_TYPE: none
+    depends_on:
+      postgres: {condition: service_healthy}
+      rabbitmq: {condition: service_healthy}
+
+  test:
+    image: maven:3.9.11-eclipse-temurin-21
+    profiles: ["test"]
+    working_dir: /workspace
+    volumes:
+      - .:/workspace
+      - maven-cache:/root/.m2
+    environment:
+      <<: *app-environment
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-test:5432/jobs
+      SPRING_RABBITMQ_HOST: rabbitmq-test
+    command: ["mvn", "-B", "-ntp", "verify", "-Pintegration"]
+    depends_on:
+      postgres-test: {condition: service_healthy}
+      rabbitmq-test: {condition: service_healthy}
+
+  postgres-test:
+    image: postgres:17-alpine
+    profiles: ["test"]
+    environment:
+      POSTGRES_DB: jobs
+      POSTGRES_USER: jobs
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-jobs-local}
+    tmpfs: ["/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jobs -d jobs"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+
+  rabbitmq-test:
+    image: rabbitmq:4.1-management-alpine
+    profiles: ["test"]
+    environment:
+      RABBITMQ_DEFAULT_USER: jobs
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-jobs-local}
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 3s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  postgres-data:
+  rabbitmq-data:
+  maven-cache:

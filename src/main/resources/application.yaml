@@ -1,0 +1,58 @@
+spring:
+  application:
+    name: job-platform
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/jobs}
+    username: ${DATABASE_USER:jobs}
+    password: ${DATABASE_PASSWORD:jobs-local}
+    hikari:
+      maximum-pool-size: 10
+      connection-timeout: 5000
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    username: ${RABBITMQ_USER:jobs}
+    password: ${RABBITMQ_PASSWORD:jobs-local}
+    connection-timeout: 5s
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    template:
+      mandatory: true
+    listener:
+      simple:
+        acknowledge-mode: auto
+        prefetch: 10
+        concurrency: ${WORKER_CONCURRENCY:2}
+        default-requeue-rejected: false
+        retry:
+          enabled: true
+          max-attempts: 3
+          initial-interval: 500ms
+          multiplier: 2
+          max-interval: 2s
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: true
+  mvc:
+    problemdetails:
+      enabled: true
+server:
+  shutdown: graceful
+  error:
+    include-message: never
+    include-stacktrace: never
+  tomcat:
+    max-http-form-post-size: 128KB
+jobs:
+  worker:
+    enabled: true
+  dispatcher:
+    enabled: true
+    delay-ms: 1000
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      show-details: never
