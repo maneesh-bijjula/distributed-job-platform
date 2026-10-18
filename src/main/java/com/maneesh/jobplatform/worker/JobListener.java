@@ -16,7 +16,7 @@ public class JobListener {
         this.executor = executor;
     }
 
-    @RabbitListener(queues = RabbitConfiguration.QUEUE)
+    @RabbitListener(queues = {RabbitConfiguration.QUEUE, RabbitConfiguration.LEGACY_QUEUE})
     public void receive(String message) {
         UUID id;
         try {

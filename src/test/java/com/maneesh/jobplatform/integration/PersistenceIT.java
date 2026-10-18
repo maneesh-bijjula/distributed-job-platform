@@ -9,6 +9,11 @@ import java.util.ArrayList;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -78,10 +83,10 @@ class PersistenceIT {
     void publishFailureRollsBackEntireOutboxBatch() {
         service.submit(JobType.SHA256, "one", null);
         service.submit(JobType.SHA256, "two", null);
-        doNothing().doThrow(new IllegalStateException("broker unavailable")).when(publisher).publish(any());
+        doNothing().doThrow(new IllegalStateException("broker unavailable")).when(publisher).publish(any(), anyInt());
         assertThatThrownBy(relay::dispatchBatch).isInstanceOf(IllegalStateException.class);
         assertThat(outboxSize()).isEqualTo(2);
-        doNothing().when(publisher).publish(any());
+        doNothing().when(publisher).publish(any(), anyInt());
         assertThat(relay.dispatchBatch()).isEqualTo(2);
         assertThat(outboxSize()).isZero();
     }
@@ -131,5 +136,50 @@ class PersistenceIT {
         executor.execute(job.id());
         assertThat(service.get(job.id()).result().get("text").asText()).isEqualTo("'; DROP TABLE JOBS; --");
         assertThat(jdbc.queryForObject("SELECT count(*) FROM jobs", Integer.class)).isEqualTo(1);
+    }
+
+    @Test
+    void scheduledIdempotentReplayNormalizesSubMicrosecondPrecision() {
+        Instant schedule = Instant.parse("2030-06-01T12:00:00.123456789Z");
+        var first = service.submit(JobType.SHA256, "abc", "scheduled", 5, schedule);
+        var replay = service.submit(JobType.SHA256, "abc", "scheduled", 5, schedule);
+        assertThat(replay.created()).isFalse();
+        assertThat(replay.job().id()).isEqualTo(first.job().id());
+        assertThat(replay.job().scheduledAt()).isEqualTo(schedule.truncatedTo(ChronoUnit.MICROS));
+        assertThat(replay.job().priority()).isEqualTo(5);
+        assertThat(outboxSize()).isEqualTo(1);
+    }
+
+    @Test
+    void changingPriorityOrScheduleForExistingKeyConflicts() {
+        Instant schedule = Instant.parse("2030-06-01T12:00:00Z");
+        service.submit(JobType.SHA256, "abc", "scheduled", 5, schedule);
+        assertThatThrownBy(() -> service.submit(JobType.SHA256, "abc", "scheduled", 6, schedule))
+                .isInstanceOfSatisfying(ResponseStatusException.class,
+                        exception -> assertThat(exception.getStatusCode().value()).isEqualTo(409));
+        assertThatThrownBy(() -> service.submit(JobType.SHA256, "abc", "scheduled", 5, schedule.plusSeconds(1)))
+                .isInstanceOfSatisfying(ResponseStatusException.class,
+                        exception -> assertThat(exception.getStatusCode().value()).isEqualTo(409));
+    }
+
+    @Test
+    void concurrentRelaysClaimDisjointBatchesWithoutBlockingEachOther() throws Exception {
+        for (int i = 0; i < 40; i++) service.submit(JobType.SHA256, "job " + i, null);
+        var published = new ConcurrentLinkedQueue<UUID>();
+        var bothRelaysEntered = new CountDownLatch(2);
+        doAnswer(call -> {
+            published.add(call.getArgument(0));
+            bothRelaysEntered.countDown();
+            assertThat(bothRelaysEntered.await(5, TimeUnit.SECONDS)).isTrue();
+            return null;
+        }).when(publisher).publish(any(), anyInt());
+        try (var pool = Executors.newVirtualThreadPerTaskExecutor()) {
+            var first = pool.submit(relay::dispatchBatch);
+            var second = pool.submit(relay::dispatchBatch);
+            assertThat(first.get(10, TimeUnit.SECONDS)).isEqualTo(20);
+            assertThat(second.get(10, TimeUnit.SECONDS)).isEqualTo(20);
+        }
+        assertThat(published).hasSize(40).doesNotHaveDuplicates();
+        assertThat(outboxSize()).isZero();
     }
 }

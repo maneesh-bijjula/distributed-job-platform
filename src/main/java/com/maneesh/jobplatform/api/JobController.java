@@ -26,7 +26,7 @@ public class JobController {
     public ResponseEntity<Job> submit(@Valid @RequestBody CreateJobRequest request,
             @RequestHeader(value = "Idempotency-Key", required = false)
             @Pattern(regexp = "[A-Za-z0-9._:-]{1,128}") String key) {
-        var submission = service.submit(request.type(), request.text(), key);
+        var submission = service.submit(request.type(), request.text(), key, request.priority(), request.scheduledAt());
         return ResponseEntity.status(submission.created() ? 202 : 200)
                 .location(URI.create("/api/v1/jobs/" + submission.job().id())).body(submission.job());
     }

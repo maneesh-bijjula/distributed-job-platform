@@ -3,6 +3,7 @@ package com.maneesh.jobplatform.integration;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.maneesh.jobplatform.config.RabbitConfiguration;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -97,5 +98,27 @@ class PipelineIT {
         await().atMost(Duration.ofSeconds(10)).untilAsserted(() ->
                 assertThat(admin.getQueueInfo(RabbitConfiguration.DEAD_QUEUE).getMessageCount()).isEqualTo(1));
         assertThat(rabbit.receiveAndConvert(RabbitConfiguration.DEAD_QUEUE)).isEqualTo("invalid-uuid");
+    }
+
+    @Test
+    void scheduledHttpJobExecutesOnlyAfterItsDeadline() {
+        Instant scheduled = Instant.now().plusSeconds(3).truncatedTo(java.time.temporal.ChronoUnit.MICROS);
+        var response = http.postForEntity("/api/v1/jobs", Map.of("type", "UPPERCASE", "text", "later",
+                "priority", 7, "scheduledAt", scheduled.toString()), JsonNode.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.ACCEPTED);
+        String location = response.getHeaders().getLocation().toString();
+        assertThat(http.getForObject(location, JsonNode.class).get("status").asText()).isEqualTo("QUEUED");
+        JsonNode done = completed(location);
+        assertThat(done.get("result").get("text").asText()).isEqualTo("LATER");
+        assertThat(done.get("priority").asInt()).isEqualTo(7);
+        assertThat(Instant.parse(done.get("completedAt").asText())).isAfterOrEqualTo(scheduled);
+    }
+
+    @Test
+    void legacyQueueJobsAreStillProcessedAfterUpgrade() {
+        UUID id = UUID.randomUUID();
+        jdbc.update("INSERT INTO jobs (id, type, input_text) VALUES (?, 'UPPERCASE', 'legacy')", id);
+        rabbit.convertAndSend(RabbitConfiguration.EXCHANGE, RabbitConfiguration.LEGACY_ROUTING_KEY, id.toString());
+        assertThat(completed("/api/v1/jobs/" + id).get("result").get("text").asText()).isEqualTo("LEGACY");
     }
 }

@@ -10,6 +10,8 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.Optional;
 import java.util.UUID;
+import java.time.Instant;
+import java.sql.Timestamp;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -23,21 +25,26 @@ public class JobRepository {
         this.mapper = mapper;
     }
 
-    public Optional<UUID> insert(UUID id, JobType type, String text, String key) {
+    public Optional<UUID> insert(UUID id, JobType type, String text, String key, int priority, Instant scheduledAt) {
         Map<String, Object> params = new HashMap<>();
         params.put("id", id);
         params.put("type", type.name());
         params.put("text", text);
         params.put("key", key);
+        params.put("priority", priority);
+        params.put("scheduledAt", scheduledAt == null ? null : Timestamp.from(scheduledAt));
         return jdbc.query("""
-                INSERT INTO jobs (id, type, input_text, idempotency_key)
-                VALUES (:id, :type, :text, :key)
+                INSERT INTO jobs (id, type, input_text, idempotency_key, priority, scheduled_at)
+                VALUES (:id, :type, :text, :key, :priority, :scheduledAt)
                 ON CONFLICT (idempotency_key) DO NOTHING RETURNING id
                 """, params, (rs, row) -> rs.getObject("id", UUID.class)).stream().findFirst();
     }
 
     public void enqueue(UUID id) {
-        jdbc.update("INSERT INTO job_outbox (job_id) VALUES (:id)", Map.of("id", id));
+        jdbc.update("""
+                INSERT INTO job_outbox (job_id, priority, available_at)
+                SELECT id, priority, COALESCE(scheduled_at, created_at) FROM jobs WHERE id = :id
+                """, Map.of("id", id));
     }
 
     public Optional<Job> find(UUID id) {
@@ -85,10 +92,12 @@ public class JobRepository {
         try {
             String result = rs.getString("result");
             var completed = rs.getTimestamp("completed_at");
+            var scheduled = rs.getTimestamp("scheduled_at");
             return new Job(rs.getObject("id", UUID.class), JobType.valueOf(rs.getString("type")),
                     rs.getString("input_text"), JobStatus.valueOf(rs.getString("status")),
                     result == null ? null : mapper.readTree(result), rs.getString("error"),
-                    rs.getTimestamp("created_at").toInstant(), completed == null ? null : completed.toInstant());
+                    rs.getTimestamp("created_at").toInstant(), completed == null ? null : completed.toInstant(),
+                    rs.getInt("priority"), scheduled == null ? null : scheduled.toInstant());
         } catch (JsonProcessingException exception) {
             throw new SQLException("Invalid stored job result", exception);
         }

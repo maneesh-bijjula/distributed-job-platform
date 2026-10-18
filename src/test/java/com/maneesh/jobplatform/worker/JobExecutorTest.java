@@ -18,7 +18,7 @@ class JobExecutorTest {
     private final UUID id = UUID.randomUUID();
 
     private Job job(JobStatus status) {
-        return new Job(id, JobType.SHA256, "abc", status, null, null, Instant.now(), null);
+        return new Job(id, JobType.SHA256, "abc", status, null, null, Instant.now(), null, 0, null);
     }
 
     @BeforeEach

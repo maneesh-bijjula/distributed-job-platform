@@ -2,6 +2,9 @@ package com.maneesh.jobplatform.jobs;
 
 import java.util.List;
 import java.util.UUID;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Objects;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,13 +22,21 @@ public class JobService {
 
     @Transactional
     public Submission submit(JobType type, String text, String key) {
+        return submit(type, text, key, 0, null);
+    }
+
+    @Transactional
+    public Submission submit(JobType type, String text, String key, int priority, Instant scheduledAt) {
+        // PostgreSQL stores timestamps at microsecond precision. Normalize before comparing replays.
+        Instant schedule = scheduledAt == null ? null : scheduledAt.truncatedTo(ChronoUnit.MICROS);
         UUID id = UUID.randomUUID();
-        if (repository.insert(id, type, text, key).isPresent()) {
+        if (repository.insert(id, type, text, key, priority, schedule).isPresent()) {
             repository.enqueue(id);
             return new Submission(get(id), true);
         }
         Job existing = repository.findByKey(key).orElseThrow();
-        if (existing.type() != type || !existing.text().equals(text)) {
+        if (existing.type() != type || !existing.text().equals(text)
+                || existing.priority() != priority || !Objects.equals(existing.scheduledAt(), schedule)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "Idempotency-Key was already used with a different request");
         }

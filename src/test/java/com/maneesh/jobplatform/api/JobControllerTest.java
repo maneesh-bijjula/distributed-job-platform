@@ -26,7 +26,13 @@ class JobControllerTest {
             "{}", "{\"type\":\"NOPE\",\"text\":\"hello\"}",
             "{\"type\":\"SHA256\",\"text\":\"  \"}",
             "{\"type\":\"SHA256\",\"text\":null}",
-            "{\"type\":\"SHA256\",\"text\":\"ok\",\"unexpected\":true}", "not-json"
+            "{\"type\":\"SHA256\",\"text\":\"ok\",\"unexpected\":true}", "not-json",
+            "{\"type\":1,\"text\":\"hello\"}",
+            "{\"type\":\"SHA256\",\"text\":\"hello\",\"priority\":-1}",
+            "{\"type\":\"SHA256\",\"text\":\"hello\",\"priority\":10}",
+            "{\"type\":\"SHA256\",\"text\":\"hello\",\"priority\":1.5}",
+            "{\"type\":\"SHA256\",\"text\":\"hello\",\"scheduledAt\":\"not-a-date\"}",
+            "{\"type\":\"SHA256\",\"text\":\"hello\",\"scheduledAt\":\"+10000-01-01T00:00:00Z\"}"
     })
     void rejectsInvalidBodiesBeforeSubmission(String body) throws Exception {
         mvc.perform(post("/api/v1/jobs").contentType(MediaType.APPLICATION_JSON).content(body))
@@ -68,8 +74,8 @@ class JobControllerTest {
     @Test
     void returnsAcceptedWithLocation() throws Exception {
         UUID id = UUID.randomUUID();
-        var job = new Job(id, JobType.SHA256, "abc", JobStatus.QUEUED, null, null, Instant.now(), null);
-        when(service.submit(JobType.SHA256, "abc", "request-1")).thenReturn(new JobService.Submission(job, true));
+        var job = new Job(id, JobType.SHA256, "abc", JobStatus.QUEUED, null, null, Instant.now(), null, 0, null);
+        when(service.submit(JobType.SHA256, "abc", "request-1", 0, null)).thenReturn(new JobService.Submission(job, true));
         mvc.perform(post("/api/v1/jobs").header("Idempotency-Key", "request-1")
                         .contentType(MediaType.APPLICATION_JSON).content("{\"type\":\"SHA256\",\"text\":\"abc\"}"))
                 .andExpect(status().isAccepted()).andExpect(header().string("Location", "/api/v1/jobs/" + id))
@@ -78,7 +84,7 @@ class JobControllerTest {
 
     @Test
     void fullFinalPageDoesNotClaimAnotherPageExists() throws Exception {
-        var job = new Job(UUID.randomUUID(), JobType.SHA256, "abc", JobStatus.QUEUED, null, null, Instant.now(), null);
+        var job = new Job(UUID.randomUUID(), JobType.SHA256, "abc", JobStatus.QUEUED, null, null, Instant.now(), null, 0, null);
         when(service.list(null, 0, 1)).thenReturn(List.of(job));
         mvc.perform(get("/api/v1/jobs?size=1"))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.items.length()").value(1))

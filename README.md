@@ -5,6 +5,7 @@ An asynchronous job service built with **Java 21, Spring Boot, PostgreSQL, and R
 ## Features
 
 - REST endpoints for job submission, retrieval, and paginated status filtering.
+- Persistent scheduling with `scheduledAt` and job priorities from 0 to 9.
 - Text handlers for word counting, SHA-256 hashing, and uppercase conversion.
 - PostgreSQL persistence with versioned Flyway migrations.
 - Transactional outbox and confirmed RabbitMQ publishing.
@@ -70,6 +71,25 @@ List responses contain `items`, `page`, `size`, and `hasNext`. Page size is limi
 
 An optional `Idempotency-Key` header accepts 1-128 characters from `A-Z`, `a-z`, `0-9`, `.`, `_`, `:`, and `-`. Repeating the same key and body returns the existing job with `200 OK`. Reusing a key for different input returns `409 Conflict`. Keys are global to this service and remain reserved while their job exists. Without a key, each request creates a new job.
 
+## Scheduling and priorities
+
+Use the optional `scheduledAt` and `priority` fields when submitting a job:
+
+```json
+{
+  "type": "SHA256",
+  "text": "process this later",
+  "priority": 8,
+  "scheduledAt": "2030-06-01T12:00:00Z"
+}
+```
+
+`scheduledAt` accepts an ISO-8601 timestamp with a UTC offset, between years 0001 and 9999. Timestamps are stored at microsecond precision. Omitting it makes a job immediately eligible; past timestamps are also immediately eligible. Future jobs remain durably queued in PostgreSQL and are published once due. The dispatcher polls once per second, so execution can start later than the requested time.
+
+Priority defaults to `0`; `9` is highest. The relay selects due jobs by descending priority, and RabbitMQ's priority queue also prioritizes messages waiting for delivery. Priority does not interrupt work already running or reorder messages already prefetched by a worker. Multiple consumers do not provide a strict global completion order, and a continuous stream of high-priority jobs can delay lower-priority work.
+
+Responses include both fields. Idempotency checks include priority and the normalized schedule, so changing either while reusing a key returns `409`.
+
 ## Architecture and delivery behavior
 
 ```mermaid
@@ -101,7 +121,7 @@ Run the unit and integration suite with Docker:
 ./scripts/test.sh
 ```
 
-Tests use separate PostgreSQL and RabbitMQ containers. The test database uses ephemeral storage and does not touch the application's database. The suite covers handler correctness, request validation, concurrent idempotency, duplicate delivery, transaction rollback on publishing failure, SQL-like input, the full HTTP-to-worker pipeline, and dead-letter routing.
+Tests use separate PostgreSQL and RabbitMQ containers. The test database uses ephemeral storage and does not touch the application's database. The suite covers handler correctness, request validation, concurrent idempotency, duplicate delivery, transaction rollback on publishing failure, concurrent outbox relays, scheduling deadlines, broker priority ordering, legacy queue compatibility, SQL-like input, the full HTTP-to-worker pipeline, and dead-letter routing.
 
 With Java 21+ installed, unit tests can also run without service containers:
 
@@ -112,6 +132,13 @@ With Java 21+ installed, unit tests can also run without service containers:
 For integration tests outside Docker, set `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`, and `SPRING_RABBITMQ_*` to dedicated test services, then run `./mvnw verify -Pintegration`. Integration tests clear their configured database's job tables.
 
 ## Operations
+
+To upgrade an existing checkout, stop application containers before rebuilding. Flyway applies the new database migration automatically and retains existing jobs. The worker continues consuming the original `jobs.ready` queue alongside `jobs.priority.ready`, so previously queued messages can drain without deleting queues or volumes.
+
+```sh
+docker compose stop api worker
+docker compose up --build -d
+```
 
 ```sh
 # Run three worker containers against the same queue.

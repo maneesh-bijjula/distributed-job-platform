@@ -3,5 +3,5 @@ package com.maneesh.jobplatform.messaging;
 import java.util.UUID;
 
 public interface JobPublisher {
-    void publish(UUID jobId);
+    void publish(UUID jobId, int priority);
 }

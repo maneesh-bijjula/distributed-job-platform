@@ -32,18 +32,18 @@ class ConfirmedJobPublisherTest {
     @Test
     void routedAndConfirmedPublishSucceeds() {
         brokerResponse(true, false);
-        assertThatCode(() -> publisher.publish(UUID.randomUUID())).doesNotThrowAnyException();
+        assertThatCode(() -> publisher.publish(UUID.randomUUID(), 0)).doesNotThrowAnyException();
     }
 
     @Test
     void negativeConfirmationDoesNotCountAsDelivery() {
         brokerResponse(false, false);
-        assertThatThrownBy(() -> publisher.publish(UUID.randomUUID())).isInstanceOf(AmqpException.class);
+        assertThatThrownBy(() -> publisher.publish(UUID.randomUUID(), 0)).isInstanceOf(AmqpException.class);
     }
 
     @Test
     void confirmedButUnroutablePublishDoesNotCountAsDelivery() {
         brokerResponse(true, true);
-        assertThatThrownBy(() -> publisher.publish(UUID.randomUUID())).isInstanceOf(AmqpException.class);
+        assertThatThrownBy(() -> publisher.publish(UUID.randomUUID(), 0)).isInstanceOf(AmqpException.class);
     }
 }
