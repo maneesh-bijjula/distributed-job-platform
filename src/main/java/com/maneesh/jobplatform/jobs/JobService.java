@@ -38,19 +38,27 @@ public class JobService {
 
     @Transactional
     public Submission submit(JobType type, String text, String key, int priority, Instant scheduledAt, Integer timeoutSeconds) {
+        return submit(type, text, key, priority, scheduledAt, timeoutSeconds, null);
+    }
+
+    @Transactional
+    public Submission submit(JobType type, String text, String key, int priority, Instant scheduledAt,
+                             Integer timeoutSeconds, RetryPolicy retryPolicy) {
         return create(type, text, key, priority, scheduledAt, null,
-                timeoutSeconds == null ? properties.defaultTimeoutSeconds() : timeoutSeconds);
+                timeoutSeconds == null ? properties.defaultTimeoutSeconds() : timeoutSeconds,
+                retryPolicy == null ? RetryPolicy.DEFAULT : retryPolicy, retryPolicy == null);
     }
 
     private Submission create(JobType type, String text, String key, int priority, Instant scheduledAt,
-                              UUID retryOf, int timeoutSeconds) {
+                              UUID retryOf, int timeoutSeconds, RetryPolicy policy, boolean policyOmitted) {
         if (timeoutSeconds < 1 || timeoutSeconds > 3600) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "timeoutSeconds must be between 1 and 3600");
         }
+        if (!policy.valid()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid retry policy");
         // PostgreSQL stores timestamps at microsecond precision. Normalize before comparing replays.
         Instant schedule = scheduledAt == null ? null : scheduledAt.truncatedTo(ChronoUnit.MICROS);
         UUID id = UUID.randomUUID();
-        if (repository.insert(id, type, text, key, priority, schedule, retryOf, timeoutSeconds).isPresent()) {
+        if (repository.insert(id, type, text, key, priority, schedule, retryOf, timeoutSeconds, policy).isPresent()) {
             repository.enqueue(id);
             repository.recordEvent(id, JobEvent.Type.SUBMITTED, JobStatus.QUEUED, retryOf);
             return new Submission(get(id), true);
@@ -58,7 +66,8 @@ public class JobService {
         Job existing = repository.findByKey(key).orElseThrow();
         if (existing.type() != type || !existing.text().equals(text)
                 || existing.priority() != priority || !Objects.equals(existing.scheduledAt(), schedule)
-                || !Objects.equals(existing.retryOf(), retryOf) || existing.timeoutSeconds() != timeoutSeconds) {
+                || !Objects.equals(existing.retryOf(), retryOf) || existing.timeoutSeconds() != timeoutSeconds
+                || (!existing.retryPolicy().equals(policy) && !(policyOmitted && repository.legacyRetryPolicy(existing.id())))) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "Idempotency-Key was already used with a different request");
         }
@@ -82,7 +91,7 @@ public class JobService {
         }
         // Each retry has a new ID: a delayed message for the original job can
         // never execute this new run or revive the original terminal state.
-        Submission submission = create(source.type(), source.text(), key, source.priority(), null, id, source.timeoutSeconds());
+        Submission submission = create(source.type(), source.text(), key, source.priority(), null, id, source.timeoutSeconds(), source.retryPolicy(), false);
         if (submission.created()) {
             repository.recordEvent(id, JobEvent.Type.RETRY_REQUESTED, source.status(), submission.job().id());
         }

@@ -3,6 +3,8 @@ package com.maneesh.jobplatform.worker;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.maneesh.jobplatform.config.ExecutionProperties;
 import com.maneesh.jobplatform.jobs.*;
+import com.maneesh.jobplatform.deadletter.DeadLetter;
+import com.maneesh.jobplatform.deadletter.DeadLetterRepository;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -16,14 +18,17 @@ public class ExecutionService {
     private final JobRepository jobs;
     private final ExecutionRepository attempts;
     private final ExecutionProperties properties;
+    private final DeadLetterRepository deadLetters;
     private final String workerId = "worker-" + UUID.randomUUID();
 
     public record Claim(Job job, JobAttempt attempt, UUID token, ExecutionRepository.Window window) {}
 
-    public ExecutionService(JobRepository jobs, ExecutionRepository attempts, ExecutionProperties properties) {
+    public ExecutionService(JobRepository jobs, ExecutionRepository attempts, ExecutionProperties properties,
+                            DeadLetterRepository deadLetters) {
         this.jobs = jobs;
         this.attempts = attempts;
         this.properties = properties;
+        this.deadLetters = deadLetters;
     }
 
     @Transactional(timeout = 10)
@@ -68,14 +73,35 @@ public class ExecutionService {
 
     @Transactional(timeout = 10)
     public boolean fail(Claim claim) {
+        return fail(claim, HandlerFailure.PERMANENT_HANDLER);
+    }
+
+    @Transactional(timeout = 10)
+    public boolean fail(Claim claim, HandlerFailure kind) {
         Job job = owned(claim);
         if (job == null) return false;
-        if (jobs.fail(job.id(), "Job handler failed") != 1) {
+        var window = attempts.window(claim.attempt().id());
+        if (!window.leaseLive() || !window.deadlineLive()) {
             expire(job, claim.attempt());
             return false;
         }
-        attempts.finish(claim.attempt().id(), JobAttempt.Status.FAILED, "Job handler failed");
-        jobs.recordEvent(job.id(), JobEvent.Type.FAILED, JobStatus.FAILED, null, claim.attempt().id());
+        // The SQL final-write guard remains authoritative even if expiry occurs after the read.
+        if (jobs.fail(job.id(), kind.message()) != 1) {
+            expire(job, claim.attempt());
+            return false;
+        }
+        attempts.finish(claim.attempt().id(), JobAttempt.Status.FAILED, kind.message());
+        attempts.failureKind(claim.attempt().id(), kind);
+        if (kind == HandlerFailure.RETRYABLE_INFRASTRUCTURE && job.attemptCount() < job.retryPolicy().maxAttempts()) {
+            attempts.retry(job.id(), job.retryPolicy().delaySeconds(job.attemptCount()));
+            jobs.recordEvent(job.id(), JobEvent.Type.RETRY_SCHEDULED, JobStatus.QUEUED, null, claim.attempt().id());
+        } else {
+            boolean exhausted = kind == HandlerFailure.RETRYABLE_INFRASTRUCTURE;
+            attempts.removePending(job.id());
+            jobs.recordEvent(job.id(), exhausted ? JobEvent.Type.RETRIES_EXHAUSTED : JobEvent.Type.FAILED,
+                    JobStatus.FAILED, null, claim.attempt().id());
+            deadLetters.execution(job, exhausted ? DeadLetter.Reason.RETRIES_EXHAUSTED : DeadLetter.Reason.PERMANENT_HANDLER);
+        }
         return true;
     }
 
@@ -130,11 +156,15 @@ public class ExecutionService {
             attempts.finish(attempt.id(), JobAttempt.Status.TIMED_OUT, "Execution deadline exceeded");
             attempts.failJob(job.id(), "Execution deadline exceeded");
             jobs.recordEvent(job.id(), JobEvent.Type.TIMED_OUT, JobStatus.FAILED, null, attempt.id());
+            deadLetters.execution(job, DeadLetter.Reason.DEADLINE_EXCEEDED);
         } else if (!window.leaseLive()) {
             attempts.finish(attempt.id(), JobAttempt.Status.ABANDONED, "Worker lease expired");
-            if (attempts.recoveryCount(job.id()) >= properties.maxRecoveries()) {
-                attempts.failJob(job.id(), "Worker recovery limit exceeded");
+            if (attempts.recoveryCount(job.id()) >= properties.maxRecoveries()
+                    || job.attemptCount() >= job.retryPolicy().maxAttempts()) {
+                attempts.failJob(job.id(), job.attemptCount() >= job.retryPolicy().maxAttempts()
+                        ? "Execution attempt limit exceeded" : "Worker recovery limit exceeded");
                 jobs.recordEvent(job.id(), JobEvent.Type.RECOVERY_EXHAUSTED, JobStatus.FAILED, null, attempt.id());
+                deadLetters.execution(job, DeadLetter.Reason.RECOVERY_EXHAUSTED);
             } else {
                 attempts.requeue(job.id());
                 jobs.recordEvent(job.id(), JobEvent.Type.LEASE_EXPIRED, JobStatus.QUEUED, null, attempt.id());
@@ -145,5 +175,6 @@ public class ExecutionService {
     private void timeoutQueued(Job job) {
         attempts.failJob(job.id(), "Execution deadline exceeded");
         jobs.recordEvent(job.id(), JobEvent.Type.TIMED_OUT, JobStatus.FAILED, null);
+        deadLetters.execution(job, DeadLetter.Reason.DEADLINE_EXCEEDED);
     }
 }

@@ -8,7 +8,13 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 public record Job(UUID id, JobType type, String text, JobStatus status, JsonNode result,
                   String error, Instant createdAt, Instant completedAt, int priority, Instant scheduledAt,
                   UUID retryOf, int timeoutSeconds, int attemptCount, UUID activeAttemptId,
-                  Instant deadlineAt, @JsonIgnore int generation) {
+                  Instant deadlineAt, @JsonIgnore int generation, RetryPolicy retryPolicy, Instant retryAt) {
+    public Job(UUID id, JobType type, String text, JobStatus status, JsonNode result, String error,
+               Instant createdAt, Instant completedAt, int priority, Instant scheduledAt, UUID retryOf,
+               int timeoutSeconds, int attemptCount, UUID activeAttemptId, Instant deadlineAt, int generation) {
+        this(id, type, text, status, result, error, createdAt, completedAt, priority, scheduledAt, retryOf,
+                timeoutSeconds, attemptCount, activeAttemptId, deadlineAt, generation, RetryPolicy.DEFAULT, null);
+    }
     public Job(UUID id, JobType type, String text, JobStatus status, JsonNode result, String error,
                Instant createdAt, Instant completedAt, int priority, Instant scheduledAt, UUID retryOf) {
         this(id, type, text, status, result, error, createdAt, completedAt, priority, scheduledAt,

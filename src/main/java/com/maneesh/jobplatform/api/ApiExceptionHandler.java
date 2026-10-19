@@ -4,6 +4,7 @@ import java.net.URI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
+import org.springframework.amqp.AmqpException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -21,5 +22,11 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
                 "Job storage is temporarily unavailable");
         problem.setType(URI.create("about:blank"));
         return problem;
+    }
+
+    @ExceptionHandler(AmqpException.class)
+    public ProblemDetail brokerUnavailable(AmqpException exception) {
+        log.warn("Dead-letter broker operation failed: {}", exception.getClass().getSimpleName());
+        return ProblemDetail.forStatusAndDetail(HttpStatus.SERVICE_UNAVAILABLE, "Message broker is temporarily unavailable");
     }
 }

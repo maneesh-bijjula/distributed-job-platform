@@ -63,6 +63,15 @@ class JobExecutorTest {
     }
 
     @Test
+    void retryableHandlerFailureUsesPersistedRetryLifecycleAndReleasesMonitor() {
+        when(processor.process(any(), any(), any())).thenThrow(new RetryableJobException("private dependency URL"));
+        executor.execute(id);
+        verify(execution).fail(claim, HandlerFailure.RETRYABLE_INFRASTRUCTURE);
+        verify(execution, never()).succeed(any(), any());
+        verify(heartbeat).cancel(false);
+    }
+
+    @Test
     void completionStorageFailureEscapesWithoutBeingClassifiedAsHandlerFailure() {
         var result = new ObjectMapper().createObjectNode();
         when(processor.process(any(), any(), any())).thenReturn(result);

@@ -50,8 +50,10 @@ public class JobExecutor {
                 execution.reconcile(claim);
                 return;
             } catch (RuntimeException exception) {
-                log.error("Handler failed for job {} attempt {}", id, claim.attempt().id(), exception);
-                execution.fail(claim);
+                var kind = HandlerFailure.classify(exception);
+                log.warn("Handler failure {} for job {} attempt {}", kind, id, claim.attempt().id());
+                if (kind == HandlerFailure.PERMANENT_HANDLER) execution.fail(claim);
+                else execution.fail(claim, kind);
                 return;
             }
             // Each lifecycle method commits in its own short transaction.

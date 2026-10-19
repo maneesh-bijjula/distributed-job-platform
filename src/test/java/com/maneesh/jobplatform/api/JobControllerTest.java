@@ -75,7 +75,7 @@ class JobControllerTest {
     void returnsAcceptedWithLocation() throws Exception {
         UUID id = UUID.randomUUID();
         var job = new Job(id, JobType.SHA256, "abc", JobStatus.QUEUED, null, null, Instant.now(), null, 0, null, null);
-        when(service.submit(JobType.SHA256, "abc", "request-1", 0, null, null)).thenReturn(new JobService.Submission(job, true));
+        when(service.submit(JobType.SHA256, "abc", "request-1", 0, null, null, null)).thenReturn(new JobService.Submission(job, true));
         mvc.perform(post("/api/v1/jobs").header("Idempotency-Key", "request-1")
                         .contentType(MediaType.APPLICATION_JSON).content("{\"type\":\"SHA256\",\"text\":\"abc\"}"))
                 .andExpect(status().isAccepted()).andExpect(header().string("Location", "/api/v1/jobs/" + id))
@@ -175,10 +175,33 @@ class JobControllerTest {
         UUID id = UUID.randomUUID();
         var job = new Job(id, JobType.SHA256, "abc", JobStatus.QUEUED, null, null,
                 Instant.now(), null, 0, null, null, 7, 0, null, null, 0);
-        when(service.submit(JobType.SHA256, "abc", null, 0, null, 7)).thenReturn(new JobService.Submission(job, true));
+        when(service.submit(JobType.SHA256, "abc", null, 0, null, 7, null)).thenReturn(new JobService.Submission(job, true));
         mvc.perform(post("/api/v1/jobs").contentType(MediaType.APPLICATION_JSON)
                 .content("{\"type\":\"SHA256\",\"text\":\"abc\",\"timeoutSeconds\":7}"))
                 .andExpect(status().isAccepted()).andExpect(jsonPath("$.timeoutSeconds").value(7));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"{}", "{\"maxAttempts\":0,\"initialBackoffSeconds\":1,\"maxBackoffSeconds\":60}",
+            "{\"maxAttempts\":26,\"initialBackoffSeconds\":1,\"maxBackoffSeconds\":60}",
+            "{\"maxAttempts\":3,\"initialBackoffSeconds\":2,\"maxBackoffSeconds\":1}",
+            "{\"maxAttempts\":3,\"initialBackoffSeconds\":1,\"maxBackoffSeconds\":3601}",
+            "{\"maxAttempts\":1.5,\"initialBackoffSeconds\":1,\"maxBackoffSeconds\":60}"})
+    void rejectsInvalidRetryPoliciesBeforeSubmission(String policy) throws Exception {
+        mvc.perform(post("/api/v1/jobs").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"type\":\"SHA256\",\"text\":\"abc\",\"retryPolicy\":" + policy + "}"))
+                .andExpect(status().isBadRequest());
+        verifyNoInteractions(service);
+    }
+
+    @Test
+    void acceptsExplicitRetryPolicy() throws Exception {
+        var job = new Job(UUID.randomUUID(), JobType.SHA256, "abc", JobStatus.QUEUED, null, null, Instant.now(), null, 0, null, null);
+        when(service.submit(JobType.SHA256, "abc", null, 0, null, null, new RetryPolicy(3, 2, 10)))
+                .thenReturn(new JobService.Submission(job, true));
+        mvc.perform(post("/api/v1/jobs").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"type\":\"SHA256\",\"text\":\"abc\",\"retryPolicy\":{\"maxAttempts\":3,\"initialBackoffSeconds\":2,\"maxBackoffSeconds\":10}}"))
+                .andExpect(status().isAccepted());
     }
 
     @ParameterizedTest

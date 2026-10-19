@@ -27,6 +27,11 @@ public class JobRepository {
 
     public Optional<UUID> insert(UUID id, JobType type, String text, String key, int priority,
                                  Instant scheduledAt, UUID retryOf, int timeoutSeconds) {
+        return insert(id, type, text, key, priority, scheduledAt, retryOf, timeoutSeconds, RetryPolicy.DEFAULT);
+    }
+
+    public Optional<UUID> insert(UUID id, JobType type, String text, String key, int priority,
+                                 Instant scheduledAt, UUID retryOf, int timeoutSeconds, RetryPolicy policy) {
         Map<String, Object> params = new HashMap<>();
         params.put("id", id);
         params.put("type", type.name());
@@ -36,9 +41,13 @@ public class JobRepository {
         params.put("scheduledAt", scheduledAt == null ? null : Timestamp.from(scheduledAt));
         params.put("retryOf", retryOf);
         params.put("timeout", timeoutSeconds);
+        params.put("maxAttempts", policy.maxAttempts());
+        params.put("initialBackoff", policy.initialBackoffSeconds());
+        params.put("maxBackoff", policy.maxBackoffSeconds());
         return jdbc.query("""
-                INSERT INTO jobs (id, type, input_text, idempotency_key, priority, scheduled_at, retry_of, timeout_seconds)
-                VALUES (:id, :type, :text, :key, :priority, :scheduledAt, :retryOf, :timeout)
+                INSERT INTO jobs (id, type, input_text, idempotency_key, priority, scheduled_at, retry_of, timeout_seconds,
+                    max_attempts, initial_backoff_seconds, max_backoff_seconds)
+                VALUES (:id, :type, :text, :key, :priority, :scheduledAt, :retryOf, :timeout, :maxAttempts, :initialBackoff, :maxBackoff)
                 ON CONFLICT (idempotency_key) DO NOTHING RETURNING id
                 """, params, (rs, row) -> rs.getObject("id", UUID.class)).stream().findFirst();
     }
@@ -58,6 +67,10 @@ public class JobRepository {
     public Optional<Job> findByKey(String key) {
         return jdbc.query("SELECT * FROM jobs WHERE idempotency_key = :key", Map.of("key", key), this::map)
                 .stream().findFirst();
+    }
+
+    public boolean legacyRetryPolicy(UUID id) {
+        return Boolean.TRUE.equals(jdbc.queryForObject("SELECT legacy_retry_policy FROM jobs WHERE id=:id", Map.of("id", id), Boolean.class));
     }
 
     public Optional<Job> lock(UUID id) {
@@ -99,7 +112,7 @@ public class JobRepository {
 
     public void cancel(UUID id) {
         jdbc.update("""
-                UPDATE jobs SET status = 'CANCELLED', completed_at = clock_timestamp(), active_attempt_id = NULL WHERE id = :id
+                UPDATE jobs SET status = 'CANCELLED', completed_at = clock_timestamp(), active_attempt_id = NULL, retry_at = NULL WHERE id = :id
                 """, Map.of("id", id));
         jdbc.update("DELETE FROM job_outbox WHERE job_id = :id", Map.of("id", id));
     }
@@ -144,7 +157,9 @@ public class JobRepository {
                     rs.getInt("priority"), scheduled == null ? null : scheduled.toInstant(),
                     rs.getObject("retry_of", UUID.class), rs.getInt("timeout_seconds"),
                     rs.getInt("attempt_count"), rs.getObject("active_attempt_id", UUID.class),
-                    deadline == null ? null : deadline.toInstant(), rs.getInt("generation"));
+                    deadline == null ? null : deadline.toInstant(), rs.getInt("generation"),
+                    new RetryPolicy(rs.getInt("max_attempts"), rs.getInt("initial_backoff_seconds"), rs.getInt("max_backoff_seconds")),
+                    rs.getTimestamp("retry_at") == null ? null : rs.getTimestamp("retry_at").toInstant());
         } catch (JsonProcessingException exception) {
             throw new SQLException("Invalid stored job result", exception);
         }

@@ -1,6 +1,6 @@
 # Execution tracking and recovery verification
 
-The execution model is covered by **72 unit tests and 60 integration tests**, plus a packaged Docker smoke check. Integration tests use isolated PostgreSQL and RabbitMQ services.
+The execution model is covered by **92 unit tests and 94 integration tests**, plus two packaged Docker smoke checks. Integration tests use isolated PostgreSQL and RabbitMQ services.
 
 | Behavior | Verification |
 | --- | --- |
@@ -14,10 +14,17 @@ The execution model is covered by **72 unit tests and 60 integration tests**, pl
 | Running cancellation | An HTTP request cancels a paused cooperative handler; cancellation is durable before the handler exits. A non-cooperative paused handler's late result is also rejected. |
 | Execution deadline | A real short deadline stops a cooperative handler. Results arriving after expiry fail even before the recovery scan runs. Recovery queue wait does not reset the deadline. |
 | Bounded recovery | Repeated lease loss reaches the configured recovery limit and produces a durable failure. |
+| Retry timing and limits | Transient handler failures persist capped exponential backoff; early/stale deliveries cannot claim them. Actual broker delivery completes after two automatic retries; exhaustion creates one inbox entry. |
+| Backoff restart | Two application contexts are started and stopped against the same test database; the replacement retains `retryAt`, the fixed deadline, and completes the second attempt. |
+| Failure classification | Known transient dependency failures retry; permanent handler failures immediately fail with sanitized attempt outcomes. Lifecycle storage failures are not misclassified as handler failures. |
+| Retry cancellation and rollback | Cancellation fences a waiting retry. Audit/inbox storage failures roll back the attempt, job state, and outbox changes. Terminal failures remove pending outbox work. |
+| Dead-letter capture | Bounded manual broker collection commits a sanitized record before acknowledgement; database failure requeues it, and repeated capture retains its original resolution. |
+| Dead-letter recovery | Concurrent requests create one resolution and one linked child or one generation advance. Key conflicts, stale generations, schedule/backoff preservation, running/successful conflicts, and audit rollback are tested. |
+| Malformed messages | Invalid payloads, invalid generation headers, and unknown job IDs remain inspectable; recovery rejects them, while audited discard is idempotent. |
 | Concurrent recovery | Multiple recovery passes recover a lost attempt once, with one generation advance. |
 | Transactional audit | Failure to persist a completion or recovery event rolls back that transition and its accompanying attempt/outbox changes. |
 | Scheduling and legacy delivery | An early legacy message cannot start a future job. UUID-only generation-zero messages still execute eligible legacy jobs; they cannot claim a recovered generation. |
-| Upgrade | Automated migrations preserve earlier jobs and results. The packaged upgrade retained all eight existing local jobs and eleven history records with unchanged checksums; no legacy attempts were fabricated. |
+| Upgrade | Automated migrations preserve earlier jobs, results, active attempts, deadlines, and outbox generations. The execution upgrade retained eight jobs and eleven history records. The retry-policy upgrade retained all 25 existing jobs, 62 history records, and 15 attempts with unchanged checksums of their original fields; no old attempts or dead letters were fabricated. |
 
 Run the automated suite:
 
@@ -30,6 +37,7 @@ Run the packaged workflow:
 ```sh
 docker compose up --build -d --wait
 python3 scripts/smoke.py
+python3 scripts/dead-letter-smoke.py
 ```
 
 The smoke check creates a scheduled job, cancels it, creates and replays a linked manual retry, waits for the real worker result, and checks attempt persistence, lifecycle history, pagination, and conflict responses. The generated jobs remain available for inspection.

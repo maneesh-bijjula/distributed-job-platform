@@ -20,6 +20,7 @@ jobs:
         run: |
           docker compose -p job-platform up -d --wait --wait-timeout 120 api worker
           python3 scripts/smoke.py
+          python3 scripts/dead-letter-smoke.py
       - name: Upload test reports
         if: always()
         uses: actions/upload-artifact@v4

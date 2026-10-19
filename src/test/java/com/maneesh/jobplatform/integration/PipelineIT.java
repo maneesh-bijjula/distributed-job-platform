@@ -111,6 +111,52 @@ class PipelineIT {
     }
 
     @Test
+    void transientHandlerFailureRetriesThroughDurableOutboxAndBrokerUntilSuccess() {
+        var calls = new java.util.concurrent.atomic.AtomicInteger();
+        doAnswer(call -> {
+            if (calls.incrementAndGet() < 3) throw new com.maneesh.jobplatform.worker.RetryableJobException("private dependency details");
+            return call.callRealMethod();
+        }).when(processor).process(eq(com.maneesh.jobplatform.jobs.JobType.UPPERCASE), eq("automatic retry"), any());
+        var response = http.postForEntity("/api/v1/jobs", Map.of("type", "UPPERCASE", "text", "automatic retry",
+                "timeoutSeconds", 30, "retryPolicy", Map.of("maxAttempts", 3, "initialBackoffSeconds", 1, "maxBackoffSeconds", 2)), JsonNode.class);
+        String path = response.getHeaders().getLocation().toString();
+        assertThat(completed(path).get("attemptCount").asInt()).isEqualTo(3);
+        assertThat(calls.get()).isEqualTo(3);
+        var attempts = http.getForObject(path + "/attempts", JsonNode.class).get("items");
+        assertThat(attempts).hasSize(3);
+        assertThat(attempts.get(0).get("failureKind").asText()).isEqualTo("RETRYABLE_INFRASTRUCTURE");
+        assertThat(attempts.get(1).get("status").asText()).isEqualTo("FAILED");
+        assertThat(attempts.get(2).get("status").asText()).isEqualTo("SUCCEEDED");
+        assertThat(Instant.parse(attempts.get(1).get("startedAt").asText()))
+                .isAfterOrEqualTo(Instant.parse(attempts.get(0).get("finishedAt").asText()).plusSeconds(1));
+        assertThat(Instant.parse(attempts.get(2).get("startedAt").asText()))
+                .isAfterOrEqualTo(Instant.parse(attempts.get(1).get("finishedAt").asText()).plusSeconds(2));
+        assertThat(attempts.toString()).doesNotContain("private dependency");
+    }
+
+    @Test
+    void infrastructureDeadLetterCanBeCollectedAndRecoveredThroughHttpWithoutCancellingSource() {
+        var admin = new RabbitAdmin(rabbit.getConnectionFactory());
+        admin.purgeQueue(RabbitConfiguration.DEAD_QUEUE);
+        doThrow(new DataAccessResourceFailureException("simulated storage outage")).when(repository).lock(any());
+        var response = http.postForEntity("/api/v1/jobs", Map.of("type", "UPPERCASE", "text", "operator recovery"), JsonNode.class);
+        String source = response.getHeaders().getLocation().toString();
+        try {
+            await().atMost(Duration.ofSeconds(15)).untilAsserted(() ->
+                    assertThat(admin.getQueueInfo(RabbitConfiguration.DEAD_QUEUE).getMessageCount()).isEqualTo(1));
+        } finally { doCallRealMethod().when(repository).lock(any()); }
+        var collection = http.postForEntity("/api/v1/dead-letters/collect?limit=1", null, JsonNode.class);
+        assertThat(collection.getStatusCode()).isEqualTo(HttpStatus.OK);
+        String id = collection.getBody().get("entryIds").get(0).asText();
+        var headers = new HttpHeaders(); headers.set("Idempotency-Key", "operator-recovery");
+        var recovery = http.postForEntity("/api/v1/dead-letters/" + id + "/recover", new HttpEntity<>(headers), JsonNode.class);
+        assertThat(recovery.getStatusCode()).isEqualTo(HttpStatus.ACCEPTED);
+        assertThat(recovery.getBody().get("recoveryJobId").asText()).isEqualTo(response.getBody().get("id").asText());
+        assertThat(completed(source).get("result").get("text").asText()).isEqualTo("OPERATOR RECOVERY");
+        assertThat(http.postForEntity("/api/v1/dead-letters/" + id + "/recover", new HttpEntity<>(headers), JsonNode.class).getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+
+    @Test
     void scheduledHttpJobExecutesOnlyAfterItsDeadline() {
         Instant scheduled = Instant.now().plusSeconds(3).truncatedTo(java.time.temporal.ChronoUnit.MICROS);
         var response = http.postForEntity("/api/v1/jobs", Map.of("type", "UPPERCASE", "text", "later",

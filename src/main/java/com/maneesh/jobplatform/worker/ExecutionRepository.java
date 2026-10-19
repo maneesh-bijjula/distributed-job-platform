@@ -42,7 +42,7 @@ public class ExecutionRepository {
                 """, params, this::map).getFirst();
         jdbc.update("""
                 UPDATE jobs SET status='RUNNING',active_attempt_id=:attempt,attempt_count=attempt_count+1,
-                    deadline_at=:deadline WHERE id=:id
+                    deadline_at=:deadline,retry_at=NULL WHERE id=:id
                 """, Map.of("id", job.id(), "attempt", id, "deadline", Timestamp.from(attempt.deadlineAt())));
         return attempt;
     }
@@ -84,8 +84,34 @@ public class ExecutionRepository {
         jdbc.update("UPDATE job_attempts SET status=:status,error=:error,finished_at=clock_timestamp() WHERE id=:id AND status='RUNNING'", params);
     }
 
+    public void failureKind(UUID id, HandlerFailure kind) {
+        jdbc.update("UPDATE job_attempts SET failure_kind=:kind WHERE id=:id", Map.of("id", id, "kind", kind.name()));
+    }
+
+    public void retry(UUID id, int delaySeconds) {
+        jdbc.update("""
+                UPDATE jobs SET status='QUEUED',active_attempt_id=NULL,generation=generation+1,error=NULL,completed_at=NULL,
+                    retry_at=clock_timestamp()+make_interval(secs => :delay) WHERE id=:id
+                """, Map.of("id", id, "delay", delaySeconds));
+        enqueueCurrent(id);
+    }
+
+    public void enqueueCurrent(UUID id) {
+        jdbc.update("""
+                INSERT INTO job_outbox(job_id,priority,available_at,generation)
+                SELECT id,priority,GREATEST(clock_timestamp(),COALESCE(scheduled_at,created_at),retry_at),generation FROM jobs WHERE id=:id
+                ON CONFLICT(job_id) DO UPDATE SET generation=EXCLUDED.generation,available_at=EXCLUDED.available_at,
+                    priority=EXCLUDED.priority
+                """, Map.of("id", id));
+    }
+
+    public void redrive(UUID id) {
+        jdbc.update("UPDATE jobs SET generation=generation+1 WHERE id=:id", Map.of("id", id));
+        enqueueCurrent(id);
+    }
+
     public boolean due(UUID id) {
-        return Boolean.TRUE.equals(jdbc.queryForObject("SELECT coalesce(scheduled_at,created_at)<=clock_timestamp() FROM jobs WHERE id=:id", Map.of("id", id), Boolean.class));
+        return Boolean.TRUE.equals(jdbc.queryForObject("SELECT GREATEST(coalesce(scheduled_at,created_at),retry_at)<=clock_timestamp() FROM jobs WHERE id=:id", Map.of("id", id), Boolean.class));
     }
 
     public boolean deadlineExpired(UUID id) {
@@ -93,7 +119,12 @@ public class ExecutionRepository {
     }
 
     public void failJob(UUID id, String error) {
-        jdbc.update("UPDATE jobs SET status='FAILED',error=:error,completed_at=clock_timestamp(),active_attempt_id=NULL WHERE id=:id", Map.of("id", id, "error", error));
+        jdbc.update("UPDATE jobs SET status='FAILED',error=:error,completed_at=clock_timestamp(),active_attempt_id=NULL,retry_at=NULL WHERE id=:id", Map.of("id", id, "error", error));
+        removePending(id);
+    }
+
+    public void removePending(UUID id) {
+        jdbc.update("DELETE FROM job_outbox WHERE job_id=:id", Map.of("id", id));
     }
 
     public int recoveryCount(UUID id) {
@@ -103,12 +134,7 @@ public class ExecutionRepository {
     public void requeue(UUID id) {
         jdbc.update("UPDATE jobs SET status='QUEUED',active_attempt_id=NULL,generation=generation+1,recovery_count=recovery_count+1 WHERE id=:id", Map.of("id", id));
         // The outbox replacement and generation advance commit together.
-        jdbc.update("""
-                INSERT INTO job_outbox(job_id,priority,available_at,generation)
-                SELECT id,priority,clock_timestamp(),generation FROM jobs WHERE id=:id
-                ON CONFLICT(job_id) DO UPDATE SET generation=EXCLUDED.generation,available_at=EXCLUDED.available_at,
-                    priority=EXCLUDED.priority
-                """, Map.of("id", id));
+        enqueueCurrent(id);
     }
 
     public List<UUID> expiredJobs() {
@@ -131,6 +157,7 @@ public class ExecutionRepository {
                 rs.getInt("attempt_number"), rs.getInt("generation"), rs.getString("worker_id"),
                 JobAttempt.Status.valueOf(rs.getString("status")), rs.getTimestamp("started_at").toInstant(),
                 rs.getTimestamp("heartbeat_at").toInstant(), rs.getTimestamp("lease_until").toInstant(),
-                rs.getTimestamp("deadline_at").toInstant(), finished == null ? null : finished.toInstant(), rs.getString("error"));
+                rs.getTimestamp("deadline_at").toInstant(), finished == null ? null : finished.toInstant(), rs.getString("error"),
+                rs.getString("failure_kind") == null ? null : HandlerFailure.valueOf(rs.getString("failure_kind")));
     }
 }

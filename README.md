@@ -9,6 +9,8 @@ An asynchronous job service built with **Java 21, Spring Boot, PostgreSQL, and R
 - Queued and cooperative running-job cancellation, plus linked idempotent manual retries.
 - Visible running state, durable execution attempts, renewable worker leases, and crash recovery.
 - Fixed execution deadlines and generation-fenced message delivery and result writes.
+- Per-job attempt limits, durable exponential backoff, and classified automatic retries.
+- Persistent dead-letter inspection with bounded broker collection and audited, idempotent recovery/discard.
 - Paginated, persisted job history with atomic status and audit updates.
 - Text handlers for word counting, SHA-256 hashing, and uppercase conversion.
 - PostgreSQL persistence with versioned Flyway migrations.
@@ -66,6 +68,11 @@ This example shows the result fields; the full response also includes the ID, ty
 | POST | `/api/v1/jobs/{id}/retry` | Create a linked retry of a failed or cancelled job |
 | GET | `/api/v1/jobs/{id}/events?page=0&size=20` | Read persisted history, oldest first |
 | GET | `/api/v1/jobs/{id}/attempts?page=0&size=20` | Read execution attempts, oldest first |
+| GET | `/api/v1/dead-letters?state=OPEN&page=0&size=20` | Inspect the persistent dead-letter inbox, oldest first |
+| GET | `/api/v1/dead-letters/{id}` | Inspect a sanitized dead-letter record and its resolution |
+| POST | `/api/v1/dead-letters/collect?limit=20` | Archive at most 1–100 messages from `jobs.dead` |
+| POST | `/api/v1/dead-letters/{id}/recover` | Deliberately recover valid work; requires an idempotency key |
+| POST | `/api/v1/dead-letters/{id}/discard` | Resolve an inbox entry without scheduling work; requires an idempotency key |
 | GET | `/actuator/health` | Check service health |
 | GET | `/actuator/prometheus` | Read Prometheus metrics |
 
@@ -117,7 +124,7 @@ curl -i -X POST http://localhost:8080/api/v1/jobs/JOB_ID/retry \
   -H 'Idempotency-Key: retry-example-1'
 ```
 
-A retry returns `202 Accepted` with a new ID and `Location` header. It inherits the original type, text, priority, and timeout, sets `retryOf` to the original ID, and is immediately eligible (`scheduledAt` is null). The original status, result, error, and schedule remain intact. Repeating that retry request with the same key returns the same child job with `200 OK`, even after the child finishes. A different key deliberately creates another retry; using a key belonging to a different source or ordinary submission returns `409`.
+A retry returns `202 Accepted` with a new ID and `Location` header. It inherits the original type, text, priority, timeout, and retry policy, sets `retryOf` to the original ID, and is immediately eligible (`scheduledAt` is null). The original status, result, error, and schedule remain intact. Repeating that retry request with the same key returns the same child job with `200 OK`, even after the child finishes. A different key deliberately creates another retry; using a key belonging to a different source or ordinary submission returns `409`.
 
 Linked retries prevent a delayed message for an old job from triggering a new run. Only failed or cancelled jobs can be retried; queued, running, and successful jobs return `409`. A manual retry starts a fresh execution budget and attempt history under its new job ID. Both control endpoints accept no request body and return `400` for unexpected JSON bodies. Missing IDs return `404`.
 
@@ -147,7 +154,7 @@ Set an optional execution budget when submitting a job:
 
 A worker commits `RUNNING`, an attempt record, and a `STARTED` history event before computing. Heartbeats renew the attempt's lease without extending its deadline. The default lease is 15 seconds and the default heartbeat interval is 2 seconds. Worker identity is generated once per application process. Claim tokens are internal and never returned by the API.
 
-The API's recovery scheduler scans expired executions every second. It marks a lost attempt `ABANDONED`, advances the delivery generation, and requeues the job through the transactional outbox. Multiple schedulers use row locks with `SKIP LOCKED`; they cannot recover the same attempt twice. An expired lease cannot be renewed, and an old claim cannot update or finish a replacement attempt. Recovery is bounded to three worker-loss recoveries by default; exhaustion produces a failed job. This recovery mechanism does not automatically retry ordinary handler failures.
+The API's recovery scheduler scans expired executions every second. It marks a lost attempt `ABANDONED`, advances the delivery generation, and requeues the job through the transactional outbox. Multiple schedulers use row locks with `SKIP LOCKED`; they cannot recover the same attempt twice. An expired lease cannot be renewed, and an old claim cannot update or finish a replacement attempt. Recovery is bounded to three worker-loss recoveries by default and also respects the job's total attempt cap. Exhaustion produces a failed job and a persistent dead-letter record. Handler-failure retries use the separate classification and backoff rules below.
 
 Deadline expiry produces job status `FAILED` with `Execution deadline exceeded` and attempt outcome `TIMED_OUT`. The heartbeat, result-write guard, and recovery scan enforce expiry. A recovered queued job can time out before replacement delivery. The next scan can run later than the exact deadline, but a result written after expiry is rejected. If the database is unavailable, durable transitions wait for it to recover; the worker never treats an unconfirmed heartbeat as a lease renewal.
 
@@ -174,6 +181,55 @@ Dispatcher scheduling and heartbeat monitoring use separate pools. The recovery 
 
 ## Architecture and delivery behavior
 
+### Automatic retries
+
+An optional policy is stored with each submitted job:
+
+```json
+{
+  "type": "SHA256",
+  "text": "bounded work",
+  "timeoutSeconds": 60,
+  "retryPolicy": {"maxAttempts": 4, "initialBackoffSeconds": 1, "maxBackoffSeconds": 60}
+}
+```
+
+Omitting `retryPolicy` selects the example policy. When providing it, supply all three integer fields. `maxAttempts` accepts 1–25 and includes the first execution and abandoned worker attempts. Setting it to 1 disables automatic retries and worker-loss recovery. Both backoff fields accept 1–3600 seconds, with initial backoff at most the maximum. Delay after execution number `n` is `min(initialBackoffSeconds × 2^(n-1), maxBackoffSeconds)`; it is deterministic and has no jitter. Worker-loss recovery is immediate and separately bounded by `JOB_MAX_RECOVERIES`, while still respecting the total attempt cap.
+
+Only explicit `RetryableJobException`, Spring `TransientDataAccessException`, and AMQP connection/I/O/timeout failures **thrown by a handler** qualify for automatic retries. Validation/programming errors and other handler exceptions are permanent. Custom handlers must classify failures deliberately and make external side effects idempotent. Included text handlers perform no dependency calls and have no artificial failure mode.
+
+A retryable failure ends its attempt as `FAILED` with sanitized error and `failureKind=RETRYABLE_INFRASTRUCTURE`. In one transaction, the job becomes `QUEUED`, its generation advances, `retryAt` is persisted, and replacement outbox work is scheduled for that timestamp. `RETRY_SCHEDULED` records the failed attempt. No worker thread sleeps during backoff. The outbox and claim guard both enforce the due time; stale or early messages cannot bypass it. Process restarts retain the schedule. `retryAt` is null once a job starts again or becomes terminal.
+
+The original execution deadline remains fixed, including backoff time; a job may time out before using every permitted attempt. Permanent failures emit `FAILED`, retry exhaustion emits `RETRIES_EXHAUSTED`, and both enter the persistent dead-letter inbox. Worker recovery exhaustion and execution timeouts also create inbox records. Attempt errors are sanitized; exception messages and stack traces are not stored in the inbox or attempt API. Lifecycle transaction failures leave recovery to leases or broker delivery retries rather than being classified as handler failures.
+
+Policy settings participate in submission idempotency. Existing jobs upgraded from the earlier execution model retain a cap of 25 to preserve their prior recovery allowance. Replays of those legacy submissions that omit a policy retain their stored policy. Existing results, attempts, deadlines, keys, and outbox generations are preserved; old failures are not retroactively copied into the inbox.
+
+### Dead-letter operations
+
+Execution failures enter PostgreSQL's inbox atomically with their terminal transition. Broker delivery failures remain in RabbitMQ's `jobs.dead` until an operator explicitly collects them:
+
+```sh
+curl -X POST 'http://localhost:8080/api/v1/dead-letters/collect?limit=20'
+curl 'http://localhost:8080/api/v1/dead-letters?state=OPEN&page=0&size=20'
+curl -i -X POST http://localhost:8080/api/v1/dead-letters/ENTRY_ID/recover \
+  -H 'Idempotency-Key: recover-entry-1'
+```
+
+Collection consumes at most 100 messages per request. Each record commits **before** its broker acknowledgement; storage failure requeues the message. A crash between commit and acknowledgement may redeliver it. Identical body hashes and generation headers are grouped into one persistent broker record, retaining any earlier resolution. This is a diagnostic grouping, not an exact count of broker deliveries. Inspection GET requests only read PostgreSQL and do not drain RabbitMQ.
+
+Broker records retain the SHA-256 hash and byte length, source, reason, known job ID, and generation. Raw payloads are removed from RabbitMQ after capture and are **not retained** in PostgreSQL. Malformed bodies, invalid generation headers, and unknown IDs are inspectable but cannot be recovered as executable jobs. UUID-only legacy messages are generation zero. Records expose no claim tokens, raw exception messages, or idempotency keys.
+
+Recovery requires an `OPEN` entry and a valid job. A queued broker job is requeued through the outbox under a new generation, preserving its original schedule, backoff, and deadline. A stale delivery generation, expired queued deadline, running job, or successful job returns `409`. For failed or cancelled jobs, recovery creates a linked new job with a fresh budget and the inherited policy. The source retains its terminal status. Recovery returns `202` plus the target job's `Location`; replaying the same key and action returns the same resolution with `200`, even after that target finishes.
+
+To resolve a record without scheduling work:
+
+```sh
+curl -X POST http://localhost:8080/api/v1/dead-letters/ENTRY_ID/discard \
+  -H 'Idempotency-Key: discard-entry-1'
+```
+
+Discard returns `200`; it does not cancel, delete, or change the associated job. Resolution keys are global to inbox actions and separate from submission/manual-retry keys. A key cannot cross entries or actions; another key cannot resolve an already resolved entry. Row locks and transactional key locks serialize concurrent actions. Resolution state, timestamp, target job ID, and related job history commit together and remain available for audit. Both actions accept no JSON body. The local API has no authentication; keep it bound to localhost.
+
 ```mermaid
 flowchart LR
     Client -->|POST /api/v1/jobs| API
@@ -193,13 +249,13 @@ Job creation and the outbox entry commit together. The relay locks a batch using
 
 Delivery is **at least once**: a crash between broker confirmation and outbox deletion can publish the same job again. Workers briefly lock the job to claim one active attempt. Duplicate messages for a running or terminal job are skipped. Each attempt has a private claim token, delivery generation, lease, and deadline; final writes require current ownership and an unexpired lease and deadline. A recovered attempt uses a new generation, so an old message cannot start the replacement execution. Recovery can repeat a computation after worker loss, so handlers with external side effects still need their own idempotency strategy.
 
-Handler exceptions produce a persisted `FAILED` job with a sanitized error. Database and infrastructure exceptions roll back the affected short transaction and trigger up to three broker delivery attempts with 500 ms and 1 s backoff. Failures before a claim can exhaust delivery into `jobs.dead`, leaving a queued job. If a claim already committed but result persistence fails, the job remains running until its lease expires and durable recovery takes over; a redelivery can be acknowledged while that claim is still active. After resolving the infrastructure problem, an operator can cancel that job and use the retry endpoint to create a linked replacement. Republishing a stale message for the cancelled source is harmless. Operators may republish a UUID-only legacy message only for a queued generation-zero job; recovered deliveries require the current generation header. Dead-letter messages can be inspected in RabbitMQ's management console.
+Handler exceptions follow the persisted policy above. Database and infrastructure exceptions in lifecycle transactions roll back the affected short transaction and trigger up to three broker delivery attempts with 500 ms and 1 s backoff. Failures before a claim can exhaust delivery into `jobs.dead`, leaving a queued job. If a claim already committed but result persistence fails, the job remains running until its lease expires and durable recovery takes over; a redelivery can be acknowledged while that claim is still active. After repairing the infrastructure, use explicit inbox collection and recovery. Cancelling and manually retrying a job remains supported; delayed source messages cannot revive it. RabbitMQ's management console can inspect broker messages before collection.
 
 The included Compose setup uses one PostgreSQL instance and one RabbitMQ node with persistent local volumes. Exposed ports bind to localhost. The HTTP API has no authentication and is intended for local development.
 
 ## Tests
 
-The suite contains **72 unit tests and 60 integration tests**. CI also builds the image and runs the packaged lifecycle smoke check.
+The suite contains **92 unit tests and 94 integration tests**. CI also builds the image and runs both packaged smoke checks.
 
 See the [execution verification matrix](docs/execution-verification.md) for the covered guarantees and limits.
 
@@ -217,9 +273,12 @@ With the packaged application running, check the complete control workflow with 
 
 ```sh
 python3 scripts/smoke.py
+python3 scripts/dead-letter-smoke.py
 ```
 
 This creates two inspectable jobs: a cancelled scheduled job and its successful immediate retry. It verifies replay behavior, worker output, persisted execution attempts, history pagination, and conflict responses. Use `--base-url` to select a different application address.
+
+The second check publishes two diagnostic dead messages through RabbitMQ's management API, verifies bounded capture, rejects malformed-message recovery, discards that record, and redrives a valid scheduled job without bypassing its schedule. It then verifies cancellation and a policy-inheriting linked retry. Set `RABBITMQ_USER` and `RABBITMQ_PASSWORD` for management credentials and `--management-url` for a different management address. Automatic transient retries, fixed backoff timing, application restart during backoff, exhaustion, concurrent recovery, and storage/audit rollback are covered by the integration suite with controlled dependency failures.
 
 With Java 21+ installed, unit tests can also run without service containers:
 
