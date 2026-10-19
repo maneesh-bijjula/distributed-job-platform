@@ -4,3 +4,5 @@ target
 .vscode
 .env*
 *.log
+__pycache__
+.auth-*

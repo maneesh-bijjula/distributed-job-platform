@@ -53,10 +53,15 @@ public class DeadLetterRepository {
     }
 
     public void resolve(UUID id, DeadLetter.State state, String key, UUID job) {
+        resolve(id,state,key,job,null);
+    }
+
+    public void resolve(UUID id, DeadLetter.State state, String key, UUID job, UUID actorKey) {
         var params = new HashMap<String, Object>();
         params.put("id", id); params.put("state", state.name()); params.put("key", key); params.put("job", job);
+        params.put("actor",actorKey);
         jdbc.update("""
-                UPDATE dead_letters SET state=:state,resolution_key=:key,resolved_at=clock_timestamp(),recovery_job_id=:job
+                UPDATE dead_letters SET state=:state,resolution_key=:key,resolved_at=clock_timestamp(),recovery_job_id=:job,resolved_by_key_id=:actor
                 WHERE id=:id AND state='OPEN'
                 """, params);
     }
@@ -79,6 +84,6 @@ public class DeadLetterRepository {
                 DeadLetter.Reason.valueOf(rs.getString("reason")), rs.getObject("job_id", UUID.class),
                 rs.getObject("generation", Integer.class), rs.getString("payload_sha256"), rs.getObject("payload_bytes", Integer.class),
                 rs.getTimestamp("captured_at").toInstant(), DeadLetter.State.valueOf(rs.getString("state")),
-                resolved == null ? null : resolved.toInstant(), rs.getObject("recovery_job_id", UUID.class));
+                resolved == null ? null : resolved.toInstant(), rs.getObject("recovery_job_id", UUID.class), rs.getObject("resolved_by_key_id",UUID.class));
     }
 }

@@ -37,7 +37,7 @@ import static org.mockito.Mockito.*;
         "jobs.dispatcher.enabled=false", "jobs.worker.enabled=false"
 })
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
-class DeadLetterIT {
+class DeadLetterIT extends AuthenticatedIntegrationTest {
     @Autowired DeadLetterCollector collector;
     @MockitoSpyBean DeadLetterService inbox;
     @MockitoSpyBean DeadLetterRepository entries;

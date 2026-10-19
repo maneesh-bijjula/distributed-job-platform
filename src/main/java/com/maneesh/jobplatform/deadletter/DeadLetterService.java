@@ -2,6 +2,7 @@ package com.maneesh.jobplatform.deadletter;
 
 import com.maneesh.jobplatform.jobs.*;
 import com.maneesh.jobplatform.worker.ExecutionRepository;
+import com.maneesh.jobplatform.auth.ApiPrincipal;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -67,6 +68,16 @@ public class DeadLetterService {
 
     @Transactional(timeout = 10)
     public Resolution recover(UUID id, String key) {
+        return recoverInternal(id,key,null);
+    }
+
+    @Transactional(timeout = 10)
+    public Resolution recoverAs(ApiPrincipal actor, UUID id, String key) {
+        operator(actor);
+        return recoverInternal(id,key,actor.keyId());
+    }
+
+    private Resolution recoverInternal(UUID id,String key,UUID actorKey) {
         DeadLetter replay = replay(id, key, DeadLetter.State.RECOVERED);
         if (replay != null) return new Resolution(replay, false);
         DeadLetter entry = lockOpen(id);
@@ -88,12 +99,22 @@ public class DeadLetterService {
             throw conflict("Only queued, failed, or cancelled jobs can be recovered");
         }
         jobs.recordEvent(source.id(), JobEvent.Type.DEAD_LETTER_RECOVERED, source.status(), recovered);
-        inbox.resolve(id, DeadLetter.State.RECOVERED, key, recovered);
+        inbox.resolve(id, DeadLetter.State.RECOVERED, key, recovered,actorKey);
         return new Resolution(get(id), true);
     }
 
     @Transactional(timeout = 10)
     public Resolution discard(UUID id, String key) {
+        return discardInternal(id,key,null);
+    }
+
+    @Transactional(timeout = 10)
+    public Resolution discardAs(ApiPrincipal actor, UUID id, String key) {
+        operator(actor);
+        return discardInternal(id,key,actor.keyId());
+    }
+
+    private Resolution discardInternal(UUID id,String key,UUID actorKey) {
         DeadLetter replay = replay(id, key, DeadLetter.State.DISCARDED);
         if (replay != null) return new Resolution(replay, false);
         DeadLetter entry = lockOpen(id);
@@ -101,7 +122,7 @@ public class DeadLetterService {
             Job job = jobs.lock(entry.jobId()).orElseThrow();
             jobs.recordEvent(job.id(), JobEvent.Type.DEAD_LETTER_DISCARDED, job.status(), null);
         }
-        inbox.resolve(id, DeadLetter.State.DISCARDED, key, null);
+        inbox.resolve(id, DeadLetter.State.DISCARDED, key, null,actorKey);
         return new Resolution(get(id), true);
     }
 
@@ -125,4 +146,7 @@ public class DeadLetterService {
     }
 
     private ResponseStatusException conflict(String message) { return new ResponseStatusException(HttpStatus.CONFLICT, message); }
+    private void operator(ApiPrincipal actor) {
+        if(actor==null || actor.role()!=ApiPrincipal.Role.OPERATOR) throw new ResponseStatusException(HttpStatus.FORBIDDEN,"Operator access required");
+    }
 }

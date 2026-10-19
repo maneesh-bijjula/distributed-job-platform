@@ -1,6 +1,6 @@
 # Execution tracking and recovery verification
 
-The execution model is covered by **92 unit tests and 94 integration tests**, plus two packaged Docker smoke checks. Integration tests use isolated PostgreSQL and RabbitMQ services.
+The platform is covered by **100 unit tests and 126 integration tests**, plus three packaged Docker smoke checks. Integration tests use isolated PostgreSQL and RabbitMQ services.
 
 | Behavior | Verification |
 | --- | --- |
@@ -21,10 +21,16 @@ The execution model is covered by **92 unit tests and 94 integration tests**, pl
 | Dead-letter capture | Bounded manual broker collection commits a sanitized record before acknowledgement; database failure requeues it, and repeated capture retains its original resolution. |
 | Dead-letter recovery | Concurrent requests create one resolution and one linked child or one generation advance. Key conflicts, stale generations, schedule/backoff preservation, running/successful conflicts, and audit rollback are tested. |
 | Malformed messages | Invalid payloads, invalid generation headers, and unknown job IDs remain inspectable; recovery rejects them, while audited discard is idempotent. |
+| Owner isolation | Real HTTP requests reject other-owner reads, cancellation, retry, results, event history, and attempts with `404`; listings are owner filtered, JSON cannot select an owner, and operator role does not bypass the job API. |
+| Keys and roles | Real bearer keys authenticate, ordinary keys cannot use any admin/dead-letter operation, key storage contains only hashes, metadata never returns tokens/hashes, revocation is idempotent, and bootstrap never resurrects revoked keys. |
+| Shared quotas | Two real API instances share one database owner quota: 20 concurrent submissions admit exactly 5 and reject 15. Multiple keys share the limit, new windows reset it, replays are free, and creation rollback also rolls back admission. |
+| Access audit | Owner/key administration commits with actor audit; audit failure rolls back key issuance. Operator dead-letter recovery retains the source owner and records its actor key. |
+| Authentication failure | Missing/invalid/revoked credentials return `401`, insufficient privileges return `403`, auth storage failure returns sanitized `503`, and public health remains available without exposing configuration. |
 | Concurrent recovery | Multiple recovery passes recover a lost attempt once, with one generation advance. |
 | Transactional audit | Failure to persist a completion or recovery event rolls back that transition and its accompanying attempt/outbox changes. |
 | Scheduling and legacy delivery | An early legacy message cannot start a future job. UUID-only generation-zero messages still execute eligible legacy jobs; they cannot claim a recovered generation. |
 | Upgrade | Automated migrations preserve earlier jobs, results, active attempts, deadlines, and outbox generations. The execution upgrade retained eight jobs and eleven history records. The retry-policy upgrade retained all 25 existing jobs, 62 history records, and 15 attempts with unchanged checksums of their original fields; no old attempts or dead letters were fabricated. |
+| Ownership upgrade | The packaged V6 upgrade retained all 29 jobs, 75 history records, 17 attempts, and 2 dead-letter records with matching checksums of their original fields. All earlier jobs belong to the legacy owner; only keys for that owner can use the ordinary job API for them. |
 
 Run the automated suite:
 
@@ -38,6 +44,7 @@ Run the packaged workflow:
 docker compose up --build -d --wait
 python3 scripts/smoke.py
 python3 scripts/dead-letter-smoke.py
+python3 scripts/auth-smoke.py
 ```
 
 The smoke check creates a scheduled job, cancels it, creates and replays a linked manual retry, waits for the real worker result, and checks attempt persistence, lifecycle history, pagination, and conflict responses. The generated jobs remain available for inspection.

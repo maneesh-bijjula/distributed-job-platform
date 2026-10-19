@@ -59,6 +59,7 @@ class MigrationIT {
                     assertThat(isolated.queryForList("SELECT status FROM job_events", String.class)).containsExactlyInAnyOrder("QUEUED", "SUCCEEDED", "FAILED");
                     assertThat(isolated.queryForObject("SELECT count(*) FROM jobs WHERE retry_of IS NOT NULL", Integer.class)).isZero();
                     assertThat(isolated.queryForObject("SELECT count(*) FROM jobs WHERE max_attempts=25 AND legacy_retry_policy", Integer.class)).isEqualTo(3);
+                    assertThat(isolated.queryForObject("SELECT count(*) FROM jobs WHERE owner_id='00000000-0000-0000-0000-000000000001'",Integer.class)).isEqualTo(3);
                     assertThat(isolated.queryForObject("SELECT count(*) FROM dead_letters", Integer.class)).isZero();
                     isolated.update("UPDATE jobs SET status='CANCELLED',completed_at=clock_timestamp() WHERE id=?", queued);
                     assertThat(isolated.queryForObject("SELECT status FROM jobs WHERE id=?", String.class, queued)).isEqualTo("CANCELLED");
@@ -109,6 +110,7 @@ class MigrationIT {
                     assertThat(attemptAfter).isEqualTo(attemptBefore);
                     assertThat(isolated.queryForObject("SELECT max_attempts FROM jobs WHERE id=?", Integer.class, job)).isEqualTo(25);
                     assertThat(isolated.queryForObject("SELECT generation FROM job_outbox WHERE job_id=?", Integer.class, job)).isEqualTo(2);
+                    assertThat(isolated.queryForObject("SELECT owner_id FROM jobs WHERE id=?",UUID.class,job)).isEqualTo(com.maneesh.jobplatform.auth.ApiPrincipal.LEGACY_OWNER);
                     assertThat(isolated.queryForObject("SELECT count(*) FROM dead_letters", Integer.class)).isZero();
                 } finally { connection.setSchema(original); }
             }

@@ -12,6 +12,7 @@ from datetime import datetime, timedelta, timezone
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 from uuid import uuid4
+from api_auth import api_key
 
 
 def main():
@@ -19,9 +20,10 @@ def main():
     parser.add_argument("--base-url", default="http://localhost:8080")
     args = parser.parse_args()
     base = args.base_url.rstrip("/")
+    token = api_key()
 
     def request(path, method="GET", body=None, key=None):
-        headers = {}
+        headers = {"Authorization": "Bearer " + token}
         if body is not None:
             headers["Content-Type"] = "application/json"
         if key:

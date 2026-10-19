@@ -34,7 +34,7 @@ import static org.mockito.Mockito.*;
 })
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @AutoConfigureObservability
-class PipelineIT {
+class PipelineIT extends AuthenticatedIntegrationTest {
     @Autowired TestRestTemplate http;
     @Autowired JdbcTemplate jdbc;
     @Autowired RabbitTemplate rabbit;

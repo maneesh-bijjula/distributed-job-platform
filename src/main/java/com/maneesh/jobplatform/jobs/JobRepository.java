@@ -14,6 +14,7 @@ import java.time.Instant;
 import java.sql.Timestamp;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
+import com.maneesh.jobplatform.auth.ApiPrincipal;
 
 @Repository
 public class JobRepository {
@@ -32,7 +33,13 @@ public class JobRepository {
 
     public Optional<UUID> insert(UUID id, JobType type, String text, String key, int priority,
                                  Instant scheduledAt, UUID retryOf, int timeoutSeconds, RetryPolicy policy) {
+        return insert(ApiPrincipal.LEGACY_OWNER,id,type,text,key,priority,scheduledAt,retryOf,timeoutSeconds,policy);
+    }
+
+    public Optional<UUID> insert(UUID owner, UUID id, JobType type, String text, String key, int priority,
+                                 Instant scheduledAt, UUID retryOf, int timeoutSeconds, RetryPolicy policy) {
         Map<String, Object> params = new HashMap<>();
+        params.put("owner",owner);
         params.put("id", id);
         params.put("type", type.name());
         params.put("text", text);
@@ -46,9 +53,9 @@ public class JobRepository {
         params.put("maxBackoff", policy.maxBackoffSeconds());
         return jdbc.query("""
                 INSERT INTO jobs (id, type, input_text, idempotency_key, priority, scheduled_at, retry_of, timeout_seconds,
-                    max_attempts, initial_backoff_seconds, max_backoff_seconds)
-                VALUES (:id, :type, :text, :key, :priority, :scheduledAt, :retryOf, :timeout, :maxAttempts, :initialBackoff, :maxBackoff)
-                ON CONFLICT (idempotency_key) DO NOTHING RETURNING id
+                    max_attempts, initial_backoff_seconds, max_backoff_seconds, owner_id)
+                VALUES (:id, :type, :text, :key, :priority, :scheduledAt, :retryOf, :timeout, :maxAttempts, :initialBackoff, :maxBackoff, :owner)
+                ON CONFLICT (owner_id,idempotency_key) DO NOTHING RETURNING id
                 """, params, (rs, row) -> rs.getObject("id", UUID.class)).stream().findFirst();
     }
 
@@ -65,8 +72,24 @@ public class JobRepository {
     }
 
     public Optional<Job> findByKey(String key) {
-        return jdbc.query("SELECT * FROM jobs WHERE idempotency_key = :key", Map.of("key", key), this::map)
+        return findByKey(ApiPrincipal.LEGACY_OWNER,key);
+    }
+
+    public Optional<Job> findByKey(UUID owner, String key) {
+        return jdbc.query("SELECT * FROM jobs WHERE owner_id=:owner AND idempotency_key = :key", Map.of("owner",owner,"key", key), this::map)
                 .stream().findFirst();
+    }
+
+    public Optional<Job> findOwned(UUID owner, UUID id) {
+        return jdbc.query("SELECT * FROM jobs WHERE owner_id=:owner AND id=:id",Map.of("owner",owner,"id",id),this::map).stream().findFirst();
+    }
+
+    public List<Job> listOwned(UUID owner, JobStatus status, int page, int size) {
+        var params = new HashMap<String,Object>();
+        params.put("owner",owner); params.put("size",size+1); params.put("offset",(long)page*size);
+        String filter = "";
+        if (status != null) { filter=" AND status=:status"; params.put("status",status.name()); }
+        return jdbc.query("SELECT * FROM jobs WHERE owner_id=:owner"+filter+" ORDER BY created_at DESC,id DESC LIMIT :size OFFSET :offset",params,this::map);
     }
 
     public boolean legacyRetryPolicy(UUID id) {
@@ -159,7 +182,7 @@ public class JobRepository {
                     rs.getInt("attempt_count"), rs.getObject("active_attempt_id", UUID.class),
                     deadline == null ? null : deadline.toInstant(), rs.getInt("generation"),
                     new RetryPolicy(rs.getInt("max_attempts"), rs.getInt("initial_backoff_seconds"), rs.getInt("max_backoff_seconds")),
-                    rs.getTimestamp("retry_at") == null ? null : rs.getTimestamp("retry_at").toInstant());
+                    rs.getTimestamp("retry_at") == null ? null : rs.getTimestamp("retry_at").toInstant(), rs.getObject("owner_id",UUID.class));
         } catch (JsonProcessingException exception) {
             throw new SQLException("Invalid stored job result", exception);
         }

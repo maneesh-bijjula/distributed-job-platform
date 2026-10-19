@@ -14,6 +14,7 @@ from datetime import datetime, timedelta, timezone
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 from uuid import uuid4
+from api_auth import api_key
 
 
 def main():
@@ -21,6 +22,7 @@ def main():
     parser.add_argument("--base-url", default="http://localhost:8080")
     parser.add_argument("--management-url", default="http://localhost:15672")
     args = parser.parse_args()
+    token = api_key()
     auth = base64.b64encode((os.getenv("RABBITMQ_USER", "jobs") + ":" +
                             os.getenv("RABBITMQ_PASSWORD", "jobs-local")).encode()).decode()
 
@@ -32,6 +34,8 @@ def main():
             headers["Idempotency-Key"] = key
         if management:
             headers["Authorization"] = "Basic " + auth
+        else:
+            headers["Authorization"] = "Bearer " + token
         base = args.management_url if management else args.base_url
         req = Request(base.rstrip("/") + path, method=method, headers=headers,
                       data=None if body is None else json.dumps(body).encode())

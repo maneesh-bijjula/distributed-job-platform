@@ -2,6 +2,8 @@ package com.maneesh.jobplatform.api;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.maneesh.jobplatform.deadletter.*;
+import com.maneesh.jobplatform.auth.ApiPrincipal;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Pattern;
@@ -42,21 +44,21 @@ public class DeadLetterController {
     }
 
     @PostMapping("/{id}/recover")
-    public ResponseEntity<DeadLetter> recover(@PathVariable UUID id,
+    public ResponseEntity<DeadLetter> recover(@AuthenticationPrincipal ApiPrincipal actor, @PathVariable UUID id,
             @RequestHeader("Idempotency-Key") @Pattern(regexp = "[A-Za-z0-9._:-]{1,128}") String key,
             @RequestBody(required = false) JsonNode body) {
         empty(body);
-        var result = service.recover(id, key);
+        var result = service.recoverAs(actor,id, key);
         return ResponseEntity.status(result.created() ? 202 : 200)
                 .location(URI.create("/api/v1/jobs/" + result.entry().recoveryJobId())).body(result.entry());
     }
 
     @PostMapping("/{id}/discard")
-    public DeadLetter discard(@PathVariable UUID id,
+    public DeadLetter discard(@AuthenticationPrincipal ApiPrincipal actor, @PathVariable UUID id,
             @RequestHeader("Idempotency-Key") @Pattern(regexp = "[A-Za-z0-9._:-]{1,128}") String key,
             @RequestBody(required = false) JsonNode body) {
         empty(body);
-        return service.discard(id, key).entry();
+        return service.discardAs(actor,id, key).entry();
     }
 
     private void empty(JsonNode body) {

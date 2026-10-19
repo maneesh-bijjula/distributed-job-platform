@@ -45,6 +45,8 @@ server:
   tomcat:
     max-http-form-post-size: 128KB
 jobs:
+  auth:
+    bootstrap-key: ${JOB_BOOTSTRAP_API_KEY:}
   execution:
     lease-seconds: ${JOB_LEASE_SECONDS:15}
     heartbeat-millis: ${JOB_HEARTBEAT_MILLIS:2000}

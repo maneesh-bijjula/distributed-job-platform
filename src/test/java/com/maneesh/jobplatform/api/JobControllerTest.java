@@ -1,6 +1,11 @@
 package com.maneesh.jobplatform.api;
 
 import com.maneesh.jobplatform.jobs.*;
+import com.maneesh.jobplatform.auth.ApiKeyService;
+import com.maneesh.jobplatform.auth.ApiPrincipal;
+import com.maneesh.jobplatform.config.SecurityConfiguration;
+import org.springframework.context.annotation.Import;
+import org.springframework.security.test.context.support.WithMockUser;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -17,9 +22,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(JobController.class)
+@Import(SecurityConfiguration.class)
+@WithMockUser(username="00000000-0000-0000-0000-000000000001",roles="OPERATOR")
 class JobControllerTest {
     @Autowired MockMvc mvc;
     @MockitoBean JobService service;
+    @MockitoBean ApiKeyService keys;
 
     @ParameterizedTest
     @ValueSource(strings = {
@@ -75,7 +83,7 @@ class JobControllerTest {
     void returnsAcceptedWithLocation() throws Exception {
         UUID id = UUID.randomUUID();
         var job = new Job(id, JobType.SHA256, "abc", JobStatus.QUEUED, null, null, Instant.now(), null, 0, null, null);
-        when(service.submit(JobType.SHA256, "abc", "request-1", 0, null, null, null)).thenReturn(new JobService.Submission(job, true));
+        when(service.submitFor(ApiPrincipal.LEGACY_OWNER,JobType.SHA256, "abc", "request-1", 0, null, null, null)).thenReturn(new JobService.Submission(job, true));
         mvc.perform(post("/api/v1/jobs").header("Idempotency-Key", "request-1")
                         .contentType(MediaType.APPLICATION_JSON).content("{\"type\":\"SHA256\",\"text\":\"abc\"}"))
                 .andExpect(status().isAccepted()).andExpect(header().string("Location", "/api/v1/jobs/" + id))
@@ -85,7 +93,7 @@ class JobControllerTest {
     @Test
     void fullFinalPageDoesNotClaimAnotherPageExists() throws Exception {
         var job = new Job(UUID.randomUUID(), JobType.SHA256, "abc", JobStatus.QUEUED, null, null, Instant.now(), null, 0, null, null);
-        when(service.list(null, 0, 1)).thenReturn(List.of(job));
+        when(service.listFor(ApiPrincipal.LEGACY_OWNER,null, 0, 1)).thenReturn(List.of(job));
         mvc.perform(get("/api/v1/jobs?size=1"))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.items.length()").value(1))
                 .andExpect(jsonPath("$.hasNext").value(false));
@@ -94,11 +102,11 @@ class JobControllerTest {
     @Test
     void cancellationReturnsPersistedTerminalState() throws Exception {
         UUID id = UUID.randomUUID();
-        when(service.cancel(id)).thenReturn(new Job(id, JobType.SHA256, "abc", JobStatus.CANCELLED,
+        when(service.cancelFor(ApiPrincipal.LEGACY_OWNER,id)).thenReturn(new Job(id, JobType.SHA256, "abc", JobStatus.CANCELLED,
                 null, null, Instant.now(), Instant.now(), 0, null, null));
         mvc.perform(post("/api/v1/jobs/" + id + "/cancel"))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.status").value("CANCELLED"));
-        verify(service).cancel(id);
+        verify(service).cancelFor(ApiPrincipal.LEGACY_OWNER,id);
     }
 
     @ParameterizedTest
@@ -108,7 +116,7 @@ class JobControllerTest {
         UUID child = UUID.randomUUID();
         Job job = new Job(child, JobType.SHA256, "abc", JobStatus.QUEUED, null, null,
                 Instant.now(), null, 7, null, source);
-        when(service.retry(source, "retry-1")).thenReturn(new JobService.Submission(job, created));
+        when(service.retryFor(ApiPrincipal.LEGACY_OWNER,source, "retry-1")).thenReturn(new JobService.Submission(job, created));
         mvc.perform(post("/api/v1/jobs/" + source + "/retry").header("Idempotency-Key", "retry-1"))
                 .andExpect(status().is(created ? 202 : 200))
                 .andExpect(header().string("Location", "/api/v1/jobs/" + child))
@@ -154,7 +162,7 @@ class JobControllerTest {
         UUID id = UUID.randomUUID();
         var first = new JobEvent(1L, id, JobEvent.Type.SUBMITTED, JobStatus.QUEUED, null, Instant.now());
         var second = new JobEvent(2L, id, JobEvent.Type.CANCELLED, JobStatus.CANCELLED, null, Instant.now());
-        when(service.events(id, 0, 1)).thenReturn(List.of(first, second));
+        when(service.eventsFor(ApiPrincipal.LEGACY_OWNER,id, 0, 1)).thenReturn(List.of(first, second));
         mvc.perform(get("/api/v1/jobs/" + id + "/events?size=1"))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.items.length()").value(1))
                 .andExpect(jsonPath("$.items[0].type").value("SUBMITTED"))
@@ -175,7 +183,7 @@ class JobControllerTest {
         UUID id = UUID.randomUUID();
         var job = new Job(id, JobType.SHA256, "abc", JobStatus.QUEUED, null, null,
                 Instant.now(), null, 0, null, null, 7, 0, null, null, 0);
-        when(service.submit(JobType.SHA256, "abc", null, 0, null, 7, null)).thenReturn(new JobService.Submission(job, true));
+        when(service.submitFor(ApiPrincipal.LEGACY_OWNER,JobType.SHA256, "abc", null, 0, null, 7, null)).thenReturn(new JobService.Submission(job, true));
         mvc.perform(post("/api/v1/jobs").contentType(MediaType.APPLICATION_JSON)
                 .content("{\"type\":\"SHA256\",\"text\":\"abc\",\"timeoutSeconds\":7}"))
                 .andExpect(status().isAccepted()).andExpect(jsonPath("$.timeoutSeconds").value(7));
@@ -197,7 +205,7 @@ class JobControllerTest {
     @Test
     void acceptsExplicitRetryPolicy() throws Exception {
         var job = new Job(UUID.randomUUID(), JobType.SHA256, "abc", JobStatus.QUEUED, null, null, Instant.now(), null, 0, null, null);
-        when(service.submit(JobType.SHA256, "abc", null, 0, null, null, new RetryPolicy(3, 2, 10)))
+        when(service.submitFor(ApiPrincipal.LEGACY_OWNER,JobType.SHA256, "abc", null, 0, null, null, new RetryPolicy(3, 2, 10)))
                 .thenReturn(new JobService.Submission(job, true));
         mvc.perform(post("/api/v1/jobs").contentType(MediaType.APPLICATION_JSON)
                 .content("{\"type\":\"SHA256\",\"text\":\"abc\",\"retryPolicy\":{\"maxAttempts\":3,\"initialBackoffSeconds\":2,\"maxBackoffSeconds\":10}}"))
@@ -218,7 +226,7 @@ class JobControllerTest {
         Instant now = Instant.now();
         var attempt = new JobAttempt(UUID.randomUUID(), id, 1, 0, "worker-test", JobAttempt.Status.RUNNING,
                 now, now, now.plusSeconds(3), now.plusSeconds(30), null, null);
-        when(service.attempts(id, 0, 1)).thenReturn(List.of(attempt));
+        when(service.attemptsFor(ApiPrincipal.LEGACY_OWNER,id, 0, 1)).thenReturn(List.of(attempt));
         mvc.perform(get("/api/v1/jobs/" + id + "/attempts?size=1"))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.hasNext").value(false))
                 .andExpect(jsonPath("$.items[0].status").value("RUNNING"))

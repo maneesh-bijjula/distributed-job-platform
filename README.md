@@ -11,6 +11,7 @@ An asynchronous job service built with **Java 21, Spring Boot, PostgreSQL, and R
 - Fixed execution deadlines and generation-fenced message delivery and result writes.
 - Per-job attempt limits, durable exponential backoff, and classified automatic retries.
 - Persistent dead-letter inspection with bounded broker collection and audited, idempotent recovery/discard.
+- Hashed bearer API keys, owner isolation, operator permissions, revocation, and transactional submission quotas.
 - Paginated, persisted job history with atomic status and audit updates.
 - Text handlers for word counting, SHA-256 hashing, and uppercase conversion.
 - PostgreSQL persistence with versioned Flyway migrations.
@@ -25,16 +26,20 @@ An asynchronous job service built with **Java 21, Spring Boot, PostgreSQL, and R
 Install Docker with the Compose plugin, then run:
 
 ```sh
+python3 scripts/init-auth.py
 docker compose up --build -d
 curl http://localhost:8080/actuator/health
 ```
 
 The first build downloads the Java dependencies. PostgreSQL and RabbitMQ must pass their health checks before the application starts.
 
+Initialization generates a random bootstrap operator key in ignored `.env` with file permissions `0600`; it does not print the key or replace an existing valid key. There is no shared default API credential. For the curl examples, set `JOB_API_KEY` privately in your shell to that bootstrap value or a newly issued key. Verification scripts load it from `JOB_API_KEY`, `JOB_BOOTSTRAP_API_KEY`, or the local `.env` without executing the file.
+
 Submit a job:
 
 ```sh
 curl -i -X POST http://localhost:8080/api/v1/jobs \
+  -H "Authorization: Bearer $JOB_API_KEY" \
   -H 'Content-Type: application/json' \
   -H 'Idempotency-Key: example-word-count-1' \
   -d '{"type":"WORD_COUNT","text":"hello distributed job platform"}'
@@ -43,7 +48,7 @@ curl -i -X POST http://localhost:8080/api/v1/jobs \
 The response is `202 Accepted` with a job ID and a `Location` header. Read the result using that ID:
 
 ```sh
-curl http://localhost:8080/api/v1/jobs/JOB_ID
+curl -H "Authorization: Bearer $JOB_API_KEY" http://localhost:8080/api/v1/jobs/JOB_ID
 ```
 
 Once processed, the response includes:
@@ -56,6 +61,55 @@ Once processed, the response includes:
 ```
 
 This example shows the result fields; the full response also includes the ID, type, original text, error, timestamps, and `retryOf` (null for an ordinary submission). Jobs move from `QUEUED` to `RUNNING`, then `SUCCEEDED`, `FAILED`, or `CANCELLED`; queued jobs can also be cancelled before execution. Responses include `timeoutSeconds`, `attemptCount`, `activeAttemptId`, and `deadlineAt`. Claiming and finalizing use separate short transactions; the handler runs between them without a database connection or row lock. The final result, terminal status, attempt outcome, and corresponding history event commit together.
+
+## Access keys and ownership
+
+Send exactly one `Authorization: Bearer KEY` header on API requests. Missing, malformed, unknown, and revoked keys return `401` with a bearer challenge. Authentication storage failure returns `503` and grants no access. Keys in query parameters, HTTP Basic credentials, and cookies are not authentication mechanisms. The service is stateless and does not create login sessions. Health at `/actuator/health` is public and exposes no component details; Prometheus and info require an operator. Environment, configuration, and other unlisted management endpoints are denied.
+
+Keys contain 256 random bits. PostgreSQL stores SHA-256 hashes and identifying prefixes, never the full tokens. Issuance returns a token once with `Cache-Control: no-store`; retain it privately. Listings and audit responses omit tokens and hashes. Every authenticated request checks current database state, with no credential cache. Revocation takes effect on subsequent authentications across API instances; requests already authenticated may finish.
+
+| Role | Job API | Extra permissions |
+| --- | --- | --- |
+| `USER` | Submit, list, read results/history/attempts, cancel, and retry within its owner | Read its own identity and owner quota |
+| `OPERATOR` | The same owner restriction | Global dead-letter operations, owner/key administration, access audit, Prometheus, and info |
+
+Operators are trusted account administrators and can explicitly issue keys for any owner, including other operator keys. Operator status does not implicitly bypass ownership on ordinary job endpoints. Missing and other-owner job IDs both return `404`, including control and history endpoints. Client JSON cannot choose a job owner. Automatic attempts and linked retries retain the source owner; the database also rejects cross-owner retry links.
+
+Create an owner and then issue a key using the operator credential:
+
+```sh
+curl -X POST http://localhost:8080/api/v1/admin/owners \
+  -H "Authorization: Bearer $JOB_API_KEY" -H 'Content-Type: application/json' \
+  -d '{"name":"Example client","submissionLimitPerMinute":120}'
+curl -X POST http://localhost:8080/api/v1/admin/owners/OWNER_ID/keys \
+  -H "Authorization: Bearer $JOB_API_KEY" -H 'Content-Type: application/json' \
+  -d '{"name":"Client key","role":"USER"}'
+```
+
+Use the issued client token for that owner's job requests. Key roles and owners are immutable; rotate by issuing a replacement key and revoking the old key. Repeated revocation is safe. Changing `JOB_BOOTSTRAP_API_KEY` adds a new bootstrap operator on API startup; it does not revoke an old key. A previously revoked bootstrap token is never reactivated by restart. Provision a replacement before revoking the last operator; if all operator keys are lost or revoked, set a fresh locally generated bootstrap token and restart the API. A fresh API refuses startup without an active operator or a valid bootstrap token. Workers need no API credential.
+
+| Method | Operator endpoint | Behavior |
+| --- | --- | --- |
+| POST / GET | `/api/v1/admin/owners` | Create or paginate owners |
+| GET | `/api/v1/admin/owners/{id}` | Read owner metadata |
+| POST | `/api/v1/admin/owners/{id}/limit` | Set `submissionLimitPerMinute`, 1–10000 |
+| POST / GET | `/api/v1/admin/owners/{id}/keys` | Issue or paginate key metadata; issuance defaults to `USER` |
+| POST | `/api/v1/admin/keys/{id}/revoke` | Revoke a key; accepts no JSON body |
+| GET | `/api/v1/admin/audit` | Paginate owner creation, key issuance/revocation, bootstrap, and quota-change audit |
+
+`GET /api/v1/auth/me` returns the caller's owner, key ID, role, and owner quota. Administrative changes commit with an audit record containing the actor key ID. Dead-letter resolutions also record their operator key ID; legacy resolutions keep their earlier, unattributed audit data.
+
+### Submission quotas
+
+Each owner has a persisted quota, initially **120 new jobs per UTC database minute**, adjustable by an operator from 1 to 10000. PostgreSQL atomically charges one shared counter per owner, across every key and API instance. The quota is authoritative database state, not an instance-local setting. New manual retries and linked dead-letter recovery jobs charge the source owner; automatic attempts and queued redrive do not create a new job and are not charged. Matching idempotency replays are free even when the quota is exhausted. Rejected validation, conflicts, and rolled-back creations do not consume admission capacity.
+
+Exhaustion returns `429 Too Many Requests` with `Retry-After` in seconds. Counters reset when the next UTC minute begins. This is a fixed-window job admission limit, not a general HTTP request limiter; a burst spanning a minute boundary may use both windows' allowances. API/database failure never falls back to unlimited local admission.
+
+### Existing jobs and upgrade access
+
+Migration V6 assigns all earlier jobs to owner `00000000-0000-0000-0000-000000000001` ("Legacy local jobs") and retains their results, deadlines, attempts, histories, schedules, policies, and keys. The bootstrap operator belongs to this owner and can read/control those jobs. Issue another key for this owner when access is needed; no public claim endpoint or guessed-ID transfer is supported. New owners cannot inspect legacy jobs. Earlier idempotency keys remain reserved within the legacy owner; different owners may reuse the same key string.
+
+Compose binds to localhost and uses HTTP for local work. Use TLS and private secret delivery when deploying beyond the local machine. API keys do not replace database/RabbitMQ access controls, backups, or deployment security.
 
 ## API
 
@@ -84,7 +138,7 @@ List responses contain `items`, `page`, `size`, and `hasNext`. Page size is limi
 | `SHA256` | `sha256` | Lowercase hexadecimal SHA-256 digest of the exact UTF-8 input |
 | `UPPERCASE` | `text` | Locale-independent Unicode uppercase conversion |
 
-An optional `Idempotency-Key` header accepts 1-128 characters from `A-Z`, `a-z`, `0-9`, `.`, `_`, `:`, and `-`. Repeating the same key and body returns the existing job with `200 OK`. Reusing a key for different input returns `409 Conflict`. Keys are global to this service and remain reserved while their job exists. Without a key, each request creates a new job.
+An optional `Idempotency-Key` header accepts 1-128 characters from `A-Z`, `a-z`, `0-9`, `.`, `_`, `:`, and `-`. Repeating the same key and body under the same owner returns the existing job with `200 OK`. Reusing a key for different input under that owner returns `409 Conflict`. Keys are shared across API keys of one owner and remain reserved while their job exists; different owners have separate namespaces. Without an idempotency key, each request creates a new job.
 
 ## Scheduling and priorities
 
@@ -110,7 +164,7 @@ Responses include both fields. Idempotency checks include priority and the norma
 Cancel a queued, scheduled, or running job with an empty-body request:
 
 ```sh
-curl -X POST http://localhost:8080/api/v1/jobs/JOB_ID/cancel
+curl -H "Authorization: Bearer $JOB_API_KEY" -X POST http://localhost:8080/api/v1/jobs/JOB_ID/cancel
 ```
 
 Cancellation returns `200 OK` with `CANCELLED` and a completion timestamp, removes any remaining outbox entry, and records a history event. Messages already in RabbitMQ may still be delivered; workers skip the cancelled job. Repeating cancellation returns the same job without recording another transition.
@@ -121,6 +175,7 @@ Retry a `FAILED` or `CANCELLED` job using a **new, required** idempotency key:
 
 ```sh
 curl -i -X POST http://localhost:8080/api/v1/jobs/JOB_ID/retry \
+  -H "Authorization: Bearer $JOB_API_KEY" \
   -H 'Idempotency-Key: retry-example-1'
 ```
 
@@ -131,7 +186,7 @@ Linked retries prevent a delayed message for an old job from triggering a new ru
 Read a job's history:
 
 ```sh
-curl 'http://localhost:8080/api/v1/jobs/JOB_ID/events?page=0&size=20'
+curl -H "Authorization: Bearer $JOB_API_KEY" 'http://localhost:8080/api/v1/jobs/JOB_ID/events?page=0&size=20'
 ```
 
 History responses use the same `items`, `page`, `size`, and `hasNext` envelope as job lists. Each event contains an opaque increasing `id`, `jobId`, `type`, `status`, `relatedJobId`, `attemptId`, and `occurredAt`. Events are ordered oldest first; IDs can contain gaps. Submission, attempt starts, terminal transitions, lease expiry, recovery exhaustion, and retry requests are recorded transactionally. A retry adds a `RETRY_REQUESTED` event to its source with the new ID, and a `SUBMITTED` event to its child with the source ID.
@@ -161,7 +216,7 @@ Deadline expiry produces job status `FAILED` with `Execution deadline exceeded` 
 Read attempt history with:
 
 ```sh
-curl 'http://localhost:8080/api/v1/jobs/JOB_ID/attempts?page=0&size=20'
+curl -H "Authorization: Bearer $JOB_API_KEY" 'http://localhost:8080/api/v1/jobs/JOB_ID/attempts?page=0&size=20'
 ```
 
 The paginated response includes each attempt's ID, number, generation, worker ID, status, start, last heartbeat, lease expiry, execution deadline, finish time, and sanitized error. Attempt outcomes are `RUNNING`, `SUCCEEDED`, `FAILED`, `CANCELLED`, `TIMED_OUT`, or `ABANDONED`. Attempts are recorded from this upgrade onward; completed legacy jobs retain their existing results without invented attempt records.
@@ -209,9 +264,10 @@ Policy settings participate in submission idempotency. Existing jobs upgraded fr
 Execution failures enter PostgreSQL's inbox atomically with their terminal transition. Broker delivery failures remain in RabbitMQ's `jobs.dead` until an operator explicitly collects them:
 
 ```sh
-curl -X POST 'http://localhost:8080/api/v1/dead-letters/collect?limit=20'
-curl 'http://localhost:8080/api/v1/dead-letters?state=OPEN&page=0&size=20'
+curl -H "Authorization: Bearer $JOB_API_KEY" -X POST 'http://localhost:8080/api/v1/dead-letters/collect?limit=20'
+curl -H "Authorization: Bearer $JOB_API_KEY" 'http://localhost:8080/api/v1/dead-letters?state=OPEN&page=0&size=20'
 curl -i -X POST http://localhost:8080/api/v1/dead-letters/ENTRY_ID/recover \
+  -H "Authorization: Bearer $JOB_API_KEY" \
   -H 'Idempotency-Key: recover-entry-1'
 ```
 
@@ -225,10 +281,11 @@ To resolve a record without scheduling work:
 
 ```sh
 curl -X POST http://localhost:8080/api/v1/dead-letters/ENTRY_ID/discard \
+  -H "Authorization: Bearer $JOB_API_KEY" \
   -H 'Idempotency-Key: discard-entry-1'
 ```
 
-Discard returns `200`; it does not cancel, delete, or change the associated job. Resolution keys are global to inbox actions and separate from submission/manual-retry keys. A key cannot cross entries or actions; another key cannot resolve an already resolved entry. Row locks and transactional key locks serialize concurrent actions. Resolution state, timestamp, target job ID, and related job history commit together and remain available for audit. Both actions accept no JSON body. The local API has no authentication; keep it bound to localhost.
+Discard returns `200`; it does not cancel, delete, or change the associated job. Resolution keys are global to operator inbox actions and separate from owner-scoped submission/manual-retry keys. A key cannot cross entries or actions; another key cannot resolve an already resolved entry. Row locks and transactional key locks serialize concurrent actions. Resolution state, timestamp, target job ID, actor key ID, and related job history commit together and remain available for audit. Both actions accept no JSON body and require operator authorization.
 
 ```mermaid
 flowchart LR
@@ -251,11 +308,11 @@ Delivery is **at least once**: a crash between broker confirmation and outbox de
 
 Handler exceptions follow the persisted policy above. Database and infrastructure exceptions in lifecycle transactions roll back the affected short transaction and trigger up to three broker delivery attempts with 500 ms and 1 s backoff. Failures before a claim can exhaust delivery into `jobs.dead`, leaving a queued job. If a claim already committed but result persistence fails, the job remains running until its lease expires and durable recovery takes over; a redelivery can be acknowledged while that claim is still active. After repairing the infrastructure, use explicit inbox collection and recovery. Cancelling and manually retrying a job remains supported; delayed source messages cannot revive it. RabbitMQ's management console can inspect broker messages before collection.
 
-The included Compose setup uses one PostgreSQL instance and one RabbitMQ node with persistent local volumes. Exposed ports bind to localhost. The HTTP API has no authentication and is intended for local development.
+The included Compose setup uses one PostgreSQL instance and one RabbitMQ node with persistent local volumes. Exposed ports bind to localhost. The HTTP API requires bearer authentication and is packaged for local development.
 
 ## Tests
 
-The suite contains **92 unit tests and 94 integration tests**. CI also builds the image and runs both packaged smoke checks.
+The suite contains **100 unit tests and 126 integration tests**. CI also builds the image and runs all three packaged smoke checks.
 
 See the [execution verification matrix](docs/execution-verification.md) for the covered guarantees and limits.
 
@@ -274,11 +331,14 @@ With the packaged application running, check the complete control workflow with 
 ```sh
 python3 scripts/smoke.py
 python3 scripts/dead-letter-smoke.py
+python3 scripts/auth-smoke.py
 ```
 
 This creates two inspectable jobs: a cancelled scheduled job and its successful immediate retry. It verifies replay behavior, worker output, persisted execution attempts, history pagination, and conflict responses. Use `--base-url` to select a different application address.
 
 The second check publishes two diagnostic dead messages through RabbitMQ's management API, verifies bounded capture, rejects malformed-message recovery, discards that record, and redrives a valid scheduled job without bypassing its schedule. It then verifies cancellation and a policy-inheriting linked retry. Set `RABBITMQ_USER` and `RABBITMQ_PASSWORD` for management credentials and `--management-url` for a different management address. Automatic transient retries, fixed backoff timing, application restart during backoff, exhaustion, concurrent recovery, and storage/audit rollback are covered by the integration suite with controlled dependency failures.
+
+The authenticated check creates two owners and three temporary client keys, verifies isolation on every job endpoint, operator restrictions, owner-scoped idempotency, shared quotas, retry ownership, and revocation, then revokes its diagnostic keys. It leaves job and audit metadata available. The integration suite additionally launches two real API instances against one database to verify exact concurrent admission limits and cross-instance revocation. Test bootstrap credentials are generated in memory; they are not local development defaults.
 
 With Java 21+ installed, unit tests can also run without service containers:
 
@@ -292,8 +352,11 @@ For integration tests outside Docker, set `SPRING_DATASOURCE_URL`, `SPRING_DATAS
 
 To upgrade an existing checkout, stop application containers before rebuilding. Flyway applies the new database migration automatically and retains existing jobs. The worker continues consuming the original `jobs.ready` queue alongside `jobs.priority.ready`, so previously queued messages can drain without deleting queues or volumes.
 
+V6 changes the submission idempotency constraint from global to owner scoped. Upgrade API and worker binaries together; do not run an older API against the migrated schema. Existing HTTP clients must send an API key after upgrading. Retain the ignored credential file privately; migration does not generate a recoverable plaintext copy of any key.
+
 ```sh
 docker compose stop api worker
+python3 scripts/init-auth.py
 docker compose up --build -d
 ```
 
@@ -312,7 +375,7 @@ Worker concurrency defaults to two consumers per instance and can be set with `W
 
 ## References
 
-Implementation references: [Spring's RabbitMQ guide and sample repository](https://github.com/spring-guides/gs-messaging-rabbitmq), [Spring AMQP documentation](https://docs.spring.io/spring-amqp/reference/), and [RabbitMQ acknowledgements and publisher confirms](https://www.rabbitmq.com/docs/confirms).
+Implementation references: [Spring's RabbitMQ guide and sample repository](https://github.com/spring-guides/gs-messaging-rabbitmq), [Spring AMQP documentation](https://docs.spring.io/spring-amqp/reference/), [Spring Security request authorization](https://docs.spring.io/spring-security/reference/servlet/authorization/authorize-http-requests.html), and [RabbitMQ acknowledgements and publisher confirms](https://www.rabbitmq.com/docs/confirms).
 
 ## License
 

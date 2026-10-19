@@ -5,6 +5,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
 import org.springframework.amqp.AmqpException;
+import com.maneesh.jobplatform.auth.AdmissionService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -28,5 +30,11 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
     public ProblemDetail brokerUnavailable(AmqpException exception) {
         log.warn("Dead-letter broker operation failed: {}", exception.getClass().getSimpleName());
         return ProblemDetail.forStatusAndDetail(HttpStatus.SERVICE_UNAVAILABLE, "Message broker is temporarily unavailable");
+    }
+
+    @ExceptionHandler(AdmissionService.Limited.class)
+    public ResponseEntity<ProblemDetail> limited(AdmissionService.Limited exception) {
+        return ResponseEntity.status(429).header("Retry-After",Integer.toString(exception.retryAfter()))
+                .body(ProblemDetail.forStatusAndDetail(HttpStatus.TOO_MANY_REQUESTS,"Owner submission limit exceeded"));
     }
 }

@@ -11,17 +11,21 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import com.maneesh.jobplatform.config.ExecutionProperties;
 import com.maneesh.jobplatform.worker.ExecutionService;
+import com.maneesh.jobplatform.auth.ApiPrincipal;
+import com.maneesh.jobplatform.auth.AdmissionService;
 
 @Service
 public class JobService {
     private final JobRepository repository;
     private final ExecutionService execution;
     private final ExecutionProperties properties;
+    private final AdmissionService admission;
 
-    public JobService(JobRepository repository, ExecutionService execution, ExecutionProperties properties) {
+    public JobService(JobRepository repository, ExecutionService execution, ExecutionProperties properties, AdmissionService admission) {
         this.repository = repository;
         this.execution = execution;
         this.properties = properties;
+        this.admission = admission;
     }
 
     public record Submission(Job job, boolean created) {}
@@ -44,12 +48,18 @@ public class JobService {
     @Transactional
     public Submission submit(JobType type, String text, String key, int priority, Instant scheduledAt,
                              Integer timeoutSeconds, RetryPolicy retryPolicy) {
-        return create(type, text, key, priority, scheduledAt, null,
+        return submitFor(ApiPrincipal.LEGACY_OWNER,type,text,key,priority,scheduledAt,timeoutSeconds,retryPolicy);
+    }
+
+    @Transactional
+    public Submission submitFor(UUID owner, JobType type, String text, String key, int priority, Instant scheduledAt,
+                                Integer timeoutSeconds, RetryPolicy retryPolicy) {
+        return create(owner,type, text, key, priority, scheduledAt, null,
                 timeoutSeconds == null ? properties.defaultTimeoutSeconds() : timeoutSeconds,
                 retryPolicy == null ? RetryPolicy.DEFAULT : retryPolicy, retryPolicy == null);
     }
 
-    private Submission create(JobType type, String text, String key, int priority, Instant scheduledAt,
+    private Submission create(UUID owner, JobType type, String text, String key, int priority, Instant scheduledAt,
                               UUID retryOf, int timeoutSeconds, RetryPolicy policy, boolean policyOmitted) {
         if (timeoutSeconds < 1 || timeoutSeconds > 3600) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "timeoutSeconds must be between 1 and 3600");
@@ -58,12 +68,13 @@ public class JobService {
         // PostgreSQL stores timestamps at microsecond precision. Normalize before comparing replays.
         Instant schedule = scheduledAt == null ? null : scheduledAt.truncatedTo(ChronoUnit.MICROS);
         UUID id = UUID.randomUUID();
-        if (repository.insert(id, type, text, key, priority, schedule, retryOf, timeoutSeconds, policy).isPresent()) {
+        if (repository.insert(owner,id, type, text, key, priority, schedule, retryOf, timeoutSeconds, policy).isPresent()) {
+            admission.acquire(owner);
             repository.enqueue(id);
             repository.recordEvent(id, JobEvent.Type.SUBMITTED, JobStatus.QUEUED, retryOf);
             return new Submission(get(id), true);
         }
-        Job existing = repository.findByKey(key).orElseThrow();
+        Job existing = repository.findByKey(owner,key).orElseThrow();
         if (existing.type() != type || !existing.text().equals(text)
                 || existing.priority() != priority || !Objects.equals(existing.scheduledAt(), schedule)
                 || !Objects.equals(existing.retryOf(), retryOf) || existing.timeoutSeconds() != timeoutSeconds
@@ -91,7 +102,7 @@ public class JobService {
         }
         // Each retry has a new ID: a delayed message for the original job can
         // never execute this new run or revive the original terminal state.
-        Submission submission = create(source.type(), source.text(), key, source.priority(), null, id, source.timeoutSeconds(), source.retryPolicy(), false);
+        Submission submission = create(source.ownerId(),source.type(), source.text(), key, source.priority(), null, id, source.timeoutSeconds(), source.retryPolicy(), false);
         if (submission.created()) {
             repository.recordEvent(id, JobEvent.Type.RETRY_REQUESTED, source.status(), submission.job().id());
         }
@@ -115,4 +126,17 @@ public class JobService {
     public List<Job> list(JobStatus status, int page, int size) {
         return repository.list(status, page, size);
     }
+
+    // Explicit owner arguments are supplied from the authenticated principal, never request JSON.
+    // Workers and operator recovery use the internal methods above and retain the source owner.
+    public Job getFor(UUID owner, UUID id) {
+        return repository.findOwned(owner,id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,"Job not found"));
+    }
+    public List<Job> listFor(UUID owner, JobStatus status, int page, int size) { return repository.listOwned(owner,status,page,size); }
+    @Transactional
+    public Job cancelFor(UUID owner, UUID id) { getFor(owner,id); return execution.cancel(id); }
+    @Transactional
+    public Submission retryFor(UUID owner, UUID id, String key) { getFor(owner,id); return retry(id,key); }
+    public List<JobEvent> eventsFor(UUID owner, UUID id, int page, int size) { getFor(owner,id); return repository.events(id,page,size); }
+    public List<JobAttempt> attemptsFor(UUID owner, UUID id, int page, int size) { getFor(owner,id); return execution.list(id,page,size); }
 }

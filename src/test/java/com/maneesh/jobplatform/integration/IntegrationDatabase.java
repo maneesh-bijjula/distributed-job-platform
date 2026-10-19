@@ -14,6 +14,6 @@ final class IntegrationDatabase {
 
     static void reset(JdbcTemplate jdbc) {
         requireTestDatabase(jdbc);
-        jdbc.execute("TRUNCATE dead_letters, job_events, job_attempts, job_outbox, jobs");
+        jdbc.execute("TRUNCATE dead_letters, job_events, job_attempts, job_outbox, jobs, submission_usage");
     }
 }
