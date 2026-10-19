@@ -7,6 +7,8 @@ import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.dao.DataAccessResourceFailureException;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -18,7 +20,7 @@ class JobExecutorTest {
     private final UUID id = UUID.randomUUID();
 
     private Job job(JobStatus status) {
-        return new Job(id, JobType.SHA256, "abc", status, null, null, Instant.now(), null, 0, null);
+        return new Job(id, JobType.SHA256, "abc", status, null, null, Instant.now(), null, 0, null, null);
     }
 
     @BeforeEach
@@ -26,12 +28,22 @@ class JobExecutorTest {
         when(repository.lock(id)).thenReturn(Optional.of(job(JobStatus.QUEUED)));
     }
 
-    @Test
-    void redeliveredCompletedJobDoesNotExecuteAgain() {
-        when(repository.lock(id)).thenReturn(Optional.of(job(JobStatus.SUCCEEDED)));
+    @ParameterizedTest
+    @EnumSource(value = JobStatus.class, names = {"SUCCEEDED", "FAILED", "CANCELLED"})
+    void redeliveredTerminalJobDoesNotExecuteAgain(JobStatus status) {
+        when(repository.lock(id)).thenReturn(Optional.of(job(status)));
         executor.execute(id);
         verifyNoInteractions(processor);
         verify(repository, never()).succeed(any(), any());
+    }
+
+    @Test
+    void historyStorageFailureEscapesInsteadOfBeingTreatedAsHandlerFailure() {
+        when(processor.process(any(), any())).thenReturn(new ObjectMapper().createObjectNode());
+        doThrow(new DataAccessResourceFailureException("history unavailable"))
+                .when(repository).recordEvent(id, JobEvent.Type.SUCCEEDED, JobStatus.SUCCEEDED, null);
+        assertThatThrownBy(() -> executor.execute(id)).isInstanceOf(DataAccessResourceFailureException.class);
+        verify(repository, never()).fail(any(), any());
     }
 
     @Test

@@ -2,6 +2,7 @@ package com.maneesh.jobplatform.worker;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.maneesh.jobplatform.jobs.JobRepository;
+import com.maneesh.jobplatform.jobs.JobEvent;
 import com.maneesh.jobplatform.jobs.JobStatus;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -38,9 +39,11 @@ public class JobExecutor {
         } catch (RuntimeException exception) {
             log.error("Handler failed for job {}", id, exception);
             repository.fail(id, "Job handler failed");
+            repository.recordEvent(id, JobEvent.Type.FAILED, JobStatus.FAILED, null);
             return;
         }
         // Storage failures escape the handler catch so the transaction rolls back and AMQP retries.
         repository.succeed(id, result);
+        repository.recordEvent(id, JobEvent.Type.SUCCEEDED, JobStatus.SUCCEEDED, null);
     }
 }

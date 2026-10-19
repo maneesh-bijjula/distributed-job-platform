@@ -6,6 +6,8 @@ An asynchronous job service built with **Java 21, Spring Boot, PostgreSQL, and R
 
 - REST endpoints for job submission, retrieval, and paginated status filtering.
 - Persistent scheduling with `scheduledAt` and job priorities from 0 to 9.
+- Queued-job cancellation and idempotent retries linked to the original job.
+- Paginated, persisted job history with atomic status and audit updates.
 - Text handlers for word counting, SHA-256 hashing, and uppercase conversion.
 - PostgreSQL persistence with versioned Flyway migrations.
 - Transactional outbox and confirmed RabbitMQ publishing.
@@ -49,7 +51,7 @@ Once processed, the response includes:
 }
 ```
 
-This example shows the result fields; the full response also includes the ID, type, original text, error, and timestamps. Jobs move from `QUEUED` to `SUCCEEDED` or `FAILED`. The handlers perform short local computations, and the result and terminal status commit in one transaction.
+This example shows the result fields; the full response also includes the ID, type, original text, error, timestamps, and `retryOf` (null for an ordinary submission). Jobs move from `QUEUED` to `SUCCEEDED`, `FAILED`, or `CANCELLED`. The handlers perform short local computations; the result, terminal status, and corresponding history event commit in one transaction.
 
 ## API
 
@@ -58,6 +60,9 @@ This example shows the result fields; the full response also includes the ID, ty
 | POST | `/api/v1/jobs` | Accept a JSON body with `type` and `text` |
 | GET | `/api/v1/jobs/{id}` | Read a persisted job and its result |
 | GET | `/api/v1/jobs?status=SUCCEEDED&page=0&size=20` | List jobs, newest first |
+| POST | `/api/v1/jobs/{id}/cancel` | Cancel a queued job; repeating cancellation is safe |
+| POST | `/api/v1/jobs/{id}/retry` | Create a linked retry of a failed or cancelled job |
+| GET | `/api/v1/jobs/{id}/events?page=0&size=20` | Read persisted history, oldest first |
 | GET | `/actuator/health` | Check service health |
 | GET | `/actuator/prometheus` | Read Prometheus metrics |
 
@@ -90,6 +95,39 @@ Priority defaults to `0`; `9` is highest. The relay selects due jobs by descendi
 
 Responses include both fields. Idempotency checks include priority and the normalized schedule, so changing either while reusing a key returns `409`.
 
+## Cancellation, retry, and history
+
+Cancel a queued or scheduled job with an empty-body request:
+
+```sh
+curl -X POST http://localhost:8080/api/v1/jobs/JOB_ID/cancel
+```
+
+Cancellation returns `200 OK` with `CANCELLED` and a completion timestamp, removes any remaining outbox entry, and records a history event. Messages already in RabbitMQ may still be delivered; workers skip the cancelled job. Repeating cancellation returns the same job without recording another transition.
+
+The API and worker serialize on the same job-row lock. Cancellation can prevent execution if it obtains the lock first. A worker that already owns the lock finishes its bounded computation first; cancellation then returns `409` for the completed job. This endpoint does not interrupt a running handler.
+
+Retry a `FAILED` or `CANCELLED` job using a **new, required** idempotency key:
+
+```sh
+curl -i -X POST http://localhost:8080/api/v1/jobs/JOB_ID/retry \
+  -H 'Idempotency-Key: retry-example-1'
+```
+
+A retry returns `202 Accepted` with a new ID and `Location` header. It inherits the original type, text, and priority, sets `retryOf` to the original ID, and is immediately eligible (`scheduledAt` is null). The original status, result, error, and schedule remain intact. Repeating that retry request with the same key returns the same child job with `200 OK`, even after the child finishes. A different key deliberately creates another retry; using a key belonging to a different source or ordinary submission returns `409`.
+
+Linked retries prevent a delayed message for an old job from triggering a new run. Only failed or cancelled jobs can be retried; queued and successful jobs return `409`. Both control endpoints accept no request body and return `400` for unexpected JSON bodies. Missing IDs return `404`.
+
+Read a job's history:
+
+```sh
+curl 'http://localhost:8080/api/v1/jobs/JOB_ID/events?page=0&size=20'
+```
+
+History responses use the same `items`, `page`, `size`, and `hasNext` envelope as job lists. Each event contains an opaque increasing `id`, `jobId`, `type`, `status`, `relatedJobId`, and `occurredAt`. Events are ordered oldest first; IDs can contain gaps. Submission, terminal transitions, and retry requests are recorded transactionally. A retry adds a `RETRY_REQUESTED` event to its source with the new ID, and a `SUBMITTED` event to its child with the source ID.
+
+History describes committed lifecycle changes. It does not count infrastructure delivery attempts whose transactions roll back. Existing jobs receive a `BASELINE` event when this migration is applied, representing their known state at upgrade time; earlier events are not reconstructed.
+
 ## Architecture and delivery behavior
 
 ```mermaid
@@ -109,11 +147,13 @@ Job creation and the outbox entry commit together. The relay locks a batch using
 
 Delivery is **at least once**: a crash between broker confirmation and outbox deletion can publish the same job again. Workers lock the job row and skip terminal jobs, so concurrent duplicate messages do not recompute a committed result. Handler execution and result persistence share a database transaction. This design supports the included bounded, side-effect-free handlers; an external side effect would need its own idempotency strategy.
 
-Handler exceptions produce a persisted `FAILED` job with a sanitized error. Database and infrastructure exceptions roll back the worker transaction and trigger up to three delivery attempts with 500 ms and 1 s backoff. Exhausted messages go to `jobs.dead`; their jobs remain `QUEUED` until an operator resolves the problem and republishes their UUIDs. Dead-letter messages can be inspected in RabbitMQ's management console.
+Handler exceptions produce a persisted `FAILED` job with a sanitized error. Database and infrastructure exceptions roll back the worker transaction and trigger up to three delivery attempts with 500 ms and 1 s backoff. Exhausted messages go to `jobs.dead`; their jobs remain `QUEUED`. After resolving the infrastructure problem, an operator can cancel that job and use the retry endpoint to create a linked replacement. Republishing a stale message for the cancelled source is harmless. Operators can also republish the original UUID while its job remains queued. Dead-letter messages can be inspected in RabbitMQ's management console.
 
 The included Compose setup uses one PostgreSQL instance and one RabbitMQ node with persistent local volumes. Exposed ports bind to localhost. The HTTP API has no authentication and is intended for local development.
 
 ## Tests
+
+The suite contains **55 unit tests and 40 integration tests**. CI also builds the image and runs the packaged lifecycle smoke check.
 
 Run the unit and integration suite with Docker:
 
@@ -121,7 +161,17 @@ Run the unit and integration suite with Docker:
 ./scripts/test.sh
 ```
 
-Tests use separate PostgreSQL and RabbitMQ containers. The test database uses ephemeral storage and does not touch the application's database. The suite covers handler correctness, request validation, concurrent idempotency, duplicate delivery, transaction rollback on publishing failure, concurrent outbox relays, scheduling deadlines, broker priority ordering, legacy queue compatibility, SQL-like input, the full HTTP-to-worker pipeline, and dead-letter routing.
+Tests use separate PostgreSQL and RabbitMQ containers. The `jobs_test` database uses ephemeral storage. Table cleanup refuses to run against a database whose name does not end in `_test`. The suite covers handler correctness, request validation, concurrent idempotency, duplicate delivery, transaction rollback on publishing failure, concurrent outbox relays, scheduling deadlines, broker priority ordering, legacy queue compatibility, SQL-like input, the full HTTP-to-worker pipeline, and dead-letter routing and recovery.
+
+Lifecycle coverage includes concurrent cancellation and retry requests, cancellation racing with worker completion, stale-message handling, persisted history and pagination, rollback when audit writes fail, and upgrades that preserve earlier jobs and results.
+
+With the packaged application running, check the complete control workflow with Python 3:
+
+```sh
+python3 scripts/smoke.py
+```
+
+This creates two inspectable jobs: a cancelled scheduled job and its successful immediate retry. It verifies replay behavior, worker output, history pagination, and conflict responses. Use `--base-url` to select a different application address.
 
 With Java 21+ installed, unit tests can also run without service containers:
 
@@ -129,7 +179,7 @@ With Java 21+ installed, unit tests can also run without service containers:
 ./mvnw test
 ```
 
-For integration tests outside Docker, set `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`, and `SPRING_RABBITMQ_*` to dedicated test services, then run `./mvnw verify -Pintegration`. Integration tests clear their configured database's job tables.
+For integration tests outside Docker, set `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`, and `SPRING_RABBITMQ_*` to dedicated test services, then run `./mvnw verify -Pintegration`. The configured database name must end in `_test`; its job tables are cleared by the suite. Use a separate RabbitMQ instance as well: tests consume, purge, and republish messages in its job queues.
 
 ## Operations
 

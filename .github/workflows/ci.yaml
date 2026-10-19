@@ -16,6 +16,10 @@ jobs:
         run: ./scripts/test.sh
       - name: Build application image
         run: docker compose -p job-platform build api
+      - name: Verify packaged lifecycle workflow
+        run: |
+          docker compose -p job-platform up -d --wait --wait-timeout 120 api worker
+          python3 scripts/smoke.py
       - name: Upload test reports
         if: always()
         uses: actions/upload-artifact@v4

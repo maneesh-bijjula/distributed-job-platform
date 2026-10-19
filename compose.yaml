@@ -76,7 +76,7 @@ services:
       - maven-cache:/root/.m2
     environment:
       <<: *app-environment
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-test:5432/jobs
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-test:5432/jobs_test
       SPRING_RABBITMQ_HOST: rabbitmq-test
     command: ["mvn", "-B", "-ntp", "verify", "-Pintegration"]
     depends_on:
@@ -87,12 +87,12 @@ services:
     image: postgres:17-alpine
     profiles: ["test"]
     environment:
-      POSTGRES_DB: jobs
+      POSTGRES_DB: jobs_test
       POSTGRES_USER: jobs
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-jobs-local}
     tmpfs: ["/var/lib/postgresql/data"]
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U jobs -d jobs"]
+      test: ["CMD-SHELL", "pg_isready -U jobs -d jobs_test"]
       interval: 2s
       timeout: 3s
       retries: 20

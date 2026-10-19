@@ -74,7 +74,7 @@ class JobControllerTest {
     @Test
     void returnsAcceptedWithLocation() throws Exception {
         UUID id = UUID.randomUUID();
-        var job = new Job(id, JobType.SHA256, "abc", JobStatus.QUEUED, null, null, Instant.now(), null, 0, null);
+        var job = new Job(id, JobType.SHA256, "abc", JobStatus.QUEUED, null, null, Instant.now(), null, 0, null, null);
         when(service.submit(JobType.SHA256, "abc", "request-1", 0, null)).thenReturn(new JobService.Submission(job, true));
         mvc.perform(post("/api/v1/jobs").header("Idempotency-Key", "request-1")
                         .contentType(MediaType.APPLICATION_JSON).content("{\"type\":\"SHA256\",\"text\":\"abc\"}"))
@@ -84,10 +84,80 @@ class JobControllerTest {
 
     @Test
     void fullFinalPageDoesNotClaimAnotherPageExists() throws Exception {
-        var job = new Job(UUID.randomUUID(), JobType.SHA256, "abc", JobStatus.QUEUED, null, null, Instant.now(), null, 0, null);
+        var job = new Job(UUID.randomUUID(), JobType.SHA256, "abc", JobStatus.QUEUED, null, null, Instant.now(), null, 0, null, null);
         when(service.list(null, 0, 1)).thenReturn(List.of(job));
         mvc.perform(get("/api/v1/jobs?size=1"))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.items.length()").value(1))
                 .andExpect(jsonPath("$.hasNext").value(false));
+    }
+
+    @Test
+    void cancellationReturnsPersistedTerminalState() throws Exception {
+        UUID id = UUID.randomUUID();
+        when(service.cancel(id)).thenReturn(new Job(id, JobType.SHA256, "abc", JobStatus.CANCELLED,
+                null, null, Instant.now(), Instant.now(), 0, null, null));
+        mvc.perform(post("/api/v1/jobs/" + id + "/cancel"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.status").value("CANCELLED"));
+        verify(service).cancel(id);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void retryReturnsNewOrReplayedJobWithLinkAndLocation(boolean created) throws Exception {
+        UUID source = UUID.randomUUID();
+        UUID child = UUID.randomUUID();
+        Job job = new Job(child, JobType.SHA256, "abc", JobStatus.QUEUED, null, null,
+                Instant.now(), null, 7, null, source);
+        when(service.retry(source, "retry-1")).thenReturn(new JobService.Submission(job, created));
+        mvc.perform(post("/api/v1/jobs/" + source + "/retry").header("Idempotency-Key", "retry-1"))
+                .andExpect(status().is(created ? 202 : 200))
+                .andExpect(header().string("Location", "/api/v1/jobs/" + child))
+                .andExpect(jsonPath("$.retryOf").value(source.toString()))
+                .andExpect(jsonPath("$.priority").value(7));
+    }
+
+    @Test
+    void retryRequiresAnIdempotencyKey() throws Exception {
+        mvc.perform(post("/api/v1/jobs/" + UUID.randomUUID() + "/retry"))
+                .andExpect(status().isBadRequest());
+        verifyNoInteractions(service);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"", "bad key!"})
+    void retryRejectsInvalidIdempotencyKey(String key) throws Exception {
+        mvc.perform(post("/api/v1/jobs/" + UUID.randomUUID() + "/retry").header("Idempotency-Key", key))
+                .andExpect(status().isBadRequest());
+        verifyNoInteractions(service);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"cancel", "retry"})
+    void controlActionsRejectUnexpectedRequestBodies(String action) throws Exception {
+        mvc.perform(post("/api/v1/jobs/" + UUID.randomUUID() + "/" + action)
+                        .header("Idempotency-Key", "valid-key").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"priority\":9}"))
+                .andExpect(status().isBadRequest());
+        verifyNoInteractions(service);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"?page=-1", "?page=1000001", "?size=0", "?size=101", "?page=nope"})
+    void eventHistoryRejectsInvalidPagination(String query) throws Exception {
+        mvc.perform(get("/api/v1/jobs/" + UUID.randomUUID() + "/events" + query))
+                .andExpect(status().isBadRequest());
+        verifyNoInteractions(service);
+    }
+
+    @Test
+    void eventHistoryPagesHaveAnAccurateContinuationFlag() throws Exception {
+        UUID id = UUID.randomUUID();
+        var first = new JobEvent(1L, id, JobEvent.Type.SUBMITTED, JobStatus.QUEUED, null, Instant.now());
+        var second = new JobEvent(2L, id, JobEvent.Type.CANCELLED, JobStatus.CANCELLED, null, Instant.now());
+        when(service.events(id, 0, 1)).thenReturn(List.of(first, second));
+        mvc.perform(get("/api/v1/jobs/" + id + "/events?size=1"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.items.length()").value(1))
+                .andExpect(jsonPath("$.items[0].type").value("SUBMITTED"))
+                .andExpect(jsonPath("$.hasNext").value(true));
     }
 }

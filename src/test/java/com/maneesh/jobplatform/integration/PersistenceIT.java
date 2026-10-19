@@ -40,7 +40,7 @@ class PersistenceIT {
 
     @BeforeEach
     void resetDatabase() {
-        jdbc.execute("TRUNCATE job_outbox, jobs");
+        IntegrationDatabase.reset(jdbc);
     }
 
     private int outboxSize() {

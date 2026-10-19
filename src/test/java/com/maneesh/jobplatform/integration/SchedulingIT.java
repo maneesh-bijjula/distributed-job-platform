@@ -31,7 +31,7 @@ class SchedulingIT {
 
     @BeforeEach
     void reset() {
-        jdbc.execute("TRUNCATE job_outbox, jobs");
+        IntegrationDatabase.reset(jdbc);
         var admin = new RabbitAdmin(rabbit.getConnectionFactory());
         admin.initialize();
         admin.purgeQueue(RabbitConfiguration.QUEUE);
