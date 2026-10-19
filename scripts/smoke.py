@@ -57,7 +57,7 @@ def main():
         assert status == 200, job
         if job["status"] == "SUCCEEDED":
             break
-        assert job["status"] == "QUEUED", job
+        assert job["status"] in ("QUEUED", "RUNNING"), job
         time.sleep(0.2)
     else:
         raise AssertionError("Worker did not finish within 20 seconds")
@@ -70,12 +70,19 @@ def main():
     assert events["items"][0]["type"] == "RETRY_REQUESTED", events
     assert events["items"][0]["relatedJobId"] == retried["id"], events
     status, events = request(child + "/events")
-    assert status == 200 and [event["type"] for event in events["items"]] == ["SUBMITTED", "SUCCEEDED"], events
+    assert status == 200 and [event["type"] for event in events["items"]] == ["SUBMITTED", "STARTED", "SUCCEEDED"], events
+    status, attempts = request(child + "/attempts")
+    assert status == 200 and not attempts["hasNext"], attempts
+    assert len(attempts["items"]) == 1 and attempts["items"][0]["status"] == "SUCCEEDED", attempts
+    assert attempts["items"][0]["number"] == 1, attempts
+    assert "claimToken" not in attempts["items"][0], attempts
+    assert job["attemptCount"] == 1 and job["activeAttemptId"] is None, job
+    assert job["deadlineAt"] is not None, job
     assert request(child + "/cancel", "POST")[0] == 409
     assert request(path + "/retry", "POST")[0] == 400
     assert request(path + "/retry", "POST", key=key)[0] == 409
     assert request(path)[1]["status"] == "CANCELLED"
-    print("PASS: packaged cancellation, idempotent retry, worker result, history pagination, and conflict checks.")
+    print("PASS: packaged cancellation, idempotent retry, worker result, persisted attempt, history pagination, and conflict checks.")
     print("Original job: " + source["id"])
     print("Successful retry: " + retried["id"])
 

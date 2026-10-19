@@ -15,7 +15,8 @@ public record CreateJobRequest(@NotNull JobType type,
                                @NotBlank @Size(max = 16000)
                                @Pattern(regexp = "[^\\x00]*", message = "must not contain null characters") String text,
                                @Min(0) @Max(9) int priority,
-                               Instant scheduledAt) {
+                               Instant scheduledAt,
+                               @Min(1) @Max(3600) Integer timeoutSeconds) {
     private static final Instant MIN_SCHEDULE = Instant.parse("0001-01-01T00:00:00Z");
     private static final Instant MAX_SCHEDULE = Instant.parse("9999-12-31T23:59:59.999999Z");
 

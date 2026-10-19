@@ -2,6 +2,7 @@ package com.maneesh.jobplatform.api;
 
 import com.maneesh.jobplatform.jobs.Job;
 import com.maneesh.jobplatform.jobs.JobEvent;
+import com.maneesh.jobplatform.jobs.JobAttempt;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.maneesh.jobplatform.jobs.JobService;
 import com.maneesh.jobplatform.jobs.JobStatus;
@@ -30,7 +31,7 @@ public class JobController {
     public ResponseEntity<Job> submit(@Valid @RequestBody CreateJobRequest request,
             @RequestHeader(value = "Idempotency-Key", required = false)
             @Pattern(regexp = "[A-Za-z0-9._:-]{1,128}") String key) {
-        var submission = service.submit(request.type(), request.text(), key, request.priority(), request.scheduledAt());
+        var submission = service.submit(request.type(), request.text(), key, request.priority(), request.scheduledAt(), request.timeoutSeconds());
         return ResponseEntity.status(submission.created() ? 202 : 200)
                 .location(URI.create("/api/v1/jobs/" + submission.job().id())).body(submission.job());
     }
@@ -74,6 +75,16 @@ public class JobController {
     }
 
     public record JobPage(List<Job> items, int page, int size, boolean hasNext) {}
+
+    public record AttemptPage(List<JobAttempt> items, int page, int size, boolean hasNext) {}
+
+    @GetMapping("/{id}/attempts")
+    public AttemptPage attempts(@PathVariable UUID id,
+                               @RequestParam(defaultValue = "0") @Min(0) @Max(1000000) int page,
+                               @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
+        List<JobAttempt> attempts = service.attempts(id, page, size);
+        return new AttemptPage(attempts.subList(0, Math.min(size, attempts.size())), page, size, attempts.size() > size);
+    }
 
     @GetMapping
     public JobPage list(@RequestParam(required = false) JobStatus status,

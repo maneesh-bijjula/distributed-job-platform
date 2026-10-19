@@ -46,4 +46,21 @@ class ConfirmedJobPublisherTest {
         brokerResponse(true, true);
         assertThatThrownBy(() -> publisher.publish(UUID.randomUUID(), 0)).isInstanceOf(AmqpException.class);
     }
+
+    @Test
+    void publishedMessageCarriesPersistentIdentityPriorityAndGeneration() {
+        UUID id = UUID.randomUUID();
+        doAnswer(call -> {
+            MessagePostProcessor postProcessor = call.getArgument(3);
+            var message = postProcessor.postProcessMessage(new Message(new byte[0]));
+            assertThat(message.getMessageProperties().getMessageId()).isEqualTo(id.toString());
+            assertThat(message.getMessageProperties().getPriority()).isEqualTo(7);
+            assertThat((Integer) message.getMessageProperties().getHeader("job-generation")).isEqualTo(2);
+            assertThat(message.getMessageProperties().getDeliveryMode())
+                    .isEqualTo(org.springframework.amqp.core.MessageDeliveryMode.PERSISTENT);
+            ((CorrelationData) call.getArgument(4)).getFuture().complete(new CorrelationData.Confirm(true, null));
+            return null;
+        }).when(rabbit).convertAndSend(anyString(), anyString(), any(), any(MessagePostProcessor.class), any(CorrelationData.class));
+        publisher.publish(id, 7, 2);
+    }
 }

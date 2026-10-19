@@ -7,6 +7,8 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -27,7 +29,8 @@ import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
-        "jobs.dispatcher.delay-ms=100", "jobs.worker.enabled=true", "jobs.dispatcher.enabled=true"
+        "jobs.dispatcher.delay-ms=100", "jobs.worker.enabled=true", "jobs.dispatcher.enabled=true",
+        "jobs.execution.lease-seconds=3", "jobs.execution.heartbeat-millis=100"
 })
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @AutoConfigureObservability
@@ -36,6 +39,8 @@ class PipelineIT {
     @Autowired JdbcTemplate jdbc;
     @Autowired RabbitTemplate rabbit;
     @MockitoSpyBean JobRepository repository;
+    @Autowired com.maneesh.jobplatform.worker.ExecutionService execution;
+    @MockitoSpyBean com.maneesh.jobplatform.worker.JobProcessor processor;
 
     @BeforeEach
     void resetDatabase() {
@@ -157,8 +162,8 @@ class PipelineIT {
         var cancelled = http.getForObject("/api/v1/jobs?status=CANCELLED", JsonNode.class);
         assertThat(cancelled.get("items")).hasSize(1);
         var childHistory = http.getForObject(child + "/events", JsonNode.class).get("items");
-        assertThat(childHistory).hasSize(2);
-        assertThat(childHistory.get(1).get("type").asText()).isEqualTo("SUCCEEDED");
+        assertThat(childHistory).hasSize(3);
+        assertThat(childHistory.get(2).get("type").asText()).isEqualTo("SUCCEEDED");
     }
 
     @Test
@@ -176,13 +181,13 @@ class PipelineIT {
         var admin = new RabbitAdmin(rabbit.getConnectionFactory());
         admin.purgeQueue(RabbitConfiguration.DEAD_QUEUE);
         doThrow(new DataAccessResourceFailureException("simulated persistence outage"))
-                .when(repository).succeed(any(), any());
+                .when(repository).lock(any());
         var response = http.postForEntity("/api/v1/jobs", Map.of("type", "UPPERCASE", "text", "recover me"), JsonNode.class);
         String source = response.getHeaders().getLocation().toString();
         await().atMost(Duration.ofSeconds(15)).untilAsserted(() ->
                 assertThat(admin.getQueueInfo(RabbitConfiguration.DEAD_QUEUE).getMessageCount()).isEqualTo(1));
         assertThat(http.getForObject(source, JsonNode.class).get("status").asText()).isEqualTo("QUEUED");
-        doCallRealMethod().when(repository).succeed(any(), any());
+        doCallRealMethod().when(repository).lock(any());
         assertThat(http.postForEntity(source + "/cancel", null, JsonNode.class).getStatusCode()).isEqualTo(HttpStatus.OK);
         HttpHeaders headers = new HttpHeaders();
         headers.set("Idempotency-Key", "recover-dead-letter");
@@ -198,5 +203,56 @@ class PipelineIT {
         assertThat(events).hasSize(3);
         assertThat(events.get(1).get("type").asText()).isEqualTo("CANCELLED");
         assertThat(events.get(2).get("type").asText()).isEqualTo("RETRY_REQUESTED");
+    }
+
+    @Test
+    void abandonedCommittedClaimIsRecoveredThroughSchedulerOutboxBrokerAndWorker() {
+        UUID id = UUID.randomUUID();
+        // This fixture represents a worker that died after its claim committed.
+        jdbc.update("INSERT INTO jobs(id,type,input_text) VALUES (?,'UPPERCASE','recovered worker')", id);
+        var lost = execution.claim(id, 0).orElseThrow();
+        jdbc.update("UPDATE job_attempts SET lease_until=clock_timestamp()-interval '1 second' WHERE id=?", lost.attempt().id());
+        var result = completed("/api/v1/jobs/" + id);
+        assertThat(result.get("attemptCount").asInt()).isEqualTo(2);
+        assertThat(result.get("result").get("text").asText()).isEqualTo("RECOVERED WORKER");
+        var history = http.getForObject("/api/v1/jobs/" + id + "/attempts", JsonNode.class);
+        assertThat(history.get("items")).hasSize(2);
+        assertThat(history.get("items").get(0).get("status").asText()).isEqualTo("ABANDONED");
+        assertThat(history.get("items").get(1).get("status").asText()).isEqualTo("SUCCEEDED");
+        assertThat(history.get("items").get(1).get("generation").asInt()).isEqualTo(1);
+        assertThat(history.toString()).doesNotContain("claimToken", "claim_token");
+    }
+
+    @Test
+    void runningJobCanBeObservedAndCooperativelyCancelledThroughHttp() throws Exception {
+        var entered = new CountDownLatch(1);
+        var stopped = new CountDownLatch(1);
+        doAnswer(call -> {
+            entered.countDown();
+            try {
+                ((com.maneesh.jobplatform.worker.ExecutionControl) call.getArgument(2)).pause(Duration.ofSeconds(20));
+            } finally { stopped.countDown(); }
+            throw new AssertionError("Cancelled handler must stop before returning a result");
+        }).when(processor).process(eq(com.maneesh.jobplatform.jobs.JobType.UPPERCASE), eq("cancel in flight"),
+                any(com.maneesh.jobplatform.worker.ExecutionControl.class));
+        var created = http.postForEntity("/api/v1/jobs", Map.of("type", "UPPERCASE", "text", "cancel in flight", "timeoutSeconds", 10), JsonNode.class);
+        String location = created.getHeaders().getLocation().toString();
+        try {
+            assertThat(entered.await(5, TimeUnit.SECONDS)).isTrue();
+            var running = http.getForObject(location, JsonNode.class);
+            assertThat(running.get("status").asText()).isEqualTo("RUNNING");
+            assertThat(running.get("activeAttemptId").isNull()).isFalse();
+            assertThat(running.get("attemptCount").asInt()).isEqualTo(1);
+            var cancelled = http.postForEntity(location + "/cancel", null, JsonNode.class);
+            assertThat(cancelled.getStatusCode()).isEqualTo(HttpStatus.OK);
+            assertThat(cancelled.getBody().get("status").asText()).isEqualTo("CANCELLED");
+            assertThat(stopped.await(3, TimeUnit.SECONDS)).isTrue();
+            var attempts = http.getForObject(location + "/attempts", JsonNode.class).get("items");
+            assertThat(attempts.get(0).get("status").asText()).isEqualTo("CANCELLED");
+            assertThat(http.getForObject(location, JsonNode.class).get("result").isNull()).isTrue();
+        } finally {
+            http.postForEntity(location + "/cancel", null, JsonNode.class);
+            stopped.await(3, TimeUnit.SECONDS);
+        }
     }
 }

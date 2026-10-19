@@ -18,13 +18,14 @@ public class ConfirmedJobPublisher implements JobPublisher {
     }
 
     @Override
-    public void publish(UUID jobId, int priority) {
+    public void publish(UUID jobId, int priority, int generation) {
         CorrelationData correlation = new CorrelationData(UUID.randomUUID().toString());
         rabbit.convertAndSend(RabbitConfiguration.EXCHANGE, RabbitConfiguration.ROUTING_KEY,
                 jobId.toString(), message -> {
                     message.getMessageProperties().setDeliveryMode(MessageDeliveryMode.PERSISTENT);
                     message.getMessageProperties().setMessageId(jobId.toString());
                     message.getMessageProperties().setPriority(priority);
+                    message.getMessageProperties().setHeader("job-generation", generation);
                     return message;
                 }, correlation);
         try {

@@ -45,6 +45,13 @@ server:
   tomcat:
     max-http-form-post-size: 128KB
 jobs:
+  execution:
+    lease-seconds: ${JOB_LEASE_SECONDS:15}
+    heartbeat-millis: ${JOB_HEARTBEAT_MILLIS:2000}
+    default-timeout-seconds: ${JOB_TIMEOUT_SECONDS:30}
+    max-recoveries: ${JOB_MAX_RECOVERIES:3}
+    monitor-threads: ${JOB_MONITOR_THREADS:4}
+    recovery-delay-ms: ${JOB_RECOVERY_DELAY_MS:1000}
   worker:
     enabled: true
   dispatcher:

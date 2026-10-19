@@ -20,6 +20,13 @@ public class JobProcessor {
         this.mapper = mapper;
     }
 
+    public JsonNode process(JobType type, String text, ExecutionControl control) {
+        control.checkpoint();
+        JsonNode result = process(type, text);
+        control.checkpoint();
+        return result;
+    }
+
     public JsonNode process(JobType type, String text) {
         var result = mapper.createObjectNode();
         return switch (type) {

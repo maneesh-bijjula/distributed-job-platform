@@ -26,7 +26,7 @@ public class JobRepository {
     }
 
     public Optional<UUID> insert(UUID id, JobType type, String text, String key, int priority,
-                                 Instant scheduledAt, UUID retryOf) {
+                                 Instant scheduledAt, UUID retryOf, int timeoutSeconds) {
         Map<String, Object> params = new HashMap<>();
         params.put("id", id);
         params.put("type", type.name());
@@ -35,17 +35,18 @@ public class JobRepository {
         params.put("priority", priority);
         params.put("scheduledAt", scheduledAt == null ? null : Timestamp.from(scheduledAt));
         params.put("retryOf", retryOf);
+        params.put("timeout", timeoutSeconds);
         return jdbc.query("""
-                INSERT INTO jobs (id, type, input_text, idempotency_key, priority, scheduled_at, retry_of)
-                VALUES (:id, :type, :text, :key, :priority, :scheduledAt, :retryOf)
+                INSERT INTO jobs (id, type, input_text, idempotency_key, priority, scheduled_at, retry_of, timeout_seconds)
+                VALUES (:id, :type, :text, :key, :priority, :scheduledAt, :retryOf, :timeout)
                 ON CONFLICT (idempotency_key) DO NOTHING RETURNING id
                 """, params, (rs, row) -> rs.getObject("id", UUID.class)).stream().findFirst();
     }
 
     public void enqueue(UUID id) {
         jdbc.update("""
-                INSERT INTO job_outbox (job_id, priority, available_at)
-                SELECT id, priority, COALESCE(scheduled_at, created_at) FROM jobs WHERE id = :id
+                INSERT INTO job_outbox (job_id, priority, available_at, generation)
+                SELECT id, priority, COALESCE(scheduled_at, created_at), generation FROM jobs WHERE id = :id
                 """, Map.of("id", id));
     }
 
@@ -77,35 +78,46 @@ public class JobRepository {
                 + " ORDER BY created_at DESC, id DESC LIMIT :size OFFSET :offset", params, this::map);
     }
 
-    public void succeed(UUID id, JsonNode result) {
-        jdbc.update("""
-                UPDATE jobs SET status = 'SUCCEEDED', result = CAST(:result AS jsonb), completed_at = clock_timestamp()
-                WHERE id = :id
+    public int succeed(UUID id, JsonNode result) {
+        return jdbc.update("""
+                UPDATE jobs SET status = 'SUCCEEDED', result = CAST(:result AS jsonb),
+                    completed_at = clock_timestamp(), active_attempt_id = NULL
+                WHERE id = :id AND status = 'RUNNING' AND EXISTS (
+                    SELECT 1 FROM job_attempts a WHERE a.id = jobs.active_attempt_id
+                    AND a.status = 'RUNNING' AND a.lease_until > clock_timestamp() AND a.deadline_at > clock_timestamp())
                 """, Map.of("id", id, "result", result.toString()));
     }
 
-    public void fail(UUID id, String error) {
-        jdbc.update("""
-                UPDATE jobs SET status = 'FAILED', error = :error, completed_at = clock_timestamp() WHERE id = :id
+    public int fail(UUID id, String error) {
+        return jdbc.update("""
+                UPDATE jobs SET status = 'FAILED', error = :error, completed_at = clock_timestamp(), active_attempt_id = NULL
+                WHERE id = :id AND status = 'RUNNING' AND EXISTS (
+                    SELECT 1 FROM job_attempts a WHERE a.id = jobs.active_attempt_id
+                    AND a.status = 'RUNNING' AND a.lease_until > clock_timestamp() AND a.deadline_at > clock_timestamp())
                 """, Map.of("id", id, "error", error));
     }
 
     public void cancel(UUID id) {
         jdbc.update("""
-                UPDATE jobs SET status = 'CANCELLED', completed_at = clock_timestamp() WHERE id = :id
+                UPDATE jobs SET status = 'CANCELLED', completed_at = clock_timestamp(), active_attempt_id = NULL WHERE id = :id
                 """, Map.of("id", id));
         jdbc.update("DELETE FROM job_outbox WHERE job_id = :id", Map.of("id", id));
     }
 
     public void recordEvent(UUID id, JobEvent.Type type, JobStatus status, UUID relatedJobId) {
+        recordEvent(id, type, status, relatedJobId, null);
+    }
+
+    public void recordEvent(UUID id, JobEvent.Type type, JobStatus status, UUID relatedJobId, UUID attemptId) {
         Map<String, Object> params = new HashMap<>();
         params.put("id", id);
         params.put("type", type.name());
         params.put("status", status.name());
         params.put("related", relatedJobId);
+        params.put("attempt", attemptId);
         jdbc.update("""
-                INSERT INTO job_events (job_id, event_type, status, related_job_id)
-                VALUES (:id, :type, :status, :related)
+                INSERT INTO job_events (job_id, event_type, status, related_job_id, attempt_id)
+                VALUES (:id, :type, :status, :related, :attempt)
                 """, params);
     }
 
@@ -116,7 +128,7 @@ public class JobRepository {
                 (rs, row) -> new JobEvent(rs.getLong("id"), rs.getObject("job_id", UUID.class),
                         JobEvent.Type.valueOf(rs.getString("event_type")),
                         JobStatus.valueOf(rs.getString("status")), rs.getObject("related_job_id", UUID.class),
-                        rs.getTimestamp("occurred_at").toInstant()));
+                        rs.getTimestamp("occurred_at").toInstant(), rs.getObject("attempt_id", UUID.class)));
     }
 
     private Job map(ResultSet rs, int row) throws SQLException {
@@ -124,12 +136,15 @@ public class JobRepository {
             String result = rs.getString("result");
             var completed = rs.getTimestamp("completed_at");
             var scheduled = rs.getTimestamp("scheduled_at");
+            var deadline = rs.getTimestamp("deadline_at");
             return new Job(rs.getObject("id", UUID.class), JobType.valueOf(rs.getString("type")),
                     rs.getString("input_text"), JobStatus.valueOf(rs.getString("status")),
                     result == null ? null : mapper.readTree(result), rs.getString("error"),
                     rs.getTimestamp("created_at").toInstant(), completed == null ? null : completed.toInstant(),
                     rs.getInt("priority"), scheduled == null ? null : scheduled.toInstant(),
-                    rs.getObject("retry_of", UUID.class));
+                    rs.getObject("retry_of", UUID.class), rs.getInt("timeout_seconds"),
+                    rs.getInt("attempt_count"), rs.getObject("active_attempt_id", UUID.class),
+                    deadline == null ? null : deadline.toInstant(), rs.getInt("generation"));
         } catch (JsonProcessingException exception) {
             throw new SQLException("Invalid stored job result", exception);
         }

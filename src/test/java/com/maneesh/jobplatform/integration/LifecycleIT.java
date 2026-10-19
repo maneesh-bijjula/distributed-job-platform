@@ -84,7 +84,7 @@ class LifecycleIT {
     }
 
     @Test
-    void workerThatAlreadyOwnsJobCompletesBeforeCancellationAndKeepsItsResult() throws Exception {
+    void runningCancellationDoesNotWaitForHandlerAndFencesItsLateResult() throws Exception {
         Job job = service.submit(JobType.SHA256, "abc", null).job();
         var entered = new CountDownLatch(1);
         var release = new CountDownLatch(1);
@@ -94,25 +94,20 @@ class LifecycleIT {
             return call.callRealMethod();
         }).when(processor).process(JobType.SHA256, "abc");
         try (var pool = Executors.newVirtualThreadPerTaskExecutor()) {
-            var execution = pool.submit(() -> executor.execute(job.id()));
+            var running = pool.submit(() -> executor.execute(job.id()));
             assertThat(entered.await(5, TimeUnit.SECONDS)).isTrue();
-            var cancelStarted = new CountDownLatch(1);
-            var cancellation = pool.submit(() -> {
-                cancelStarted.countDown();
-                conflict(() -> service.cancel(job.id()));
-            });
             try {
-                assertThat(cancelStarted.await(5, TimeUnit.SECONDS)).isTrue();
-            } finally {
-                release.countDown();
-            }
-            execution.get(10, TimeUnit.SECONDS);
-            cancellation.get(10, TimeUnit.SECONDS);
+                assertThat(service.get(job.id()).status()).isEqualTo(JobStatus.RUNNING);
+                var cancelled = pool.submit(() -> service.cancel(job.id())).get(2, TimeUnit.SECONDS);
+                assertThat(cancelled.status()).isEqualTo(JobStatus.CANCELLED);
+                assertThat(service.attempts(job.id(), 0, 20).getFirst().status()).isEqualTo(JobAttempt.Status.CANCELLED);
+            } finally { release.countDown(); }
+            running.get(5, TimeUnit.SECONDS);
         }
-        assertThat(service.get(job.id()).status()).isEqualTo(JobStatus.SUCCEEDED);
-        assertThat(service.get(job.id()).result().get("sha256").asText()).startsWith("ba7816");
+        assertThat(service.get(job.id()).status()).isEqualTo(JobStatus.CANCELLED);
+        assertThat(service.get(job.id()).result()).isNull();
         assertThat(service.events(job.id(), 0, 10)).extracting(JobEvent::type)
-                .containsExactly(JobEvent.Type.SUBMITTED, JobEvent.Type.SUCCEEDED);
+                .containsExactly(JobEvent.Type.SUBMITTED, JobEvent.Type.STARTED, JobEvent.Type.CANCELLED);
     }
 
     @Test
@@ -164,7 +159,7 @@ class LifecycleIT {
         assertThat(failed.error()).isEqualTo("Job handler failed");
         assertThat(service.get(retry.job().id()).status()).isEqualTo(JobStatus.SUCCEEDED);
         assertThat(service.events(source.id(), 0, 10)).extracting(JobEvent::type)
-                .containsExactly(JobEvent.Type.SUBMITTED, JobEvent.Type.FAILED, JobEvent.Type.RETRY_REQUESTED);
+                .containsExactly(JobEvent.Type.SUBMITTED, JobEvent.Type.STARTED, JobEvent.Type.FAILED, JobEvent.Type.RETRY_REQUESTED);
     }
 
     @Test
@@ -234,20 +229,27 @@ class LifecycleIT {
         assertThat(service.retry(id, "retry-rollback").created()).isTrue();
     }
 
+    @Autowired com.maneesh.jobplatform.worker.ExecutionService execution;
+
     @Test
-    void resultAndHistoryRollBackTogetherAndDuplicateDeliveryAddsNoEvent() {
+    void resultAndHistoryRollBackTogetherAndAnAbandonedClaimCanRecover() {
         UUID id = service.submit(JobType.SHA256, "abc", null).job().id();
         doThrow(new DataAccessResourceFailureException("audit unavailable")).when(repository)
-                .recordEvent(id, JobEvent.Type.SUCCEEDED, JobStatus.SUCCEEDED, null);
+                .recordEvent(eq(id), eq(JobEvent.Type.SUCCEEDED), eq(JobStatus.SUCCEEDED), isNull(), any(UUID.class));
         assertThatThrownBy(() -> executor.execute(id)).isInstanceOf(DataAccessResourceFailureException.class);
-        assertThat(service.get(id).status()).isEqualTo(JobStatus.QUEUED);
+        assertThat(service.get(id).status()).isEqualTo(JobStatus.RUNNING);
         assertThat(service.get(id).result()).isNull();
-        assertThat(service.events(id, 0, 10)).hasSize(1);
-        doCallRealMethod().when(repository).recordEvent(id, JobEvent.Type.SUCCEEDED, JobStatus.SUCCEEDED, null);
-        executor.execute(id);
-        executor.execute(id);
+        assertThat(service.events(id, 0, 10)).hasSize(2);
+        jdbc.update("UPDATE job_attempts SET lease_until=clock_timestamp()-interval '1 second' WHERE job_id=?", id);
+        assertThat(execution.recoverBatch()).isEqualTo(1);
+        doCallRealMethod().when(repository).recordEvent(eq(id), eq(JobEvent.Type.SUCCEEDED), eq(JobStatus.SUCCEEDED), isNull(), any(UUID.class));
+        executor.execute(id, 1);
+        executor.execute(id, 1);
         assertThat(service.events(id, 0, 10)).extracting(JobEvent::type)
-                .containsExactly(JobEvent.Type.SUBMITTED, JobEvent.Type.SUCCEEDED);
+                .containsExactly(JobEvent.Type.SUBMITTED, JobEvent.Type.STARTED, JobEvent.Type.LEASE_EXPIRED,
+                        JobEvent.Type.STARTED, JobEvent.Type.SUCCEEDED);
+        assertThat(service.attempts(id, 0, 10)).extracting(JobAttempt::status)
+                .containsExactly(JobAttempt.Status.ABANDONED, JobAttempt.Status.SUCCEEDED);
     }
 
     @Test

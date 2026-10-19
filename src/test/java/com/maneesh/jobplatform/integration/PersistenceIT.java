@@ -83,10 +83,10 @@ class PersistenceIT {
     void publishFailureRollsBackEntireOutboxBatch() {
         service.submit(JobType.SHA256, "one", null);
         service.submit(JobType.SHA256, "two", null);
-        doNothing().doThrow(new IllegalStateException("broker unavailable")).when(publisher).publish(any(), anyInt());
+        doNothing().doThrow(new IllegalStateException("broker unavailable")).when(publisher).publish(any(), anyInt(), anyInt());
         assertThatThrownBy(relay::dispatchBatch).isInstanceOf(IllegalStateException.class);
         assertThat(outboxSize()).isEqualTo(2);
-        doNothing().when(publisher).publish(any(), anyInt());
+        doNothing().when(publisher).publish(any(), anyInt(), anyInt());
         assertThat(relay.dispatchBatch()).isEqualTo(2);
         assertThat(outboxSize()).isZero();
     }
@@ -172,7 +172,7 @@ class PersistenceIT {
             bothRelaysEntered.countDown();
             assertThat(bothRelaysEntered.await(5, TimeUnit.SECONDS)).isTrue();
             return null;
-        }).when(publisher).publish(any(), anyInt());
+        }).when(publisher).publish(any(), anyInt(), anyInt());
         try (var pool = Executors.newVirtualThreadPerTaskExecutor()) {
             var first = pool.submit(relay::dispatchBatch);
             var second = pool.submit(relay::dispatchBatch);
