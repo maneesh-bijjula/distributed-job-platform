@@ -239,22 +239,25 @@ class ExecutionIT {
     void handlerRunsOutsideDatabaseTransactionAndHeartbeatsKeepItsLeaseAlive() throws Exception {
         Job job = submit();
         var entered = new CountDownLatch(1);
+        var release = new CountDownLatch(1);
         doAnswer(call -> {
             assertThat(TransactionSynchronizationManager.isActualTransactionActive()).isFalse();
             assertThat(jobs.get(job.id()).status()).isEqualTo(JobStatus.RUNNING);
             entered.countDown();
             ExecutionControl control = call.getArgument(2);
-            control.pause(Duration.ofSeconds(4));
+            while (release.getCount() != 0) control.pause(Duration.ofMillis(100));
             return new ObjectMapper().createObjectNode().put("text", "HEARTBEATING");
         }).when(processor).process(eq(JobType.UPPERCASE), eq("hello"), any(ExecutionControl.class));
         try (var pool = Executors.newVirtualThreadPerTaskExecutor()) {
             var future = pool.submit(() -> executor.execute(job.id()));
             assertThat(entered.await(5, TimeUnit.SECONDS)).isTrue();
             var initial = jobs.attempts(job.id(), 0, 10).getFirst();
-            await().pollDelay(Duration.ofMillis(3200)).atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
-                assertThat(jobs.get(job.id()).status()).isEqualTo(JobStatus.RUNNING);
-                assertThat(jobs.attempts(job.id(), 0, 10).getFirst().leaseUntil()).isAfter(initial.leaseUntil());
-            });
+            try {
+                await().pollDelay(Duration.ofMillis(3200)).atMost(Duration.ofSeconds(6)).untilAsserted(() -> {
+                    assertThat(jobs.get(job.id()).status()).isEqualTo(JobStatus.RUNNING);
+                    assertThat(jobs.attempts(job.id(), 0, 10).getFirst().leaseUntil()).isAfter(initial.leaseUntil());
+                });
+            } finally { release.countDown(); }
             future.get(5, TimeUnit.SECONDS);
         }
         assertThat(jobs.get(job.id()).status()).isEqualTo(JobStatus.SUCCEEDED);
