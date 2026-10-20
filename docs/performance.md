@@ -98,6 +98,6 @@ The base defaults remain available for comparison. Production capacity depends o
 
 CI checks harness arithmetic/isolation/retry guards, the complete Java suite, existing packaged and monitoring checks, a small 120-job two-worker workload, and the real resilience scenarios. It uploads raw reports and invokes guarded cleanup even after failures. CI asserts correctness and accounting, not a hardware-dependent speed threshold.
 
-See [recorded measurements](benchmark-results.md) for the actual environment, results, interpretation, and project-claim wording. The original resume's 500+ jobs/sec, 3.4x scaling, and zero loss across 100 failure tests are not inferred from these smaller checks; only measurements explicitly recorded there support numerical claims.
+See [recorded measurements](benchmark-results.md) for the environment, results, interpretation, and technical summary. Numerical performance and recovery claims should include their workload, configuration, scenario count, and supporting raw evidence.
 
 References: [Docker merge/override semantics](https://docs.docker.com/reference/compose-file/merge/), [Spring AMQP consumer and prefetch behavior](https://docs.spring.io/spring-amqp/reference/amqp/receiving-messages/async-consumer.html).

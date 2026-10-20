@@ -64,4 +64,4 @@ Evidence-matching project wording:
 - Built a Java/Spring Boot job platform with PostgreSQL transactional outbox, RabbitMQ leased workers, idempotent APIs, retries, dead-letter recovery, and Prometheus/Grafana monitoring.
 - Verified 42400 synthetic benchmark jobs; improved median finite-workload completion throughput from 34.5 to 97.8 jobs/sec with measured dispatch/prefetch/pool settings. Tested real worker/dependency recovery and stale-result fencing with 194/194 scenario jobs accounted for.
 
-The project does not use Redis. List only implemented technologies when describing it. Deployment preparation and release review remain the next phase.
+Implemented technologies include Java, Spring Boot, PostgreSQL, RabbitMQ, Docker, Prometheus, and Grafana.
