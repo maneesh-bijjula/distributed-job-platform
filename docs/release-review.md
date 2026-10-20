@@ -29,7 +29,7 @@ evidence-backed wording. CI uploads reports from all workflows as its `test-repo
 artifact. Credentials, database archives and private diagnostics are excluded from
 that artifact and from the repository.
 
-The Phase 6 report in `docs/evidence/phase6/` records the tested revision, image
+The [Phase 6 evidence](evidence/phase6/README.md) records the tested revision, image
 identity, source SHA-256 values, scenario outcomes and restore counts. It describes
 local timings only; a small local restore is not a production recovery-time target.
 

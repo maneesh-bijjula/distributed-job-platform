@@ -1,0 +1,114 @@
+{
+  "sourceCommit": "ccdadc2ba765a71537691849ea238f312b0d1a70",
+  "command": "./scripts/test.sh",
+  "suites": {
+    "surefire-reports": {
+      "tests": 122,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "classes": [
+        {
+          "name": "com.maneesh.jobplatform.worker.ConfirmedJobPublisherTest",
+          "tests": 4
+        },
+        {
+          "name": "com.maneesh.jobplatform.integration.IntegrationDatabaseTest",
+          "tests": 2
+        },
+        {
+          "name": "com.maneesh.jobplatform.worker.CapacityPropertiesTest",
+          "tests": 11
+        },
+        {
+          "name": "com.maneesh.jobplatform.worker.ExecutionControlTest",
+          "tests": 4
+        },
+        {
+          "name": "com.maneesh.jobplatform.worker.MetricsPropertiesTest",
+          "tests": 6
+        },
+        {
+          "name": "com.maneesh.jobplatform.worker.ShutdownConfigurationTest",
+          "tests": 5
+        },
+        {
+          "name": "com.maneesh.jobplatform.worker.ExecutionPropertiesTest",
+          "tests": 3
+        },
+        {
+          "name": "com.maneesh.jobplatform.worker.JobExecutorTest",
+          "tests": 8
+        },
+        {
+          "name": "com.maneesh.jobplatform.worker.KeyTokensTest",
+          "tests": 8
+        },
+        {
+          "name": "com.maneesh.jobplatform.worker.RetryPolicyTest",
+          "tests": 12
+        },
+        {
+          "name": "com.maneesh.jobplatform.worker.JobProcessorTest",
+          "tests": 5
+        },
+        {
+          "name": "com.maneesh.jobplatform.api.JobControllerTest",
+          "tests": 54
+        }
+      ]
+    },
+    "failsafe-reports": {
+      "tests": 141,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "classes": [
+        {
+          "name": "com.maneesh.jobplatform.integration.SchedulingIT",
+          "tests": 3
+        },
+        {
+          "name": "com.maneesh.jobplatform.integration.ExecutionIT",
+          "tests": 18
+        },
+        {
+          "name": "com.maneesh.jobplatform.integration.PersistenceIT",
+          "tests": 11
+        },
+        {
+          "name": "com.maneesh.jobplatform.integration.MigrationIT",
+          "tests": 2
+        },
+        {
+          "name": "com.maneesh.jobplatform.integration.ObservabilityIT",
+          "tests": 13
+        },
+        {
+          "name": "com.maneesh.jobplatform.integration.DeadLetterIT",
+          "tests": 19
+        },
+        {
+          "name": "com.maneesh.jobplatform.integration.PipelineIT",
+          "tests": 16
+        },
+        {
+          "name": "com.maneesh.jobplatform.integration.AccessIT",
+          "tests": 32
+        },
+        {
+          "name": "com.maneesh.jobplatform.integration.LifecycleIT",
+          "tests": 13
+        },
+        {
+          "name": "com.maneesh.jobplatform.integration.DispatchCapacityIT",
+          "tests": 2
+        },
+        {
+          "name": "com.maneesh.jobplatform.integration.RetryIT",
+          "tests": 12
+        }
+      ]
+    }
+  }
+}
