@@ -11,7 +11,7 @@ limits. Public hosting is a separate deployment decision.
 | Area | Release check |
 | --- | --- |
 | Application correctness | 263 passing Java tests: 122 unit, 141 integration; no failures, errors or skipped tests |
-| Harness and recovery safety | 18 Python tests for accounting, isolation, replay identity, offline guards, archive integrity and safe restore refusal |
+| Harness and recovery safety | 24 Python tests for accounting, isolation, replay identity, offline guards, archive integrity, safe restore refusal and fault-campaign denominators (18 at the recorded Phase 6 release) |
 | Packaged workflows | Cancellation/retry/results/attempts/history; dead-letter collection/recovery; owner isolation/quotas/revocation |
 | Operations visibility | Promtool config/rules, 17 live dashboard expressions, real dependency outage checks |
 | Load and failure behavior | Bounded CI load and real resilience suite; [recorded larger comparisons](benchmark-results.md) retain their original source/image identity |

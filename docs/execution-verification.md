@@ -1,6 +1,6 @@
 # Execution tracking and recovery verification
 
-The platform is covered by **122 unit tests and 141 integration tests**, eighteen Python harness/safety tests, and packaged Docker workflows. Integration tests use isolated PostgreSQL and RabbitMQ services.
+The platform is covered by **122 unit tests and 141 integration tests**, twenty-four Python harness/safety tests, and packaged Docker workflows. Integration tests use isolated PostgreSQL and RabbitMQ services.
 
 | Behavior | Verification |
 | --- | --- |
@@ -49,6 +49,7 @@ The platform is covered by **122 unit tests and 141 integration tests**, eightee
 | Backup and restore | Offline custom-format dumps are restored into a scratch database and into empty replacement deployment volumes; every public table and sequence fingerprint matches before startup. Nonempty targets and online maintenance are refused. |
 | Lost broker deliveries | Offline reconciliation recreates missing outbox work only for queued jobs, preserves future schedules and is repeatable; the restored worker verifies original job results without duplicate attempts. |
 | Failed rollout | An intentionally failing application startup leaves the schema/data unchanged; restoring the compatible image recovers operation. Database migrations are not automatically reversed. |
+| Repeated fault accounting | A seeded balanced campaign requires an actual observed Docker crash/pause per trial, fresh workloads, oracle-checked results, stable replay IDs and a complete final database population. Missing/duplicate IDs or unobserved faults fail the harness. |
 
 Run the automated suite:
 
@@ -65,7 +66,7 @@ python3 scripts/dead-letter-smoke.py
 python3 scripts/auth-smoke.py
 ```
 
-The [observability guide](observability.md) includes the optional monitoring profile, live metric/dashboard check, and controlled outage verification. CI runs these checks too. The automated Java suite totals **263 tests** (122 unit and 141 integration), plus eighteen Python harness/safety tests. The [performance guide](performance.md) covers the additional packaged load/fault workflows and recorded evidence. The [deployment guide](deployment.md) and [recovery runbook](recovery.md) describe the repeatable release drill.
+The [observability guide](observability.md) includes the optional monitoring profile, live metric/dashboard check, and controlled outage verification. CI runs these checks too. The automated Java suite totals **263 tests** (122 unit and 141 integration), plus twenty-four Python harness/safety tests. The [performance guide](performance.md) covers the additional packaged load/fault workflows and recorded evidence. The [deployment guide](deployment.md) and [recovery runbook](recovery.md) describe the repeatable release drill. The [fault campaign guide](fault-campaign.md) explains repeated actual fault injections and their strict accepted-job denominator.
 
 The smoke check creates a scheduled job, cancels it, creates and replays a linked manual retry, waits for the real worker result, and checks attempt persistence, lifecycle history, pagination, and conflict responses. The generated jobs remain available for inspection.
 

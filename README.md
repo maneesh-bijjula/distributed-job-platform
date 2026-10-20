@@ -336,7 +336,7 @@ See the [observability guide](docs/observability.md) for metric definitions, cre
 
 ## Tests
 
-The Java suite contains **122 unit tests and 141 integration tests**. Eighteen Python tests check load-harness arithmetic, isolation, replay safety, and offline recovery guards. CI also builds the images, runs all three packaged regression checks, validates Prometheus rules and live dashboard data, exercises bounded load and real failures, and verifies fresh deployment, graceful shutdown, backup/restore and broker recovery.
+The Java suite contains **122 unit tests and 141 integration tests**. Twenty-four Python tests check load-harness arithmetic, isolation, replay safety, offline recovery guards and fault-campaign accounting. CI also builds the images, runs all three packaged regression checks, validates Prometheus rules and live dashboard data, exercises bounded load and real failures, and verifies fresh deployment, graceful shutdown, backup/restore and broker recovery.
 
 See the [execution verification matrix](docs/execution-verification.md) for the covered guarantees and limits.
 
@@ -381,6 +381,8 @@ The [single-host deployment guide](docs/deployment.md) uses a separate Compose p
 The [architecture and demo walkthrough](docs/project-walkthrough.md) explains delivery guarantees and provides measured project wording. The [release review](docs/release-review.md) links validation evidence and remaining operating limits.
 
 ### Load, resilience, and tuning
+
+The [repeated fault campaign](docs/fault-campaign.md) declares and journals real worker, broker, database and API crashes/suspensions with fresh workloads per trial. It supports 100 balanced injections with full accepted-job reconciliation; ordinary CI runs one trial per fault kind, and a separate manual workflow can repeat all 100.
 
 The [performance guide](docs/performance.md) explains the separate disposable test stack, seeded workloads, 10000-job backlog comparisons, actual worker kill/freeze recovery, dependency restarts, duplicate deliveries, and priority/prefetch tradeoffs. It records raw request/job/attempt ledgers, resource limits, source/image identity, and independently verified results. [Recorded measurements](docs/benchmark-results.md) distinguish achieved rates from broader capacity claims.
 
