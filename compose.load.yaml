@@ -25,7 +25,7 @@ services:
     image: postgres:17-alpine
     labels: *labels
     mem_limit: 384m
-    cpus: 1
+    cpus: ${LOAD_DB_CPUS:-1}
     environment:
       POSTGRES_DB: jobs_load_test
       POSTGRES_USER: jobs

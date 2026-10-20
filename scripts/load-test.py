@@ -26,6 +26,7 @@ def main():
     parser.add_argument("--workers", type=bounded(1, 4), default=1)
     parser.add_argument("--concurrency", type=bounded(1, 8), default=2)
     parser.add_argument("--pool", type=bounded(2, 50), default=10)
+    parser.add_argument("--database-cpus", type=int, choices=(1, 2), default=1)
     parser.add_argument("--prefetch", type=bounded(1, 250), default=10)
     parser.add_argument("--batch", type=bounded(1, 100), default=20)
     parser.add_argument("--dispatch-ms", type=bounded(50, 60000), default=1000)
@@ -36,7 +37,7 @@ def main():
     parser.add_argument("--skip-build", action="store_true")
     args = parser.parse_args()
     stack = Stack(args.output, batch=args.batch, delay=args.dispatch_ms, prefetch=args.prefetch,
-                  pool=args.pool, concurrency=args.concurrency, workers=args.workers)
+                  pool=args.pool, concurrency=args.concurrency, workers=args.workers, database_cpus=args.database_cpus)
     try:
         stack.start(build=not args.skip_build)
         warmup = Workload(stack, "warmup", specs(12, sizes=(128,)), 4)

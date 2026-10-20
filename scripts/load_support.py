@@ -70,13 +70,13 @@ def compressed_rows(path, rows):
 
 class Stack:
     """All destructive operations are confined to labeled, dedicated load-test resources."""
-    def __init__(self, output, *, batch=20, delay=1000, prefetch=10, pool=10, concurrency=2, workers=1):
+    def __init__(self, output, *, batch=20, delay=1000, prefetch=10, pool=10, concurrency=2, workers=1, database_cpus=1):
         self.output = Path(output).resolve()
         self.output.parent.mkdir(parents=True, exist_ok=True)
         self.output.mkdir(exist_ok=False)
         self.settings = {"batchSize": batch, "dispatchDelayMs": delay, "prefetch": prefetch,
                          "databasePoolSize": pool, "concurrencyPerWorker": concurrency, "workers": workers,
-                         "apiInstances": 2, "leaseSeconds": 6, "heartbeatMs": 1000}
+                         "apiInstances": 2, "leaseSeconds": 6, "heartbeatMs": 1000, "databaseCpus": database_cpus}
         path = ROOT / ".loadtest.env"
         if path.is_symlink():
             raise ValueError("Refusing a symlink for load credentials")
@@ -97,6 +97,7 @@ class Stack:
                     "LOAD_PREFETCH": str(prefetch), "LOAD_POOL_SIZE": str(pool), "LOAD_CONCURRENCY": str(concurrency)}
         # Fixed loopback addresses prevent an accidental run against the ordinary application.
         self.env.update(LOAD_API_PORT="18080", LOAD_API2_PORT="18081", LOAD_MANAGEMENT_PORT="18082")
+        self.env["LOAD_DB_CPUS"] = str(database_cpus)
         self.command = ["docker", "compose", "-p", PROJECT, "--env-file", str(path), "-f", str(ROOT / "compose.load.yaml")]
         self.clients = [Client(18080, self.private["LOAD_BOOTSTRAP_KEY"]),
                         Client(18081, self.private["LOAD_BOOTSTRAP_KEY"])]
