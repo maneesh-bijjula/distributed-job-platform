@@ -12,8 +12,8 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-      - name: Verify load harness arithmetic and safety guards
-        run: python3 -m unittest discover -s scripts -p 'test_load_support.py' -v
+      - name: Verify load and recovery harness safety guards
+        run: python3 -m unittest discover -s scripts -p 'test_*.py' -v
       - name: Unit and integration tests
         run: ./scripts/test.sh
       - name: Build application image
@@ -37,6 +37,8 @@ jobs:
         run: |
           python3 scripts/load-test.py --output reports/phase5/ci-load --jobs 120 --clients 8 --workers 2 --batch 50 --dispatch-ms 250 --prefetch 1 --pool 6 --schedule-seconds 1
           python3 scripts/resilience-test.py --output reports/phase5/ci-resilience --skip-build
+      - name: Verify deployment, graceful shutdown, backup and disaster recovery
+        run: python3 scripts/release-smoke.py --output reports/phase6/ci-release
       - name: Upload test reports
         if: always()
         uses: actions/upload-artifact@v4
@@ -47,9 +49,11 @@ jobs:
             target/failsafe-reports/
             reports/observability-*.json
             reports/phase5/
+            reports/phase6/
           if-no-files-found: ignore
       - name: Clean up services
         if: always()
         run: |
           python3 scripts/clean-load-stack.py
+          python3 scripts/release-smoke.py --cleanup-only
           docker compose -p job-platform --profile test --profile observability down

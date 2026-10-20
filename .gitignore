@@ -13,3 +13,4 @@ __pycache__/
 .auth-*
 .observability/
 .loadtest.env
+.deployment/

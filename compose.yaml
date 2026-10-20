@@ -52,6 +52,7 @@ services:
 
   api:
     image: job-platform:local
+    stop_grace_period: 90s
     build: .
     environment:
       <<: *app-environment
@@ -70,6 +71,7 @@ services:
 
   worker:
     image: job-platform:local
+    stop_grace_period: 90s
     build: .
     environment:
       <<: *app-environment

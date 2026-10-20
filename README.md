@@ -24,6 +24,7 @@ An asynchronous job service built with **Java 21, Spring Boot, PostgreSQL, and R
 - Reproducible isolated load tests, raw timing/accounting evidence, and real worker/dependency failure checks.
 - Validated dispatch, prefetch, concurrency, and connection-pool controls with an optional measured tuning profile.
 - Liveness/readiness probes, automated tests, and GitHub Actions CI.
+- Separate single-host deployment with mounted secrets, bounded graceful shutdown, verified PostgreSQL backup/restore, and recovery runbooks.
 
 ## Run locally
 
@@ -335,7 +336,7 @@ See the [observability guide](docs/observability.md) for metric definitions, cre
 
 ## Tests
 
-The Java suite contains **117 unit tests and 141 integration tests**. Eight Python tests check load-harness arithmetic, isolation, and replay safety. CI also builds the images, runs all three packaged regression checks, validates Prometheus rules and live dashboard data, and exercises bounded load plus real worker/dependency failure scenarios.
+The Java suite contains **122 unit tests and 141 integration tests**. Eighteen Python tests check load-harness arithmetic, isolation, replay safety, and offline recovery guards. CI also builds the images, runs all three packaged regression checks, validates Prometheus rules and live dashboard data, exercises bounded load and real failures, and verifies fresh deployment, graceful shutdown, backup/restore and broker recovery.
 
 See the [execution verification matrix](docs/execution-verification.md) for the covered guarantees and limits.
 
@@ -372,6 +373,12 @@ With Java 21+ installed, unit tests can also run without service containers:
 For integration tests outside Docker, set `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`, and `SPRING_RABBITMQ_*` to dedicated test services, then run `./mvnw verify -Pintegration`. The configured database name must end in `_test`; its job tables are cleared by the suite. Use a separate RabbitMQ instance as well: tests consume, purge, and republish messages in its job queues.
 
 ## Operations
+
+### Deployment and recovery
+
+The [single-host deployment guide](docs/deployment.md) uses a separate Compose profile, private mounted credentials, a loopback-only API, non-root/read-only JVM containers and explicit shutdown budgets. The [recovery runbook](docs/recovery.md) covers verified database backups, empty-target restores, safe upgrade ordering, lost broker delivery repair, dead letters and retention limits. It retains one database and one broker node; high availability and public hosting are outside this profile.
+
+The [architecture and demo walkthrough](docs/project-walkthrough.md) explains delivery guarantees and provides measured project wording. The [release review](docs/release-review.md) links validation evidence and remaining operating limits.
 
 ### Load, resilience, and tuning
 

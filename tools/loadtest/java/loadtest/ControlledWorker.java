@@ -22,7 +22,7 @@ public class ControlledWorker {
     @Bean @Primary
     JobProcessor controlledProcessor(ObjectMapper mapper,Environment environment) {
         long delay=environment.getRequiredProperty("LOAD_HANDLER_DELAY_MS",Long.class);
-        if(delay<50 || delay>5000) throw new IllegalArgumentException("Fixture delay must be 50–5000 ms");
+        if(delay<50 || delay>15000) throw new IllegalArgumentException("Fixture delay must be 50–15000 ms");
         return new JobProcessor(mapper) {
             @Override public JsonNode process(JobType type,String text,ExecutionControl control) {
                 control.checkpoint();

@@ -3,6 +3,8 @@ spring:
     banner-mode: off
   application:
     name: job-platform
+  lifecycle:
+    timeout-per-shutdown-phase: 40s
   datasource:
     url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/jobs}
     username: ${DATABASE_USER:jobs}
@@ -64,6 +66,7 @@ jobs:
     recovery-delay-ms: ${JOB_RECOVERY_DELAY_MS:1000}
   worker:
     enabled: true
+    shutdown-millis: ${JOB_LISTENER_SHUTDOWN_MILLIS:35000}
   dispatcher:
     enabled: true
     delay-ms: ${JOB_DISPATCH_DELAY_MS:1000}

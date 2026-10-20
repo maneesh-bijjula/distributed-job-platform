@@ -1,6 +1,6 @@
 # Execution tracking and recovery verification
 
-The platform is covered by **100 unit tests and 126 integration tests**, plus three packaged Docker smoke checks. Integration tests use isolated PostgreSQL and RabbitMQ services.
+The platform is covered by **122 unit tests and 141 integration tests**, eighteen Python harness/safety tests, and packaged Docker workflows. Integration tests use isolated PostgreSQL and RabbitMQ services.
 
 | Behavior | Verification |
 | --- | --- |
@@ -44,6 +44,11 @@ The platform is covered by **100 unit tests and 126 integration tests**, plus th
 | Priority and prefetch | A finite urgent burst overtakes older queued work before it drains; delivered low-priority messages can delay later urgent work with higher prefetch. Continuous-traffic fairness is not claimed. |
 | Capacity controls | Startup rejects unsafe bounds. A real integration check verifies custom batch limits preserve remaining outbox work and pool configuration reaches Hikari. |
 | Observability upgrade | The packaged V7 upgrade preserved 37 jobs, 96 events, 20 attempts, 2 outbox entries, 4 dead letters, 4 key records, owners, access audit, and admission records with matching checksums of their original fields. |
+| Fresh deployment | The separate release profile starts with random file-mounted credentials and empty volumes, exposes only a loopback API, and passes packaged lifecycle and access-control workflows. |
+| Graceful worker shutdown | SIGTERM during an eight-second fixture execution permits its one successful attempt before normal JVM termination. Prefetched work is returned rather than drained during shutdown. |
+| Backup and restore | Offline custom-format dumps are restored into a scratch database and into empty replacement deployment volumes; every public table and sequence fingerprint matches before startup. Nonempty targets and online maintenance are refused. |
+| Lost broker deliveries | Offline reconciliation recreates missing outbox work only for queued jobs, preserves future schedules and is repeatable; the restored worker verifies original job results without duplicate attempts. |
+| Failed rollout | An intentionally failing application startup leaves the schema/data unchanged; restoring the compatible image recovers operation. Database migrations are not automatically reversed. |
 
 Run the automated suite:
 
@@ -60,7 +65,7 @@ python3 scripts/dead-letter-smoke.py
 python3 scripts/auth-smoke.py
 ```
 
-The [observability guide](observability.md) includes the optional monitoring profile, live metric/dashboard check, and controlled outage verification. CI runs these checks too. The automated Java suite totals **258 tests** (117 unit and 141 integration), plus eight Python harness guardrail tests. The [performance guide](performance.md) covers the additional packaged load/fault workflows and recorded evidence.
+The [observability guide](observability.md) includes the optional monitoring profile, live metric/dashboard check, and controlled outage verification. CI runs these checks too. The automated Java suite totals **263 tests** (122 unit and 141 integration), plus eighteen Python harness/safety tests. The [performance guide](performance.md) covers the additional packaged load/fault workflows and recorded evidence. The [deployment guide](deployment.md) and [recovery runbook](recovery.md) describe the repeatable release drill.
 
 The smoke check creates a scheduled job, cancels it, creates and replays a linked manual retry, waits for the real worker result, and checks attempt persistence, lifecycle history, pagination, and conflict responses. The generated jobs remain available for inspection.
 

@@ -1,0 +1,121 @@
+# Standalone single-host profile. Do not merge with the development compose.yaml.
+x-app: &app
+  image: ${APP_IMAGE:?Initialize deployment with scripts/deploy.py}
+  restart: unless-stopped
+  stop_grace_period: 90s
+  mem_limit: 512m
+  cpus: 1.0
+  read_only: true
+  tmpfs: ["/tmp:size=64m,mode=1777"]
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
+  networks: [backend, edge]
+  logging:
+    driver: json-file
+    options: {max-size: 10m, max-file: "3"}
+  depends_on:
+    postgres: {condition: service_healthy}
+    rabbitmq: {condition: service_healthy}
+
+x-environment: &environment
+  SPRING_CONFIG_IMPORT: configtree:/run/secrets/
+  SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/jobs
+  SPRING_DATASOURCE_USERNAME: jobs
+  SPRING_RABBITMQ_HOST: rabbitmq
+  SPRING_RABBITMQ_USERNAME: jobs
+  SPRING_LIFECYCLE_TIMEOUT_PER_SHUTDOWN_PHASE: 40s
+  JOB_LISTENER_SHUTDOWN_MILLIS: 35000
+  JOB_DB_POOL_SIZE: ${JOB_DB_POOL_SIZE:-6}
+  JOB_WORKER_PREFETCH: ${JOB_WORKER_PREFETCH:-1}
+  WORKER_CONCURRENCY: ${WORKER_CONCURRENCY:-2}
+  JOB_DISPATCH_BATCH_SIZE: ${JOB_DISPATCH_BATCH_SIZE:-50}
+  JOB_DISPATCH_DELAY_MS: ${JOB_DISPATCH_DELAY_MS:-250}
+  JOB_LEASE_SECONDS: ${JOB_LEASE_SECONDS:-15}
+  JOB_HEARTBEAT_MILLIS: ${JOB_HEARTBEAT_MILLIS:-2000}
+  JOB_TIMEOUT_SECONDS: ${JOB_TIMEOUT_SECONDS:-30}
+
+services:
+  postgres:
+    image: ${POSTGRES_IMAGE:-postgres:17-alpine}
+    restart: unless-stopped
+    mem_limit: 512m
+    cpus: 1.0
+    stop_grace_period: 60s
+    environment:
+      POSTGRES_DB: jobs
+      POSTGRES_USER: jobs
+      POSTGRES_PASSWORD_FILE: /run/secrets/database_password
+    secrets: [database_password]
+    volumes: [postgres-data:/var/lib/postgresql/data]
+    networks: [backend]
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U jobs -d jobs"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+    logging: {driver: json-file, options: {max-size: 10m, max-file: "3"}}
+
+  rabbitmq:
+    image: ${RABBITMQ_IMAGE:-rabbitmq:4.1-management-alpine}
+    hostname: rabbitmq
+    restart: unless-stopped
+    mem_limit: 512m
+    cpus: 1.0
+    stop_grace_period: 60s
+    secrets:
+      - source: rabbitmq_config
+        target: /etc/rabbitmq/rabbitmq.conf
+    volumes: [rabbitmq-data:/var/lib/rabbitmq]
+    networks: [backend]
+    healthcheck:
+      test: [CMD, rabbitmq-diagnostics, -q, ping]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    logging: {driver: json-file, options: {max-size: 10m, max-file: "3"}}
+
+  api:
+    <<: *app
+    environment:
+      <<: *environment
+      JOBS_WORKER_ENABLED: "false"
+      SERVER_FORWARD_HEADERS_STRATEGY: none
+    secrets:
+      - source: database_password
+        target: spring.datasource.password
+      - source: broker_password
+        target: spring.rabbitmq.password
+      - source: bootstrap_key
+        target: jobs.auth.bootstrap-key
+    ports: ["127.0.0.1:${DEPLOY_API_PORT:-8088}:8080"]
+    healthcheck:
+      test: [CMD, wget, -q, -O, /dev/null, "http://127.0.0.1:8080/actuator/health/readiness"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 30s
+
+  worker:
+    <<: *app
+    environment:
+      <<: *environment
+      JOBS_WORKER_ENABLED: "true"
+      JOBS_DISPATCHER_ENABLED: "false"
+      SPRING_MAIN_WEB_APPLICATION_TYPE: none
+    secrets:
+      - source: database_password
+        target: spring.datasource.password
+      - source: broker_password
+        target: spring.rabbitmq.password
+
+networks:
+  backend: {internal: true}
+  edge: {}
+volumes:
+  postgres-data: {}
+  rabbitmq-data: {}
+secrets:
+  database_password: {file: "${DEPLOY_SECRET_DIR:?}/database-password"}
+  broker_password: {file: "${DEPLOY_SECRET_DIR:?}/broker-password"}
+  bootstrap_key: {file: "${DEPLOY_SECRET_DIR:?}/bootstrap-key"}
+  rabbitmq_config: {file: "${DEPLOY_SECRET_DIR:?}/rabbitmq.conf"}
