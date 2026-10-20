@@ -1,0 +1,180 @@
+{
+  "recordedAt": "2026-10-20T06:32:46.366405+00:00",
+  "gitCommit": "5bbcff7027adf4ed95a6d82bcfddaaaf52e9a71d",
+  "workingTreeDirty": false,
+  "command": [
+    "python3",
+    "scripts/load-test.py",
+    "--output",
+    "reports/phase5/measured-backlog-1-worker",
+    "--jobs",
+    "300",
+    "--clients",
+    "16",
+    "--workers",
+    "1",
+    "--skip-build",
+    "--batch",
+    "50",
+    "--dispatch-ms",
+    "250",
+    "--prefetch",
+    "1",
+    "--pool",
+    "6",
+    "--workers",
+    "1",
+    "--jobs",
+    "10000",
+    "--clients",
+    "24",
+    "--schedule-seconds",
+    "0",
+    "--mode",
+    "backlog"
+  ],
+  "sourceSha256": {
+    "Dockerfile": "728da6cffdf69d7daa5ad2272282a42e0ebade6b493c85e2ec5ecfd4edce545e",
+    "Dockerfile.loadtest": "fbe0e690a93a01bb970c98df6d5f255555dcfe55acdcf72a4f9bb6f6f43f84c9",
+    "compose.load.yaml": "f5516c4189444c489b1b22b1ba87e781242db1a9500efbb169e931765150b2fd",
+    "pom.xml": "c691bbd3963a843e73ca4d8c21febd1231183408ac98a3b7e1a099ea3f3450fc",
+    "scripts/load-test.py": "276324aef0b76875930adc0a4e6a0cf969d42bd8cb940afd550e07f17cd455f1",
+    "scripts/load_support.py": "a02194178c2726b6fa3c1ec1669f3860cb4c763dc1a416595c41cfa400ad6ccd",
+    "scripts/resilience-test.py": "6e3ed9c50190c23d5af636b376dc0ca5d9b13422a253c6fb54f880b6568a4c6e",
+    "src/main/java/com/maneesh/jobplatform/JobPlatformApplication.java": "9782b78c12f26a8d12ff0d8e4d1ebb4d0b3a4e21f8e63d11c8cf9fe89ccc2771",
+    "src/main/java/com/maneesh/jobplatform/api/AccessController.java": "c49da8be6b0329fd31ed975c19b821de7bd640161bc615936e95d35aa7cae8cb",
+    "src/main/java/com/maneesh/jobplatform/api/ApiExceptionHandler.java": "7100693a5114a2b6cf20a438f35561bac527e389ec745e94547896c628d52f6b",
+    "src/main/java/com/maneesh/jobplatform/api/CreateJobRequest.java": "2eb129fd4c748ece1cd96b1849f70b42464987532469a716058eeb922e97cee1",
+    "src/main/java/com/maneesh/jobplatform/api/DeadLetterController.java": "df62d455f521049979add28c96907c6a52f3e838cc3198b00240425f60e5d2ba",
+    "src/main/java/com/maneesh/jobplatform/api/JobController.java": "e961d0befcf1cda386a57d4232f1863e8cf6affa5726f1b8a75c00d22edb0b6a",
+    "src/main/java/com/maneesh/jobplatform/auth/AccessRecords.java": "3e52b7290b0788c95f6912b6ab701247252c31baaa0595672445641ee0c39c62",
+    "src/main/java/com/maneesh/jobplatform/auth/AccessRepository.java": "c1c06ca43a207ba36dbb1fcbf698b026c2b803fac48777758b360d97eef2907f",
+    "src/main/java/com/maneesh/jobplatform/auth/AdmissionService.java": "61db70cf159fc43ffff9ac3982be6628b824ef9b2bbd081a04e82353c7dee96c",
+    "src/main/java/com/maneesh/jobplatform/auth/ApiKeyBootstrap.java": "a1eed3d556573b314b621d33d753446ac7ba2638a0e01cacaeb811d6c1fbcf67",
+    "src/main/java/com/maneesh/jobplatform/auth/ApiKeyFilter.java": "9c0cca2b1985c6ee290600b471a367bf3b01436ffd9857632288fc6470238e5f",
+    "src/main/java/com/maneesh/jobplatform/auth/ApiKeyService.java": "ad9db8f35aba9d844775badf7f0df118d14f68e5059828620e86a238329b0f74",
+    "src/main/java/com/maneesh/jobplatform/auth/ApiPrincipal.java": "ec4dd86a95ef4d94dfcefe7109950a2fdb12ce05b50e16b1ac1bcf88abb9aafc",
+    "src/main/java/com/maneesh/jobplatform/auth/KeyTokens.java": "269f350e6e4006da3ab63c1a535a6ee6ec9dd1e73e42e7e688df359aa434ede4",
+    "src/main/java/com/maneesh/jobplatform/config/CapacityProperties.java": "310b4d7a88b3c3c4bcb0adb2b1af878e731993236480e41c390323d32f9c8c07",
+    "src/main/java/com/maneesh/jobplatform/config/DispatchProperties.java": "1679648d25386940b78b3edcfb1c16b94a421b7c636f13b7cdd2265a7b56b988",
+    "src/main/java/com/maneesh/jobplatform/config/ExecutionConfiguration.java": "dcec098ad424875715743ad895bcb5ec12361bc3273539c14234c1cd590938a6",
+    "src/main/java/com/maneesh/jobplatform/config/ExecutionProperties.java": "5f35692fc6a08f51992a24b757511a54c273dba2aaf22a196e11a3a1ff1c7185",
+    "src/main/java/com/maneesh/jobplatform/config/MetricsProperties.java": "3a64b98b6618a117b3e9edca1f55af4e1afd21c004ba9e8d99e2b135e6adfd04",
+    "src/main/java/com/maneesh/jobplatform/config/ObservabilityConfiguration.java": "1ec5465c010d7b92518423c5df68ac5f93830483dbf67c7f8d546d9661864d3e",
+    "src/main/java/com/maneesh/jobplatform/config/RabbitConfiguration.java": "4153b9958474550f24c475c92cc3d8533bf69ac8894e616f5d3364084d398227",
+    "src/main/java/com/maneesh/jobplatform/config/SecurityConfiguration.java": "5fbd8734c3185de6dac3c88f22a2be6e300d33c7eba78c0bfcd1661bde8a14b7",
+    "src/main/java/com/maneesh/jobplatform/deadletter/DeadLetter.java": "a22869fb12f2edeae76aec3c404768abbbf0ddc5144003bdd2a27497c2ee6c3c",
+    "src/main/java/com/maneesh/jobplatform/deadletter/DeadLetterCollector.java": "203e33ccae2fc22a5b5f72a4c349bfc55a32772f62bb87547ee9fe9016dbbca7",
+    "src/main/java/com/maneesh/jobplatform/deadletter/DeadLetterRepository.java": "b20bb66eb8b39637bd750f7d445520b961ade27c8d791e4bf2b0a11b2cc5063c",
+    "src/main/java/com/maneesh/jobplatform/deadletter/DeadLetterService.java": "8ae21c54dc2ffd4308a508d2567753cb1f26aa0e40f98265b60021c1786d3a2b",
+    "src/main/java/com/maneesh/jobplatform/jobs/Job.java": "a3817a114e2908e4cd52f127fa84a4825e40539a856127a8a8a0c12211d516a3",
+    "src/main/java/com/maneesh/jobplatform/jobs/JobAttempt.java": "6648351cf58bca80521e1b59014446bf32f59fdd175647bdaf0e17e4a1c0c96b",
+    "src/main/java/com/maneesh/jobplatform/jobs/JobEvent.java": "cdba4d4a2de964c3970cc80e8d1354ab564386b1d20e354255729e4c7de185bc",
+    "src/main/java/com/maneesh/jobplatform/jobs/JobRepository.java": "0b5337491c94c8e584a81ba4846704c3eaef3c3266552fbc0ffa1ee3ab5f0257",
+    "src/main/java/com/maneesh/jobplatform/jobs/JobService.java": "3dcf224ae3e96ffbbdf13cb50b31318e6465378b8a341ea2ec281e7c825f2fb9",
+    "src/main/java/com/maneesh/jobplatform/jobs/JobStatus.java": "a9dc559d7c447d4a125d4b30fd1d855c66c0eacaabf1bca5f797577fb747e558",
+    "src/main/java/com/maneesh/jobplatform/jobs/JobType.java": "843ff526bdbf5f6fb3f623fb6023fc65d5262cfe8a667f3970cd89c8e5bfcd30",
+    "src/main/java/com/maneesh/jobplatform/jobs/RetryPolicy.java": "da3224abd6c1e41f279cd2bbfc3c3d764e9a39c6ae95fdd3f034a43d880dfabd",
+    "src/main/java/com/maneesh/jobplatform/messaging/ConfirmedJobPublisher.java": "576142a176b24cdd86a5e7639e0ffc157a786c01270d6f7967997afd9fe643bc",
+    "src/main/java/com/maneesh/jobplatform/messaging/JobPublisher.java": "3f06e4408cc15ebb273a7858598f8c3ab473dc4ff3f14f451bf2440c42224a46",
+    "src/main/java/com/maneesh/jobplatform/messaging/OutboxRelay.java": "f03965c39d2cf01ad1ac8f3d377f33cc0a6c834573da3277632dd56f9b9a039a",
+    "src/main/java/com/maneesh/jobplatform/messaging/OutboxScheduler.java": "270102d8a6e698580c5385a2c7696b1d4d3cec7e7e245ea3829f3e00c8e883f7",
+    "src/main/java/com/maneesh/jobplatform/observability/JobMetricsExporter.java": "679bc288da7692d836b3a7fc26b81a6186165f7ee5998de9577b5786c009e12d",
+    "src/main/java/com/maneesh/jobplatform/observability/LifecycleMetrics.java": "ada9af29a09d795a8d933cf0a8859800aef2dcbac4347add186a7fb71776ecb1",
+    "src/main/java/com/maneesh/jobplatform/observability/MetricsSnapshotRepository.java": "635078648e573bde9a05dce7a73b06eef8f1c95b4972e2d6c6e9f6956fc35fa5",
+    "src/main/java/com/maneesh/jobplatform/observability/OperationMetrics.java": "a35ffdf3e097f6875c8b1728564ce1d91b7c8dea0d75a62fc46a6856e96381e1",
+    "src/main/java/com/maneesh/jobplatform/worker/ExecutionControl.java": "2408b94795bcedc6ba30ab77a1eb179e33e5b2c690c5234cdadd45cc15b8f722",
+    "src/main/java/com/maneesh/jobplatform/worker/ExecutionRecoveryScheduler.java": "4fa1b03c60cbfcc792e504f1496518dbc4c1cbca3993776bc5252f8d555bef94",
+    "src/main/java/com/maneesh/jobplatform/worker/ExecutionRepository.java": "b3dfcc81809f6c03dd43dae3908bbace4628bc46f6978f9668e7c359b1012ee4",
+    "src/main/java/com/maneesh/jobplatform/worker/ExecutionService.java": "49a8c4621ad3ac967fe225437d9751cd3cf542b52317fa583b469082c36ea177",
+    "src/main/java/com/maneesh/jobplatform/worker/HandlerFailure.java": "fbb84a0104ca82ddf28d184b353039d4ce5b33ce2716c7217601cb82c2201d69",
+    "src/main/java/com/maneesh/jobplatform/worker/JobExecutor.java": "e43619faf529a39afcee2457673b1be1e1b9f4714cc37e980ce82131663fe87d",
+    "src/main/java/com/maneesh/jobplatform/worker/JobListener.java": "c3448a68ccea0d30967685678d77e64d8b1f2c5178ee611295e3ad5c6322362d",
+    "src/main/java/com/maneesh/jobplatform/worker/JobProcessor.java": "58e7a3e62de8ff4d4d56fde77135c4b148cfd6ce4cb1ac5069c1aa21b66b92ed",
+    "src/main/java/com/maneesh/jobplatform/worker/RetryableJobException.java": "361ca764f25e8c55d0b0b27a31311a44a4faa44d289c58d70c0efee75cd044ba",
+    "src/main/resources/application.yaml": "9515db97aeca35a10451afb2b57c65861d58f07f472f2eb4ca2bb1df2a30db3e",
+    "src/main/resources/db/migration/V1__create_jobs_and_outbox.sql": "386b3e8ff7cf4164f5cbdde0f42873df06b220d2bc42dc9d19282ffa2a80d327",
+    "src/main/resources/db/migration/V2__schedule_and_prioritize_jobs.sql": "f2b06d83b22dcbe9468a31ffa4b2a5b35fb177c3228136be867403a03f344306",
+    "src/main/resources/db/migration/V3__job_controls_and_history.sql": "0bacba680a7dc9c126d57360ab5bdd505ef5a8546d04f30aa12c73144ac65dc1",
+    "src/main/resources/db/migration/V4__execution_attempts_and_leases.sql": "ecf9e7765135a8c40a212ff7120d6100b9ebae64a4de82a328e1477ad0cee899",
+    "src/main/resources/db/migration/V5__retry_policies_and_dead_letters.sql": "babf43613a4f419808cffd87e4698be0f45bfa932636aabf113135d8dc192fd3",
+    "src/main/resources/db/migration/V6__owners_api_keys_and_admission.sql": "8510be287fb1866fd2bcb5c60c68387924f0a1c40a7566d6884773070664b74b",
+    "src/main/resources/db/migration/V7__durable_observability.sql": "943cb3462b4ffc8fbc2d742b052e285592924d5f458d9206ecdb69ad80ff310c",
+    "tools/loadtest/java/loadtest/ControlledWorker.java": "f076a6ba14e70a4e228a63b8c2ff0abb23f7dc1ea2c07f9cf8667021e413c54f"
+  },
+  "hostOS": "Darwin",
+  "hostArchitecture": "arm64",
+  "python": "3.14.6",
+  "docker": {
+    "ServerVersion": "29.5.3",
+    "NCPU": 8,
+    "MemTotal": 4108632064,
+    "Architecture": "aarch64",
+    "OperatingSystem": "Docker Desktop"
+  },
+  "images": {
+    "job-platform:load": {
+      "Id": "sha256:112bd1bd17aa17fad6f1200076b80b29e5a857c299e4778849be4bffaac82c2f",
+      "RepoDigests": [
+        "job-platform@sha256:112bd1bd17aa17fad6f1200076b80b29e5a857c299e4778849be4bffaac82c2f"
+      ],
+      "Architecture": "arm64"
+    },
+    "job-platform:load-controlled": {
+      "Id": "sha256:97c3c4ec11406732557c2589be767b6b931f131cb8bf87fc0c644409ea3c6d63",
+      "RepoDigests": [
+        "job-platform@sha256:97c3c4ec11406732557c2589be767b6b931f131cb8bf87fc0c644409ea3c6d63"
+      ],
+      "Architecture": "arm64"
+    },
+    "postgres:17-alpine": {
+      "Id": "sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24",
+      "RepoDigests": [
+        "postgres@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24"
+      ],
+      "Architecture": "arm64"
+    },
+    "rabbitmq:4.1-management-alpine": {
+      "Id": "sha256:72b92455b387f14d44efa3b9b4553bae3d8d82cd515376712ae08d67fc9a7b0d",
+      "RepoDigests": [
+        "rabbitmq@sha256:72b92455b387f14d44efa3b9b4553bae3d8d82cd515376712ae08d67fc9a7b0d"
+      ],
+      "Architecture": "arm64"
+    }
+  },
+  "containerLimits": {
+    "job-platform-load-worker-1": {
+      "Memory": 536870912,
+      "NanoCpus": 750000000
+    },
+    "job-platform-load-api2-1": {
+      "Memory": 536870912,
+      "NanoCpus": 1000000000
+    },
+    "job-platform-load-api-1": {
+      "Memory": 536870912,
+      "NanoCpus": 1000000000
+    },
+    "job-platform-load-rabbitmq-1": {
+      "Memory": 402653184,
+      "NanoCpus": 1000000000
+    },
+    "job-platform-load-postgres-1": {
+      "Memory": 402653184,
+      "NanoCpus": 1000000000
+    }
+  },
+  "settings": {
+    "batchSize": 50,
+    "dispatchDelayMs": 250,
+    "prefetch": 1,
+    "databasePoolSize": 6,
+    "concurrencyPerWorker": 2,
+    "workers": 1,
+    "apiInstances": 2,
+    "leaseSeconds": 6,
+    "heartbeatMs": 1000
+  },
+  "timing": "Client monotonic elapsed time; DB timestamps for job/attempt intervals; nearest-rank percentiles",
+  "cpuWork": "Unmodified WORD_COUNT/SHA256/UPPERCASE unless a fault report explicitly identifies the fixture"
+}

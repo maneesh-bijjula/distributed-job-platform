@@ -1,0 +1,99 @@
+{
+  "passed": true,
+  "name": "stale-worker-resumed",
+  "ownerId": "9ac3305a-a07f-4cce-9bbd-63ed406c1af6",
+  "uniqueJobs": 1,
+  "requestCount": 1,
+  "duplicateRequests": 0,
+  "httpStatuses": {
+    "202": 1
+  },
+  "apiRequests": {
+    "0": 1
+  },
+  "attemptOutcomes": {
+    "ABANDONED": 1,
+    "SUCCEEDED": 1
+  },
+  "workerProcessesUsed": 2,
+  "submissionSeconds": 0.018745374982245266,
+  "admittedJobsPerSecond": 53.346492185253844,
+  "completionMeasurement": "submission through observed terminal state",
+  "completionSeconds": 14.855703374982113,
+  "completedJobsPerSecond": 0.06731421426225159,
+  "successfulHttpRequestMs": {
+    "samples": 1,
+    "mean": 13.080957985948771,
+    "p50": 13.080957985948771,
+    "p95": 13.080957985948771,
+    "p99": 13.080957985948771,
+    "max": 13.080957985948771
+  },
+  "logicalSubmissionMs": {
+    "samples": 1,
+    "mean": 13.199957989854738,
+    "p50": 13.199957989854738,
+    "p95": 13.199957989854738,
+    "p99": 13.199957989854738,
+    "max": 13.199957989854738
+  },
+  "allHttpRequestMs": {
+    "samples": 1,
+    "mean": 13.080957985948771,
+    "p50": 13.080957985948771,
+    "p95": 13.080957985948771,
+    "p99": 13.080957985948771,
+    "max": 13.080957985948771
+  },
+  "newJobRequestMs": {
+    "samples": 1,
+    "mean": 13.080957985948771,
+    "p50": 13.080957985948771,
+    "p95": 13.080957985948771,
+    "p99": 13.080957985948771,
+    "max": 13.080957985948771
+  },
+  "replayRequestMs": {
+    "samples": 0,
+    "mean": null,
+    "p50": null,
+    "p95": null,
+    "p99": null,
+    "max": null
+  },
+  "transportErrors": 0,
+  "httpErrorResponses": 0,
+  "jobEndToEndMs": {
+    "samples": 1,
+    "mean": 14517.907,
+    "p50": 14517.907,
+    "p95": 14517.907,
+    "p99": 14517.907,
+    "max": 14517.907
+  },
+  "attemptQueueDelayMs": {
+    "samples": 2,
+    "mean": 3049.441,
+    "p50": 1044.632,
+    "p95": 5054.25,
+    "p99": 5054.25,
+    "max": 5054.25
+  },
+  "attemptExecutionMs": {
+    "samples": 2,
+    "mean": 4209.657,
+    "p50": 2124.542,
+    "p95": 6294.772,
+    "p99": 6294.772,
+    "max": 6294.772
+  },
+  "payloadBytes": {
+    "128": 1
+  },
+  "scheduledJobs": 0,
+  "accountedFor": 1,
+  "incorrectResults": 0,
+  "duplicateSuccessfulAttempts": 0,
+  "pollIntervalSeconds": 0.25,
+  "fixtureUsed": true
+}

@@ -1,0 +1,1282 @@
+{
+  "passed": true,
+  "settings": {
+    "batchSize": 50,
+    "dispatchDelayMs": 250,
+    "prefetch": 1,
+    "databasePoolSize": 6,
+    "concurrencyPerWorker": 1,
+    "workers": 2,
+    "apiInstances": 2,
+    "leaseSeconds": 6,
+    "heartbeatMs": 1000,
+    "databaseCpus": 1
+  },
+  "scenarios": [
+    {
+      "fault": "broker_stop_restore",
+      "acceptedWhileDown": 24,
+      "outboxPreserved": 24
+    },
+    {
+      "fault": "database_stop_restore",
+      "previouslyAccepted": 6,
+      "retriedUniqueSubmissions": 12,
+      "readiness": 503,
+      "liveness": 200,
+      "authenticatedApi": 503
+    },
+    {
+      "fault": "application_stop_restart",
+      "acceptedIdsPreserved": 12
+    },
+    {
+      "fault": "duplicate_broker_delivery",
+      "extraMessages": 40,
+      "jobs": 20
+    },
+    {
+      "fault": "worker_sigkill",
+      "attemptId": "6dd3f973-86df-479e-8c6c-80115d820db8",
+      "jobId": "17ba436f-1698-4206-9873-ff01d9a42ee3"
+    },
+    {
+      "fault": "worker_pause_resume",
+      "attemptId": "404a291b-c343-4fbb-909c-55449622c99d",
+      "replacementSucceededBeforeResume": true,
+      "staleFinalWriteRejected": true
+    },
+    {
+      "fault": "finite_priority_burst",
+      "highFirst": 16,
+      "olderLowEventuallyCompleted": 4,
+      "continuousHighTrafficCanStarveLow": true
+    },
+    {
+      "fault": "prefetch_priority_delay",
+      "prefetch": 10,
+      "lowAttemptsBeforeFirstUrgent": 10
+    },
+    {
+      "fault": "bounded_admission",
+      "limitPerMinute": 5,
+      "accepted": 5,
+      "rejected429": 7,
+      "replayCharged": false
+    }
+  ],
+  "workloads": [
+    {
+      "passed": true,
+      "name": "concurrent-duplicates",
+      "ownerId": "643ad979-643b-4020-88b7-b8eaf223ca21",
+      "uniqueJobs": 80,
+      "requestCount": 160,
+      "duplicateRequests": 80,
+      "httpStatuses": {
+        "202": 80,
+        "200": 80
+      },
+      "apiRequests": {
+        "0": 80,
+        "1": 80
+      },
+      "attemptOutcomes": {
+        "SUCCEEDED": 80
+      },
+      "workerProcessesUsed": 2,
+      "submissionSeconds": 1.587850542011438,
+      "admittedJobsPerSecond": 50.382575616127305,
+      "completionMeasurement": "submission through observed terminal state",
+      "completionSeconds": 1.73725687499973,
+      "completedJobsPerSecond": 46.04960909998554,
+      "successfulHttpRequestMs": {
+        "samples": 160,
+        "mean": 77.1606020443869,
+        "p50": 41.9060830026865,
+        "p95": 259.16708400473,
+        "p99": 533.4639580105431,
+        "max": 571.5804159990512
+      },
+      "logicalSubmissionMs": {
+        "samples": 160,
+        "mean": 77.61357242525264,
+        "p50": 42.25625001708977,
+        "p95": 259.3530830054078,
+        "p99": 533.7353749782778,
+        "max": 571.7697909858543
+      },
+      "allHttpRequestMs": {
+        "samples": 160,
+        "mean": 77.1606020443869,
+        "p50": 41.9060830026865,
+        "p95": 259.16708400473,
+        "p99": 533.4639580105431,
+        "max": 571.5804159990512
+      },
+      "newJobRequestMs": {
+        "samples": 80,
+        "mean": 125.5888015639357,
+        "p50": 91.00149999721907,
+        "p95": 288.31408300902694,
+        "p99": 571.5804159990512,
+        "max": 571.5804159990512
+      },
+      "replayRequestMs": {
+        "samples": 80,
+        "mean": 28.732402524838108,
+        "p50": 16.649583005346358,
+        "p95": 75.14745800290257,
+        "p99": 90.50325001589954,
+        "max": 90.50325001589954
+      },
+      "transportErrors": 0,
+      "httpErrorResponses": 0,
+      "jobEndToEndMs": {
+        "samples": 80,
+        "mean": 509.2740375,
+        "p50": 533.572,
+        "p95": 668.199,
+        "p99": 693.899,
+        "max": 693.899
+      },
+      "attemptQueueDelayMs": {
+        "samples": 80,
+        "mean": 497.580075,
+        "p50": 521.412,
+        "p95": 651.439,
+        "p99": 669.8349999999999,
+        "max": 669.8349999999999
+      },
+      "attemptExecutionMs": {
+        "samples": 80,
+        "mean": 11.788525,
+        "p50": 4.281,
+        "p95": 44.163,
+        "p99": 91.521,
+        "max": 91.521
+      },
+      "payloadBytes": {
+        "128": 40,
+        "4096": 40
+      },
+      "scheduledJobs": 0,
+      "accountedFor": 80,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "pollIntervalSeconds": 0.25,
+      "fixtureUsed": false
+    },
+    {
+      "passed": true,
+      "name": "broker-outage",
+      "ownerId": "70b9c3d2-1584-43c9-a5bb-fecc0166e775",
+      "uniqueJobs": 24,
+      "requestCount": 36,
+      "duplicateRequests": 12,
+      "httpStatuses": {
+        "202": 24,
+        "200": 12
+      },
+      "apiRequests": {
+        "0": 18,
+        "1": 18
+      },
+      "attemptOutcomes": {
+        "SUCCEEDED": 24
+      },
+      "workerProcessesUsed": 2,
+      "submissionSeconds": 0.22532433399464935,
+      "admittedJobsPerSecond": 106.51312964968051,
+      "completionMeasurement": "submission through observed terminal state",
+      "completionSeconds": 4.979899250000017,
+      "completedJobsPerSecond": 4.819374608833686,
+      "successfulHttpRequestMs": {
+        "samples": 36,
+        "mean": 45.19140983272033,
+        "p50": 40.123875020071864,
+        "p95": 96.42604200053029,
+        "p99": 123.86566601344384,
+        "max": 123.86566601344384
+      },
+      "logicalSubmissionMs": {
+        "samples": 36,
+        "mean": 45.498677165596746,
+        "p50": 40.42599999229424,
+        "p95": 96.51804098393768,
+        "p99": 124.00466701365076,
+        "max": 124.00466701365076
+      },
+      "allHttpRequestMs": {
+        "samples": 36,
+        "mean": 45.19140983272033,
+        "p50": 40.123875020071864,
+        "p95": 96.42604200053029,
+        "p99": 123.86566601344384,
+        "max": 123.86566601344384
+      },
+      "newJobRequestMs": {
+        "samples": 24,
+        "mean": 56.89463895760127,
+        "p50": 51.544624991947785,
+        "p95": 96.42604200053029,
+        "p99": 123.86566601344384,
+        "max": 123.86566601344384
+      },
+      "replayRequestMs": {
+        "samples": 12,
+        "mean": 21.784951582958456,
+        "p50": 8.477791008772328,
+        "p95": 43.166874995222315,
+        "p99": 43.166874995222315,
+        "max": 43.166874995222315
+      },
+      "transportErrors": 0,
+      "httpErrorResponses": 0,
+      "jobEndToEndMs": {
+        "samples": 24,
+        "mean": 4394.3786666666665,
+        "p50": 4391.786,
+        "p95": 4410.124,
+        "p99": 4430.759,
+        "max": 4430.759
+      },
+      "attemptQueueDelayMs": {
+        "samples": 24,
+        "mean": 4389.2595833333335,
+        "p50": 4385.7609999999995,
+        "p95": 4404.696000000001,
+        "p99": 4428.211,
+        "max": 4428.211
+      },
+      "attemptExecutionMs": {
+        "samples": 24,
+        "mean": 4.8834583333333335,
+        "p50": 2.829,
+        "p95": 17.089,
+        "p99": 28.811,
+        "max": 28.811
+      },
+      "payloadBytes": {
+        "128": 12,
+        "4096": 12
+      },
+      "scheduledJobs": 0,
+      "accountedFor": 24,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "pollIntervalSeconds": 0.25,
+      "fixtureUsed": false
+    },
+    {
+      "passed": true,
+      "name": "database-before",
+      "ownerId": "05376153-98fc-4afb-a730-57a19a83b97b",
+      "uniqueJobs": 6,
+      "requestCount": 6,
+      "duplicateRequests": 0,
+      "httpStatuses": {
+        "202": 6
+      },
+      "apiRequests": {
+        "1": 3,
+        "0": 3
+      },
+      "attemptOutcomes": {
+        "SUCCEEDED": 6
+      },
+      "workerProcessesUsed": 2,
+      "submissionSeconds": 0.09269033398595639,
+      "admittedJobsPerSecond": 64.73166879417077,
+      "completionMeasurement": "submission through observed terminal state",
+      "completionSeconds": 25.367464209004538,
+      "completedJobsPerSecond": 0.23652344398973138,
+      "successfulHttpRequestMs": {
+        "samples": 6,
+        "mean": 69.88027100063239,
+        "p50": 52.09783400641754,
+        "p95": 90.51370801171288,
+        "p99": 90.51370801171288,
+        "max": 90.51370801171288
+      },
+      "logicalSubmissionMs": {
+        "samples": 6,
+        "mean": 69.98072216326061,
+        "p50": 52.132332988549024,
+        "p95": 90.58870899025351,
+        "p99": 90.58870899025351,
+        "max": 90.58870899025351
+      },
+      "allHttpRequestMs": {
+        "samples": 6,
+        "mean": 69.88027100063239,
+        "p50": 52.09783400641754,
+        "p95": 90.51370801171288,
+        "p99": 90.51370801171288,
+        "max": 90.51370801171288
+      },
+      "newJobRequestMs": {
+        "samples": 6,
+        "mean": 69.88027100063239,
+        "p50": 52.09783400641754,
+        "p95": 90.51370801171288,
+        "p99": 90.51370801171288,
+        "max": 90.51370801171288
+      },
+      "replayRequestMs": {
+        "samples": 0,
+        "mean": null,
+        "p50": null,
+        "p95": null,
+        "p99": null,
+        "max": null
+      },
+      "transportErrors": 0,
+      "httpErrorResponses": 0,
+      "jobEndToEndMs": {
+        "samples": 6,
+        "mean": 25234.291166666666,
+        "p50": 25230.574,
+        "p95": 25254.013,
+        "p99": 25254.013,
+        "max": 25254.013
+      },
+      "attemptQueueDelayMs": {
+        "samples": 6,
+        "mean": 280.495,
+        "p50": 288.375,
+        "p95": 301.328,
+        "p99": 301.328,
+        "max": 301.328
+      },
+      "attemptExecutionMs": {
+        "samples": 6,
+        "mean": 13.339500000000001,
+        "p50": 7.909,
+        "p95": 28.247,
+        "p99": 28.247,
+        "max": 28.247
+      },
+      "payloadBytes": {
+        "128": 3,
+        "4096": 3
+      },
+      "scheduledJobs": 6,
+      "accountedFor": 6,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "pollIntervalSeconds": 0.25,
+      "fixtureUsed": false
+    },
+    {
+      "passed": true,
+      "name": "database-during",
+      "ownerId": "af0c97d9-afc9-4353-9500-c322dbe69714",
+      "uniqueJobs": 12,
+      "requestCount": 21,
+      "duplicateRequests": 6,
+      "httpStatuses": {
+        "503": 3,
+        "202": 12,
+        "200": 6
+      },
+      "apiRequests": {
+        "0": 10,
+        "1": 11
+      },
+      "attemptOutcomes": {
+        "SUCCEEDED": 12
+      },
+      "workerProcessesUsed": 2,
+      "submissionSeconds": 1.2259541249950416,
+      "admittedJobsPerSecond": 9.788294484549766,
+      "completionMeasurement": "submission through observed terminal state",
+      "completionSeconds": 25.318075999995926,
+      "completedJobsPerSecond": 0.47396966499357734,
+      "successfulHttpRequestMs": {
+        "samples": 18,
+        "mean": 512.7443287249965,
+        "p50": 191.072665998945,
+        "p95": 1160.7176669931505,
+        "p99": 1160.7176669931505,
+        "max": 1160.7176669931505
+      },
+      "logicalSubmissionMs": {
+        "samples": 18,
+        "mean": 532.325219835103,
+        "p50": 191.24258300871588,
+        "p95": 1160.861374984961,
+        "p99": 1160.861374984961,
+        "max": 1160.861374984961
+      },
+      "allHttpRequestMs": {
+        "samples": 21,
+        "mean": 441.28442657529376,
+        "p50": 127.50416700146161,
+        "p95": 1154.6311660204083,
+        "p99": 1160.7176669931505,
+        "max": 1160.7176669931505
+      },
+      "newJobRequestMs": {
+        "samples": 12,
+        "mean": 755.6435174216555,
+        "p50": 1001.2898329878226,
+        "p95": 1160.7176669931505,
+        "p99": 1160.7176669931505,
+        "max": 1160.7176669931505
+      },
+      "replayRequestMs": {
+        "samples": 6,
+        "mean": 26.94595133167847,
+        "p50": 10.120082995854318,
+        "p95": 56.43529200460762,
+        "p99": 56.43529200460762,
+        "max": 56.43529200460762
+      },
+      "transportErrors": 0,
+      "httpErrorResponses": 3,
+      "jobEndToEndMs": {
+        "samples": 12,
+        "mean": 387.03749999999997,
+        "p50": 400.224,
+        "p95": 459.731,
+        "p99": 459.731,
+        "max": 459.731
+      },
+      "attemptQueueDelayMs": {
+        "samples": 12,
+        "mean": 365.67941666666667,
+        "p50": 380.849,
+        "p95": 432.63,
+        "p99": 432.63,
+        "max": 432.63
+      },
+      "attemptExecutionMs": {
+        "samples": 12,
+        "mean": 24.902,
+        "p50": 3.94,
+        "p95": 137.354,
+        "p99": 137.354,
+        "max": 137.354
+      },
+      "payloadBytes": {
+        "128": 6,
+        "4096": 6
+      },
+      "scheduledJobs": 0,
+      "accountedFor": 12,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "pollIntervalSeconds": 0.25,
+      "fixtureUsed": false
+    },
+    {
+      "passed": true,
+      "name": "application-restart",
+      "ownerId": "2b040800-3d58-40a1-9263-b2910bfc9a31",
+      "uniqueJobs": 12,
+      "requestCount": 24,
+      "duplicateRequests": 12,
+      "httpStatuses": {
+        "202": 12,
+        "200": 12
+      },
+      "apiRequests": {
+        "0": 12,
+        "1": 12
+      },
+      "attemptOutcomes": {
+        "SUCCEEDED": 12
+      },
+      "workerProcessesUsed": 2,
+      "submissionSeconds": 0.20744804199784994,
+      "admittedJobsPerSecond": 57.84580989260131,
+      "completionMeasurement": "submission through observed terminal state",
+      "completionSeconds": 14.40584987498005,
+      "completedJobsPerSecond": 0.8329949363724449,
+      "successfulHttpRequestMs": {
+        "samples": 24,
+        "mean": 57.727182374947006,
+        "p50": 36.25350000220351,
+        "p95": 145.9024159994442,
+        "p99": 159.8096250090748,
+        "max": 159.8096250090748
+      },
+      "logicalSubmissionMs": {
+        "samples": 24,
+        "mean": 57.87765616454029,
+        "p50": 36.55399999115616,
+        "p95": 146.0854170145467,
+        "p99": 159.85225001350045,
+        "max": 159.85225001350045
+      },
+      "allHttpRequestMs": {
+        "samples": 24,
+        "mean": 57.727182374947006,
+        "p50": 36.25350000220351,
+        "p95": 145.9024159994442,
+        "p99": 159.8096250090748,
+        "max": 159.8096250090748
+      },
+      "newJobRequestMs": {
+        "samples": 12,
+        "mean": 87.6143612525387,
+        "p50": 97.21208401606418,
+        "p95": 159.8096250090748,
+        "p99": 159.8096250090748,
+        "max": 159.8096250090748
+      },
+      "replayRequestMs": {
+        "samples": 12,
+        "mean": 27.84000349735531,
+        "p50": 15.888875001110137,
+        "p95": 93.32575000007637,
+        "p99": 93.32575000007637,
+        "max": 93.32575000007637
+      },
+      "transportErrors": 0,
+      "httpErrorResponses": 0,
+      "jobEndToEndMs": {
+        "samples": 12,
+        "mean": 14129.164083333335,
+        "p50": 14161.214,
+        "p95": 14177.458,
+        "p99": 14177.458,
+        "max": 14177.458
+      },
+      "attemptQueueDelayMs": {
+        "samples": 12,
+        "mean": 2123.3013333333333,
+        "p50": 2185.7700000000004,
+        "p95": 2215.744,
+        "p99": 2215.744,
+        "max": 2215.744
+      },
+      "attemptExecutionMs": {
+        "samples": 12,
+        "mean": 38.60725,
+        "p50": 5.427,
+        "p95": 113.396,
+        "p99": 113.396,
+        "max": 113.396
+      },
+      "payloadBytes": {
+        "128": 6,
+        "4096": 6
+      },
+      "scheduledJobs": 12,
+      "accountedFor": 12,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "pollIntervalSeconds": 0.25,
+      "fixtureUsed": false
+    },
+    {
+      "passed": true,
+      "name": "duplicate-delivery",
+      "ownerId": "4efa6d82-6202-4711-8ed0-e9cf02ff5b39",
+      "uniqueJobs": 20,
+      "requestCount": 40,
+      "duplicateRequests": 20,
+      "httpStatuses": {
+        "202": 20,
+        "200": 20
+      },
+      "apiRequests": {
+        "1": 20,
+        "0": 20
+      },
+      "attemptOutcomes": {
+        "SUCCEEDED": 20
+      },
+      "workerProcessesUsed": 2,
+      "submissionSeconds": 0.41537075000815094,
+      "admittedJobsPerSecond": 48.149755368204275,
+      "completionMeasurement": "submission through observed terminal state",
+      "completionSeconds": 7.949360334023368,
+      "completedJobsPerSecond": 2.5159257046632715,
+      "successfulHttpRequestMs": {
+        "samples": 40,
+        "mean": 81.4443614508491,
+        "p50": 40.216749999672174,
+        "p95": 299.2682910116855,
+        "p99": 392.79529100167565,
+        "max": 392.79529100167565
+      },
+      "logicalSubmissionMs": {
+        "samples": 40,
+        "mean": 81.61713237859658,
+        "p50": 40.35237501375377,
+        "p95": 299.39558400656097,
+        "p99": 392.9017910268158,
+        "max": 392.9017910268158
+      },
+      "allHttpRequestMs": {
+        "samples": 40,
+        "mean": 81.4443614508491,
+        "p50": 40.216749999672174,
+        "p95": 299.2682910116855,
+        "p99": 392.79529100167565,
+        "max": 392.79529100167565
+      },
+      "newJobRequestMs": {
+        "samples": 20,
+        "mean": 137.50281875254586,
+        "p50": 103.61558399745263,
+        "p95": 303.75062499661,
+        "p99": 392.79529100167565,
+        "max": 392.79529100167565
+      },
+      "replayRequestMs": {
+        "samples": 20,
+        "mean": 25.38590414915234,
+        "p50": 10.996833007084206,
+        "p95": 76.54183299746364,
+        "p99": 77.67933298600838,
+        "max": 77.67933298600838
+      },
+      "transportErrors": 0,
+      "httpErrorResponses": 0,
+      "jobEndToEndMs": {
+        "samples": 20,
+        "mean": 7602.1664,
+        "p50": 7583.874,
+        "p95": 7671.13,
+        "p99": 7676.887,
+        "max": 7676.887
+      },
+      "attemptQueueDelayMs": {
+        "samples": 20,
+        "mean": 7581.89895,
+        "p50": 7576.388,
+        "p95": 7640.3910000000005,
+        "p99": 7643.534,
+        "max": 7643.534
+      },
+      "attemptExecutionMs": {
+        "samples": 20,
+        "mean": 24.09495,
+        "p50": 4.233,
+        "p95": 98.797,
+        "p99": 100.168,
+        "max": 100.168
+      },
+      "payloadBytes": {
+        "128": 10,
+        "4096": 10
+      },
+      "scheduledJobs": 0,
+      "accountedFor": 20,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "pollIntervalSeconds": 0.25,
+      "fixtureUsed": false
+    },
+    {
+      "passed": true,
+      "name": "worker-killed",
+      "ownerId": "274c58ba-fda0-4d99-be54-bb63065794ce",
+      "uniqueJobs": 1,
+      "requestCount": 1,
+      "duplicateRequests": 0,
+      "httpStatuses": {
+        "202": 1
+      },
+      "apiRequests": {
+        "0": 1
+      },
+      "attemptOutcomes": {
+        "ABANDONED": 1,
+        "SUCCEEDED": 1
+      },
+      "workerProcessesUsed": 2,
+      "submissionSeconds": 0.018136957980459556,
+      "admittedJobsPerSecond": 55.13603775657322,
+      "completionMeasurement": "submission through observed terminal state",
+      "completionSeconds": 15.945422499993583,
+      "completedJobsPerSecond": 0.0627139230710508,
+      "successfulHttpRequestMs": {
+        "samples": 1,
+        "mean": 16.191292001167312,
+        "p50": 16.191292001167312,
+        "p95": 16.191292001167312,
+        "p99": 16.191292001167312,
+        "max": 16.191292001167312
+      },
+      "logicalSubmissionMs": {
+        "samples": 1,
+        "mean": 16.424500005086884,
+        "p50": 16.424500005086884,
+        "p95": 16.424500005086884,
+        "p99": 16.424500005086884,
+        "max": 16.424500005086884
+      },
+      "allHttpRequestMs": {
+        "samples": 1,
+        "mean": 16.191292001167312,
+        "p50": 16.191292001167312,
+        "p95": 16.191292001167312,
+        "p99": 16.191292001167312,
+        "max": 16.191292001167312
+      },
+      "newJobRequestMs": {
+        "samples": 1,
+        "mean": 16.191292001167312,
+        "p50": 16.191292001167312,
+        "p95": 16.191292001167312,
+        "p99": 16.191292001167312,
+        "max": 16.191292001167312
+      },
+      "replayRequestMs": {
+        "samples": 0,
+        "mean": null,
+        "p50": null,
+        "p95": null,
+        "p99": null,
+        "max": null
+      },
+      "transportErrors": 0,
+      "httpErrorResponses": 0,
+      "jobEndToEndMs": {
+        "samples": 1,
+        "mean": 15648.71,
+        "p50": 15648.71,
+        "p95": 15648.71,
+        "p99": 15648.71,
+        "max": 15648.71
+      },
+      "attemptQueueDelayMs": {
+        "samples": 2,
+        "mean": 3757.7545000000005,
+        "p50": 1738.863,
+        "p95": 5776.646000000001,
+        "p99": 5776.646000000001,
+        "max": 5776.646000000001
+      },
+      "attemptExecutionMs": {
+        "samples": 2,
+        "mean": 4065.8955,
+        "p50": 2036.876,
+        "p95": 6094.915,
+        "p99": 6094.915,
+        "max": 6094.915
+      },
+      "payloadBytes": {
+        "128": 1
+      },
+      "scheduledJobs": 0,
+      "accountedFor": 1,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "pollIntervalSeconds": 0.25,
+      "fixtureUsed": true
+    },
+    {
+      "passed": true,
+      "name": "stale-worker-resumed",
+      "ownerId": "9ac3305a-a07f-4cce-9bbd-63ed406c1af6",
+      "uniqueJobs": 1,
+      "requestCount": 1,
+      "duplicateRequests": 0,
+      "httpStatuses": {
+        "202": 1
+      },
+      "apiRequests": {
+        "0": 1
+      },
+      "attemptOutcomes": {
+        "ABANDONED": 1,
+        "SUCCEEDED": 1
+      },
+      "workerProcessesUsed": 2,
+      "submissionSeconds": 0.018745374982245266,
+      "admittedJobsPerSecond": 53.346492185253844,
+      "completionMeasurement": "submission through observed terminal state",
+      "completionSeconds": 14.855703374982113,
+      "completedJobsPerSecond": 0.06731421426225159,
+      "successfulHttpRequestMs": {
+        "samples": 1,
+        "mean": 13.080957985948771,
+        "p50": 13.080957985948771,
+        "p95": 13.080957985948771,
+        "p99": 13.080957985948771,
+        "max": 13.080957985948771
+      },
+      "logicalSubmissionMs": {
+        "samples": 1,
+        "mean": 13.199957989854738,
+        "p50": 13.199957989854738,
+        "p95": 13.199957989854738,
+        "p99": 13.199957989854738,
+        "max": 13.199957989854738
+      },
+      "allHttpRequestMs": {
+        "samples": 1,
+        "mean": 13.080957985948771,
+        "p50": 13.080957985948771,
+        "p95": 13.080957985948771,
+        "p99": 13.080957985948771,
+        "max": 13.080957985948771
+      },
+      "newJobRequestMs": {
+        "samples": 1,
+        "mean": 13.080957985948771,
+        "p50": 13.080957985948771,
+        "p95": 13.080957985948771,
+        "p99": 13.080957985948771,
+        "max": 13.080957985948771
+      },
+      "replayRequestMs": {
+        "samples": 0,
+        "mean": null,
+        "p50": null,
+        "p95": null,
+        "p99": null,
+        "max": null
+      },
+      "transportErrors": 0,
+      "httpErrorResponses": 0,
+      "jobEndToEndMs": {
+        "samples": 1,
+        "mean": 14517.907,
+        "p50": 14517.907,
+        "p95": 14517.907,
+        "p99": 14517.907,
+        "max": 14517.907
+      },
+      "attemptQueueDelayMs": {
+        "samples": 2,
+        "mean": 3049.441,
+        "p50": 1044.632,
+        "p95": 5054.25,
+        "p99": 5054.25,
+        "max": 5054.25
+      },
+      "attemptExecutionMs": {
+        "samples": 2,
+        "mean": 4209.657,
+        "p50": 2124.542,
+        "p95": 6294.772,
+        "p99": 6294.772,
+        "max": 6294.772
+      },
+      "payloadBytes": {
+        "128": 1
+      },
+      "scheduledJobs": 0,
+      "accountedFor": 1,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "pollIntervalSeconds": 0.25,
+      "fixtureUsed": true
+    },
+    {
+      "passed": true,
+      "name": "priority-low",
+      "ownerId": "019dac16-2ac7-41e4-8d32-8905049b8ff0",
+      "uniqueJobs": 4,
+      "requestCount": 4,
+      "duplicateRequests": 0,
+      "httpStatuses": {
+        "202": 4
+      },
+      "apiRequests": {
+        "1": 2,
+        "0": 2
+      },
+      "attemptOutcomes": {
+        "SUCCEEDED": 4
+      },
+      "workerProcessesUsed": 1,
+      "submissionSeconds": 0.05019954201998189,
+      "admittedJobsPerSecond": 79.68200184790138,
+      "completionMeasurement": "submission through observed terminal state",
+      "completionSeconds": 10.846709375007777,
+      "completedJobsPerSecond": 0.3687754379421761,
+      "successfulHttpRequestMs": {
+        "samples": 4,
+        "mean": 40.95028150186408,
+        "p50": 38.05958401062526,
+        "p95": 47.743250004714355,
+        "p99": 47.743250004714355,
+        "max": 47.743250004714355
+      },
+      "logicalSubmissionMs": {
+        "samples": 4,
+        "mean": 41.116260254057124,
+        "p50": 38.19887500139885,
+        "p95": 47.89975000312552,
+        "p99": 47.89975000312552,
+        "max": 47.89975000312552
+      },
+      "allHttpRequestMs": {
+        "samples": 4,
+        "mean": 40.95028150186408,
+        "p50": 38.05958401062526,
+        "p95": 47.743250004714355,
+        "p99": 47.743250004714355,
+        "max": 47.743250004714355
+      },
+      "newJobRequestMs": {
+        "samples": 4,
+        "mean": 40.95028150186408,
+        "p50": 38.05958401062526,
+        "p95": 47.743250004714355,
+        "p99": 47.743250004714355,
+        "max": 47.743250004714355
+      },
+      "replayRequestMs": {
+        "samples": 0,
+        "mean": null,
+        "p50": null,
+        "p95": null,
+        "p99": null,
+        "max": null
+      },
+      "transportErrors": 0,
+      "httpErrorResponses": 0,
+      "jobEndToEndMs": {
+        "samples": 4,
+        "mean": 10461.512999999999,
+        "p50": 10408.264,
+        "p95": 10622.615,
+        "p99": 10622.615,
+        "max": 10622.615
+      },
+      "attemptQueueDelayMs": {
+        "samples": 4,
+        "mean": 10355.4445,
+        "p50": 10302.851,
+        "p95": 10518.9,
+        "p99": 10518.9,
+        "max": 10518.9
+      },
+      "attemptExecutionMs": {
+        "samples": 4,
+        "mean": 105.31875,
+        "p50": 105.318,
+        "p95": 106.606,
+        "p99": 106.606,
+        "max": 106.606
+      },
+      "payloadBytes": {
+        "128": 2,
+        "4096": 2
+      },
+      "scheduledJobs": 0,
+      "accountedFor": 4,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "pollIntervalSeconds": 0.25,
+      "fixtureUsed": true
+    },
+    {
+      "passed": true,
+      "name": "priority-high",
+      "ownerId": "ffbd8673-d076-42b4-8d04-dd9bdb7c70f1",
+      "uniqueJobs": 16,
+      "requestCount": 16,
+      "duplicateRequests": 0,
+      "httpStatuses": {
+        "202": 16
+      },
+      "apiRequests": {
+        "1": 8,
+        "0": 8
+      },
+      "attemptOutcomes": {
+        "SUCCEEDED": 16
+      },
+      "workerProcessesUsed": 1,
+      "submissionSeconds": 0.11272212499170564,
+      "admittedJobsPerSecond": 141.94196570706345,
+      "completionMeasurement": "submission through observed terminal state",
+      "completionSeconds": 10.65943333299947,
+      "completedJobsPerSecond": 1.5010178777953613,
+      "successfulHttpRequestMs": {
+        "samples": 16,
+        "mean": 47.65597119148879,
+        "p50": 44.983333005802706,
+        "p95": 81.86537501751445,
+        "p99": 81.86537501751445,
+        "max": 81.86537501751445
+      },
+      "logicalSubmissionMs": {
+        "samples": 16,
+        "mean": 47.77572149941989,
+        "p50": 45.14516700874083,
+        "p95": 81.96616699569859,
+        "p99": 81.96616699569859,
+        "max": 81.96616699569859
+      },
+      "allHttpRequestMs": {
+        "samples": 16,
+        "mean": 47.65597119148879,
+        "p50": 44.983333005802706,
+        "p95": 81.86537501751445,
+        "p99": 81.86537501751445,
+        "max": 81.86537501751445
+      },
+      "newJobRequestMs": {
+        "samples": 16,
+        "mean": 47.65597119148879,
+        "p50": 44.983333005802706,
+        "p95": 81.86537501751445,
+        "p99": 81.86537501751445,
+        "max": 81.86537501751445
+      },
+      "replayRequestMs": {
+        "samples": 0,
+        "mean": null,
+        "p50": null,
+        "p95": null,
+        "p99": null,
+        "max": null
+      },
+      "transportErrors": 0,
+      "httpErrorResponses": 0,
+      "jobEndToEndMs": {
+        "samples": 16,
+        "mean": 8749.17675,
+        "p50": 8704.841,
+        "p95": 9581.155,
+        "p99": 9581.155,
+        "max": 9581.155
+      },
+      "attemptQueueDelayMs": {
+        "samples": 16,
+        "mean": 8638.4756875,
+        "p50": 8588.060000000001,
+        "p95": 9475.823,
+        "p99": 9475.823,
+        "max": 9475.823
+      },
+      "attemptExecutionMs": {
+        "samples": 16,
+        "mean": 111.2245625,
+        "p50": 108.691,
+        "p95": 135.521,
+        "p99": 135.521,
+        "max": 135.521
+      },
+      "payloadBytes": {
+        "128": 8,
+        "4096": 8
+      },
+      "scheduledJobs": 0,
+      "accountedFor": 16,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "pollIntervalSeconds": 0.25,
+      "fixtureUsed": true
+    },
+    {
+      "passed": true,
+      "name": "prefetched-low",
+      "ownerId": "c3bf9a67-abf6-44fa-ae6d-909908c4350d",
+      "uniqueJobs": 10,
+      "requestCount": 10,
+      "duplicateRequests": 0,
+      "httpStatuses": {
+        "202": 10
+      },
+      "apiRequests": {
+        "0": 5,
+        "1": 5
+      },
+      "attemptOutcomes": {
+        "SUCCEEDED": 10
+      },
+      "workerProcessesUsed": 1,
+      "submissionSeconds": 0.1168001249898225,
+      "admittedJobsPerSecond": 85.61634673654125,
+      "completionMeasurement": "submission through observed terminal state",
+      "completionSeconds": 11.716801500006113,
+      "completedJobsPerSecond": 0.8534752423683872,
+      "successfulHttpRequestMs": {
+        "samples": 10,
+        "mean": 71.49691239756066,
+        "p50": 64.033875009045,
+        "p95": 111.06333299539983,
+        "p99": 111.06333299539983,
+        "max": 111.06333299539983
+      },
+      "logicalSubmissionMs": {
+        "samples": 10,
+        "mean": 71.67368330119643,
+        "p50": 64.06983398483135,
+        "p95": 111.1926670128014,
+        "p99": 111.1926670128014,
+        "max": 111.1926670128014
+      },
+      "allHttpRequestMs": {
+        "samples": 10,
+        "mean": 71.49691239756066,
+        "p50": 64.033875009045,
+        "p95": 111.06333299539983,
+        "p99": 111.06333299539983,
+        "max": 111.06333299539983
+      },
+      "newJobRequestMs": {
+        "samples": 10,
+        "mean": 71.49691239756066,
+        "p50": 64.033875009045,
+        "p95": 111.06333299539983,
+        "p99": 111.06333299539983,
+        "max": 111.06333299539983
+      },
+      "replayRequestMs": {
+        "samples": 0,
+        "mean": null,
+        "p50": null,
+        "p95": null,
+        "p99": null,
+        "max": null
+      },
+      "transportErrors": 0,
+      "httpErrorResponses": 0,
+      "jobEndToEndMs": {
+        "samples": 10,
+        "mean": 9535.4234,
+        "p50": 9336.537,
+        "p95": 11404.552,
+        "p99": 11404.552,
+        "max": 11404.552
+      },
+      "attemptQueueDelayMs": {
+        "samples": 10,
+        "mean": 9106.6213,
+        "p50": 8923.537,
+        "p95": 10992.32,
+        "p99": 10992.32,
+        "max": 10992.32
+      },
+      "attemptExecutionMs": {
+        "samples": 10,
+        "mean": 435.66369999999995,
+        "p50": 413.771,
+        "p95": 603.543,
+        "p99": 603.543,
+        "max": 603.543
+      },
+      "payloadBytes": {
+        "128": 5,
+        "4096": 5
+      },
+      "scheduledJobs": 0,
+      "accountedFor": 10,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "pollIntervalSeconds": 0.25,
+      "fixtureUsed": true
+    },
+    {
+      "passed": true,
+      "name": "prefetched-urgent",
+      "ownerId": "3c781031-7eff-4c06-8d70-28327a544d24",
+      "uniqueJobs": 3,
+      "requestCount": 3,
+      "duplicateRequests": 0,
+      "httpStatuses": {
+        "202": 3
+      },
+      "apiRequests": {
+        "0": 2,
+        "1": 1
+      },
+      "attemptOutcomes": {
+        "SUCCEEDED": 3
+      },
+      "workerProcessesUsed": 1,
+      "submissionSeconds": 0.032814665988553315,
+      "admittedJobsPerSecond": 91.42253652822446,
+      "completionMeasurement": "submission through observed terminal state",
+      "completionSeconds": 5.896494165994227,
+      "completedJobsPerSecond": 0.5087768961599847,
+      "successfulHttpRequestMs": {
+        "samples": 3,
+        "mean": 22.625736319848027,
+        "p50": 19.307957991259173,
+        "p95": 31.500416982453316,
+        "p99": 31.500416982453316,
+        "max": 31.500416982453316
+      },
+      "logicalSubmissionMs": {
+        "samples": 3,
+        "mean": 22.701125000215445,
+        "p50": 19.369125016964972,
+        "p95": 31.56312499777414,
+        "p99": 31.56312499777414,
+        "max": 31.56312499777414
+      },
+      "allHttpRequestMs": {
+        "samples": 3,
+        "mean": 22.625736319848027,
+        "p50": 19.307957991259173,
+        "p95": 31.500416982453316,
+        "p99": 31.500416982453316,
+        "max": 31.500416982453316
+      },
+      "newJobRequestMs": {
+        "samples": 3,
+        "mean": 22.625736319848027,
+        "p50": 19.307957991259173,
+        "p95": 31.500416982453316,
+        "p99": 31.500416982453316,
+        "max": 31.500416982453316
+      },
+      "replayRequestMs": {
+        "samples": 0,
+        "mean": null,
+        "p50": null,
+        "p95": null,
+        "p99": null,
+        "max": null
+      },
+      "transportErrors": 0,
+      "httpErrorResponses": 0,
+      "jobEndToEndMs": {
+        "samples": 3,
+        "mean": 5242.434,
+        "p50": 5216.24,
+        "p95": 5783.898,
+        "p99": 5783.898,
+        "max": 5783.898
+      },
+      "attemptQueueDelayMs": {
+        "samples": 3,
+        "mean": 4801.118333333333,
+        "p50": 4732.281999999999,
+        "p95": 5355.786,
+        "p99": 5355.786,
+        "max": 5355.786
+      },
+      "attemptExecutionMs": {
+        "samples": 3,
+        "mean": 454.51500000000004,
+        "p50": 429.4,
+        "p95": 522.266,
+        "p99": 522.266,
+        "max": 522.266
+      },
+      "payloadBytes": {
+        "128": 2,
+        "4096": 1
+      },
+      "scheduledJobs": 0,
+      "accountedFor": 3,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "pollIntervalSeconds": 0.25,
+      "fixtureUsed": true
+    }
+  ],
+  "accountedJobs": 194,
+  "conservation": {
+    "total": 194,
+    "succeeded": 194
+  },
+  "faultFixture": "Separate image, deterministic non-cooperative 100\u20132000 ms delay; excluded from capacity evidence",
+  "scope": "One execution of each listed scenario, not 100 independent failure trials or a production availability guarantee",
+  "cleanupVerified": true
+}

@@ -1,0 +1,101 @@
+{
+  "passed": true,
+  "name": "concurrent-duplicates",
+  "ownerId": "643ad979-643b-4020-88b7-b8eaf223ca21",
+  "uniqueJobs": 80,
+  "requestCount": 160,
+  "duplicateRequests": 80,
+  "httpStatuses": {
+    "202": 80,
+    "200": 80
+  },
+  "apiRequests": {
+    "0": 80,
+    "1": 80
+  },
+  "attemptOutcomes": {
+    "SUCCEEDED": 80
+  },
+  "workerProcessesUsed": 2,
+  "submissionSeconds": 1.587850542011438,
+  "admittedJobsPerSecond": 50.382575616127305,
+  "completionMeasurement": "submission through observed terminal state",
+  "completionSeconds": 1.73725687499973,
+  "completedJobsPerSecond": 46.04960909998554,
+  "successfulHttpRequestMs": {
+    "samples": 160,
+    "mean": 77.1606020443869,
+    "p50": 41.9060830026865,
+    "p95": 259.16708400473,
+    "p99": 533.4639580105431,
+    "max": 571.5804159990512
+  },
+  "logicalSubmissionMs": {
+    "samples": 160,
+    "mean": 77.61357242525264,
+    "p50": 42.25625001708977,
+    "p95": 259.3530830054078,
+    "p99": 533.7353749782778,
+    "max": 571.7697909858543
+  },
+  "allHttpRequestMs": {
+    "samples": 160,
+    "mean": 77.1606020443869,
+    "p50": 41.9060830026865,
+    "p95": 259.16708400473,
+    "p99": 533.4639580105431,
+    "max": 571.5804159990512
+  },
+  "newJobRequestMs": {
+    "samples": 80,
+    "mean": 125.5888015639357,
+    "p50": 91.00149999721907,
+    "p95": 288.31408300902694,
+    "p99": 571.5804159990512,
+    "max": 571.5804159990512
+  },
+  "replayRequestMs": {
+    "samples": 80,
+    "mean": 28.732402524838108,
+    "p50": 16.649583005346358,
+    "p95": 75.14745800290257,
+    "p99": 90.50325001589954,
+    "max": 90.50325001589954
+  },
+  "transportErrors": 0,
+  "httpErrorResponses": 0,
+  "jobEndToEndMs": {
+    "samples": 80,
+    "mean": 509.2740375,
+    "p50": 533.572,
+    "p95": 668.199,
+    "p99": 693.899,
+    "max": 693.899
+  },
+  "attemptQueueDelayMs": {
+    "samples": 80,
+    "mean": 497.580075,
+    "p50": 521.412,
+    "p95": 651.439,
+    "p99": 669.8349999999999,
+    "max": 669.8349999999999
+  },
+  "attemptExecutionMs": {
+    "samples": 80,
+    "mean": 11.788525,
+    "p50": 4.281,
+    "p95": 44.163,
+    "p99": 91.521,
+    "max": 91.521
+  },
+  "payloadBytes": {
+    "128": 40,
+    "4096": 40
+  },
+  "scheduledJobs": 0,
+  "accountedFor": 80,
+  "incorrectResults": 0,
+  "duplicateSuccessfulAttempts": 0,
+  "pollIntervalSeconds": 0.25,
+  "fixtureUsed": false
+}

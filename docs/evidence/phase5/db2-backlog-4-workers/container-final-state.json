@@ -1,0 +1,42 @@
+[
+  {
+    "name": "/job-platform-load-worker-2",
+    "status": "running",
+    "oomKilled": false
+  },
+  {
+    "name": "/job-platform-load-worker-1",
+    "status": "running",
+    "oomKilled": false
+  },
+  {
+    "name": "/job-platform-load-worker-4",
+    "status": "running",
+    "oomKilled": false
+  },
+  {
+    "name": "/job-platform-load-worker-3",
+    "status": "running",
+    "oomKilled": false
+  },
+  {
+    "name": "/job-platform-load-api2-1",
+    "status": "running",
+    "oomKilled": false
+  },
+  {
+    "name": "/job-platform-load-api-1",
+    "status": "running",
+    "oomKilled": false
+  },
+  {
+    "name": "/job-platform-load-postgres-1",
+    "status": "running",
+    "oomKilled": false
+  },
+  {
+    "name": "/job-platform-load-rabbitmq-1",
+    "status": "running",
+    "oomKilled": false
+  }
+]

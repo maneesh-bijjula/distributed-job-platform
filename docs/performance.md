@@ -8,7 +8,7 @@ Use Python 3.9+ and Docker Compose 2.24.4+. `compose.load.yaml` uses Docker's `!
 
 Each run starts with fresh load-only volumes and cleans them afterward, including unfreezing paused workers. Ordinary `job-platform` volumes and credentials are not used. Generated load credentials live in ignored, mode-0600 `.loadtest.env`; they are never passed as CLI arguments or recorded in results. Leave the ports available and avoid simultaneous load runners. For comparable local results, stop unrelated heavy work and record any remaining activity.
 
-The local profile caps each API/worker at 512 MiB, PostgreSQL/RabbitMQ at 384 MiB, each API/DB/broker at one CPU, and each worker at 0.75 CPU. These are test constraints, not deployment recommendations. The runner records Docker's available CPU/memory, architecture, image IDs, source hashes, exact command, settings, resource samples, and OOM checks. Allow enough Docker memory for two APIs and the selected worker count. A container OOM invalidates the run.
+The local profile caps each API/worker at 512 MiB, PostgreSQL/RabbitMQ at 384 MiB, each API/broker at one CPU, and each worker at 0.75 CPU. PostgreSQL defaults to one CPU; `--database-cpus 2` supports a matched follow-up. These are test constraints, not deployment recommendations. The runner records Docker's available CPU/memory, architecture, image IDs, source hashes, exact command, settings, resource samples, and OOM checks. Allow enough Docker memory for two APIs and the selected worker count. A container OOM invalidates the run.
 
 If a terminal is forcibly closed during a fault scenario, clean the isolated resources with:
 

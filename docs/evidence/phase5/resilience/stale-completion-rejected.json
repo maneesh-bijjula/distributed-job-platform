@@ -1,0 +1,29 @@
+{
+  "oldAttemptId": "404a291b-c343-4fbb-909c-55449622c99d",
+  "matchedLogs": [
+    {
+      "@timestamp": "2026-10-20T06:45:03.565911632Z",
+      "log": {
+        "level": "INFO",
+        "logger": "com.maneesh.jobplatform.worker.JobExecutor"
+      },
+      "process": {
+        "pid": 1,
+        "thread": {
+          "name": "org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#0-1"
+        }
+      },
+      "service": {
+        "name": "job-platform",
+        "node": {}
+      },
+      "message": "Execution result rejected because its claim is no longer current or live",
+      "event": "completion_rejected",
+      "job_id": "93e5eed9-f630-49ca-b7e7-7409472ef529",
+      "attempt_id": "404a291b-c343-4fbb-909c-55449622c99d",
+      "ecs": {
+        "version": "8.11"
+      }
+    }
+  ]
+}

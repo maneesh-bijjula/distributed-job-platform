@@ -1,0 +1,119 @@
+{
+  "passed": true,
+  "name": "measured",
+  "ownerId": "28ef2bee-1fd6-4b01-9ec5-3ffc4fddc4e0",
+  "uniqueJobs": 10000,
+  "requestCount": 12000,
+  "duplicateRequests": 2000,
+  "httpStatuses": {
+    "202": 10000,
+    "200": 2000
+  },
+  "apiRequests": {
+    "0": 6000,
+    "1": 6000
+  },
+  "attemptOutcomes": {
+    "SUCCEEDED": 10000
+  },
+  "workerProcessesUsed": 4,
+  "submissionSeconds": 20.54344208299881,
+  "admittedJobsPerSecond": 486.77334399943265,
+  "completionMeasurement": "preloaded broker drain",
+  "completionSeconds": 29.51779054198414,
+  "completedJobsPerSecond": 338.77874381474,
+  "successfulHttpRequestMs": {
+    "samples": 12000,
+    "mean": 40.45912909655696,
+    "p50": 25.162125006318092,
+    "p95": 114.41650000051595,
+    "p99": 211.4369169867132,
+    "max": 729.1482920118142
+  },
+  "logicalSubmissionMs": {
+    "samples": 12000,
+    "mean": 40.83673424353037,
+    "p50": 25.53229100885801,
+    "p95": 114.53420799807645,
+    "p99": 211.55487501528114,
+    "max": 729.2608749994542
+  },
+  "allHttpRequestMs": {
+    "samples": 12000,
+    "mean": 40.45912909655696,
+    "p50": 25.162125006318092,
+    "p95": 114.41650000051595,
+    "p99": 211.4369169867132,
+    "max": 729.1482920118142
+  },
+  "newJobRequestMs": {
+    "samples": 10000,
+    "mean": 45.10960313426913,
+    "p50": 28.959082992514595,
+    "p95": 123.41379199642688,
+    "p99": 218.52779199252836,
+    "max": 729.1482920118142
+  },
+  "replayRequestMs": {
+    "samples": 2000,
+    "mean": 17.206758907996118,
+    "p50": 8.012833015527576,
+    "p95": 61.584665992995724,
+    "p99": 72.58633300079964,
+    "max": 90.25308300624602
+  },
+  "transportErrors": 0,
+  "httpErrorResponses": 0,
+  "jobEndToEndMs": {
+    "samples": 10000,
+    "mean": 36642.782561299995,
+    "p50": 36592.944,
+    "p95": 44053.32,
+    "p99": 44564.774,
+    "max": 44686.03
+  },
+  "attemptQueueDelayMs": {
+    "samples": 10000,
+    "mean": 36631.9071486,
+    "p50": 36587.522,
+    "p95": 44049.236,
+    "p99": 44560.412,
+    "max": 44682.934
+  },
+  "attemptExecutionMs": {
+    "samples": 10000,
+    "mean": 11.9426809,
+    "p50": 4.401,
+    "p95": 62.469,
+    "p99": 77.189,
+    "max": 261.309
+  },
+  "payloadBytes": {
+    "128": 3334,
+    "4096": 3333,
+    "16000": 3333
+  },
+  "scheduledJobs": 0,
+  "accountedFor": 10000,
+  "incorrectResults": 0,
+  "duplicateSuccessfulAttempts": 0,
+  "pollIntervalSeconds": 0.25,
+  "fixtureUsed": false,
+  "mode": "backlog",
+  "seed": 17,
+  "settings": {
+    "batchSize": 50,
+    "dispatchDelayMs": 250,
+    "prefetch": 1,
+    "databasePoolSize": 6,
+    "concurrencyPerWorker": 2,
+    "workers": 4,
+    "apiInstances": 2,
+    "leaseSeconds": 6,
+    "heartbeatMs": 1000
+  },
+  "scheduledFraction": "none",
+  "workload": "round-robin WORD_COUNT/SHA256/UPPERCASE, ASCII payloads of 128/4096/16000 bytes",
+  "throughputScope": "Includes two APIs, PostgreSQL, RabbitMQ and unmodified production workers; no artificial handler delay",
+  "cleanupVerified": true
+}
