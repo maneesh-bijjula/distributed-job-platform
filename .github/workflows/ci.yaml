@@ -9,9 +9,11 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+      - name: Verify load harness arithmetic and safety guards
+        run: python3 -m unittest discover -s scripts -p 'test_load_support.py' -v
       - name: Unit and integration tests
         run: ./scripts/test.sh
       - name: Build application image
@@ -31,6 +33,10 @@ jobs:
           docker compose -p job-platform --profile observability run --rm --no-deps -w /etc/prometheus --entrypoint /bin/promtool prometheus test rules alerts.test.yml
           python3 scripts/observability-smoke.py --report reports/observability-smoke.json
           python3 scripts/observability-outage-smoke.py --report reports/observability-outages.json
+      - name: Verify bounded load and real resilience scenarios
+        run: |
+          python3 scripts/load-test.py --output reports/phase5/ci-load --jobs 120 --clients 8 --workers 2 --batch 50 --dispatch-ms 250 --prefetch 1 --pool 6 --schedule-seconds 1
+          python3 scripts/resilience-test.py --output reports/phase5/ci-resilience --skip-build
       - name: Upload test reports
         if: always()
         uses: actions/upload-artifact@v4
@@ -40,7 +46,10 @@ jobs:
             target/surefire-reports/
             target/failsafe-reports/
             reports/observability-*.json
+            reports/phase5/
           if-no-files-found: ignore
       - name: Clean up services
         if: always()
-        run: docker compose -p job-platform --profile test --profile observability down
+        run: |
+          python3 scripts/clean-load-stack.py
+          docker compose -p job-platform --profile test --profile observability down

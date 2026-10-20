@@ -21,6 +21,8 @@ An asynchronous job service built with **Java 21, Spring Boot, PostgreSQL, and R
 - Independent API and worker containers, with configurable worker concurrency.
 - Durable job counters and attempt timings, bounded backlog metrics, and correlated JSON logs.
 - Optional local Prometheus/Grafana profile with a provisioned dashboard and tested alert rules.
+- Reproducible isolated load tests, raw timing/accounting evidence, and real worker/dependency failure checks.
+- Validated dispatch, prefetch, concurrency, and connection-pool controls with an optional measured tuning profile.
 - Liveness/readiness probes, automated tests, and GitHub Actions CI.
 
 ## Run locally
@@ -333,7 +335,7 @@ See the [observability guide](docs/observability.md) for metric definitions, cre
 
 ## Tests
 
-The suite contains **106 unit tests and 139 integration tests**. CI also builds the image, runs all three packaged regression checks, validates Prometheus rules, checks live dashboard data, and verifies real broker/database outages and restoration.
+The Java suite contains **117 unit tests and 141 integration tests**. Eight Python tests check load-harness arithmetic, isolation, and replay safety. CI also builds the images, runs all three packaged regression checks, validates Prometheus rules and live dashboard data, and exercises bounded load plus real worker/dependency failure scenarios.
 
 See the [execution verification matrix](docs/execution-verification.md) for the covered guarantees and limits.
 
@@ -370,6 +372,14 @@ With Java 21+ installed, unit tests can also run without service containers:
 For integration tests outside Docker, set `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`, and `SPRING_RABBITMQ_*` to dedicated test services, then run `./mvnw verify -Pintegration`. The configured database name must end in `_test`; its job tables are cleared by the suite. Use a separate RabbitMQ instance as well: tests consume, purge, and republish messages in its job queues.
 
 ## Operations
+
+### Load, resilience, and tuning
+
+The [performance guide](docs/performance.md) explains the separate disposable test stack, seeded workloads, 10000-job backlog comparisons, actual worker kill/freeze recovery, dependency restarts, duplicate deliveries, and priority/prefetch tradeoffs. It records raw request/job/attempt ledgers, resource limits, source/image identity, and independently verified results. [Recorded measurements](docs/benchmark-results.md) distinguish achieved rates from broader capacity claims.
+
+For the evaluated short-text profile, use `docker compose -f compose.yaml -f compose.tuned.yaml up --build -d --wait api worker`. Its relay batch/poll settings, database pools, worker concurrency, and prefetch are explicit and bounded; base defaults remain available. Review the measured environment and workload before choosing settings for another deployment.
+
+### Upgrade and local controls
 
 To upgrade an existing checkout, stop application containers before rebuilding. Flyway applies the new database migration automatically and retains existing jobs. The worker continues consuming the original `jobs.ready` queue alongside `jobs.priority.ready`, so previously queued messages can drain without deleting queues or volumes.
 

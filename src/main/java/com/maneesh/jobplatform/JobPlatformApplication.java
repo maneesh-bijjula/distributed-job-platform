@@ -6,10 +6,12 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import com.maneesh.jobplatform.config.ExecutionProperties;
 import com.maneesh.jobplatform.config.MetricsProperties;
+import com.maneesh.jobplatform.config.DispatchProperties;
+import com.maneesh.jobplatform.config.CapacityProperties;
 import org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration;
 
 @EnableScheduling
-@EnableConfigurationProperties({ExecutionProperties.class,MetricsProperties.class})
+@EnableConfigurationProperties({ExecutionProperties.class,MetricsProperties.class,DispatchProperties.class,CapacityProperties.class})
 @SpringBootApplication(exclude = UserDetailsServiceAutoConfiguration.class)
 public class JobPlatformApplication {
     public static void main(String[] args) {

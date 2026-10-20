@@ -8,3 +8,4 @@ reports
 __pycache__
 .auth-*
 .observability
+.loadtest.env

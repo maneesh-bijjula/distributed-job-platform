@@ -1,0 +1,17 @@
+FROM maven:3.9.11-eclipse-temurin-21 AS build
+WORKDIR /build
+COPY pom.xml .
+RUN mvn -B -q dependency:go-offline
+COPY src ./src
+RUN mvn -B -q compile dependency:copy-dependencies -DincludeScope=runtime
+COPY tools/loadtest/java /fixtures
+RUN mkdir /fixture-classes && javac -cp 'target/classes:target/dependency/*' -d /fixture-classes /fixtures/loadtest/ControlledWorker.java
+
+FROM eclipse-temurin:21-jre-alpine
+RUN addgroup -S jobs && adduser -S jobs -G jobs
+WORKDIR /app
+COPY --from=build --chown=jobs:jobs /build/target/classes classes
+COPY --from=build --chown=jobs:jobs /build/target/dependency lib
+COPY --from=build --chown=jobs:jobs /fixture-classes fixtures
+USER jobs
+ENTRYPOINT ["java", "-XX:MaxRAMPercentage=50.0", "-cp", "/app/classes:/app/lib/*:/app/fixtures", "loadtest.ControlledWorker"]

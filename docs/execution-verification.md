@@ -38,6 +38,11 @@ The platform is covered by **100 unit tests and 126 integration tests**, plus th
 | Correlated logging | Committed lifecycle logs include job/attempt IDs and omit inputs, keys, and private exception messages. Rolled-back transitions produce no committed-transition log. |
 | Monitoring profile | Promtool validates configuration and alert cases. The packaged smoke executes all 17 provisioned panel expressions and retrieves actual job data through Grafana's data source. |
 | Real dependency outages | The packaged check physically stops/restores this Compose project's broker and database, verifies actual firing alerts, public probes, fail-closed authentication, durable admission during broker downtime, and completion after restoration. |
+| Actual worker termination | The isolated Phase 5 runner kills a controlled worker after a committed claim, then verifies an abandoned attempt, a new delivery generation, one correct success, and no missing job. |
+| Resumed stale process | A frozen non-cooperative fixture worker resumes after replacement completion. Its real final write is rejected, with correlated `completion_rejected` evidence and an unchanged successful replacement result. |
+| Load accounting and timing | The isolated load harness reconciles every diagnostic key, job, attempt, and lifecycle event; independently checks all results; and records raw latency distributions, duplicates/errors, container limits, resource samples, and exact source/image identity. |
+| Priority and prefetch | A finite urgent burst overtakes older queued work before it drains; delivered low-priority messages can delay later urgent work with higher prefetch. Continuous-traffic fairness is not claimed. |
+| Capacity controls | Startup rejects unsafe bounds. A real integration check verifies custom batch limits preserve remaining outbox work and pool configuration reaches Hikari. |
 | Observability upgrade | The packaged V7 upgrade preserved 37 jobs, 96 events, 20 attempts, 2 outbox entries, 4 dead letters, 4 key records, owners, access audit, and admission records with matching checksums of their original fields. |
 
 Run the automated suite:
@@ -55,8 +60,8 @@ python3 scripts/dead-letter-smoke.py
 python3 scripts/auth-smoke.py
 ```
 
-The [observability guide](observability.md) includes the optional monitoring profile, live metric/dashboard check, and controlled outage verification. CI runs these checks too. The automated suite totals **245 passing tests** (106 unit and 139 integration).
+The [observability guide](observability.md) includes the optional monitoring profile, live metric/dashboard check, and controlled outage verification. CI runs these checks too. The automated Java suite totals **258 tests** (117 unit and 141 integration), plus eight Python harness guardrail tests. The [performance guide](performance.md) covers the additional packaged load/fault workflows and recorded evidence.
 
 The smoke check creates a scheduled job, cancels it, creates and replays a linked manual retry, waits for the real worker result, and checks attempt persistence, lifecycle history, pagination, and conflict responses. The generated jobs remain available for inspection.
 
-Worker-loss scenarios use deterministic lease-expiry simulation; they do not claim that these tests physically terminate a production process. The guarantees concern durable job state and fenced result writes. Arbitrary custom code can ignore cooperative cancellation and continue running until its worker process is stopped, and external side effects require their own idempotency strategy. These checks do not establish a throughput benchmark or production availability.
+The Java suite uses deterministic lease-expiry simulation. The separate Phase 5 fault runner also physically kills/freezes disposable worker processes using an explicitly identified delay fixture; the fixture is excluded from capacity measurements. The guarantees concern the recorded durable job state and fenced result writes. Arbitrary custom code can ignore cooperative cancellation, and external side effects require their own idempotency strategy. Recorded throughput belongs to its measured environment/workload and does not establish production availability or universal capacity.

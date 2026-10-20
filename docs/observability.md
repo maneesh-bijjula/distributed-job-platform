@@ -119,6 +119,6 @@ The following check **temporarily stops only this Compose project's RabbitMQ, re
 python3 scripts/observability-outage-smoke.py --report reports/observability-outages.json
 ```
 
-CI runs the full 245-test suite and both monitoring checks against its packaged application. Integration coverage includes exact lifecycle/timing semantics, transaction and metric-flush rollback, suspended transactions, mixed-type concurrent batches, restart persistence, bounded tags, sanitized correlated logs, metric snapshot failure, and scrape-key scope/revocation. These operational checks establish the tested behavior, not production availability or a throughput benchmark.
+CI runs the full 258-test Java suite and both monitoring checks against its packaged application, plus the [load/resilience harness](performance.md). Integration coverage includes exact lifecycle/timing semantics, transaction and metric-flush rollback, suspended transactions, mixed-type concurrent batches, restart persistence, bounded tags, sanitized correlated logs, metric snapshot failure, and scrape-key scope/revocation. These operational checks establish the tested behavior, not production availability or a throughput benchmark.
 
 Monitoring scripts create the ignored `reports/` directory on the host for their JSON reports. Java test XML remains under `target/`, which the test container can own on Linux. CI uploads both locations without requiring the host scripts to write into the container-owned directory.

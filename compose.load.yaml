@@ -1,0 +1,106 @@
+name: job-platform-load
+
+x-labels: &labels
+  com.maneesh.job-platform.load-test: "true"
+x-environment: &environment
+  SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/jobs_load_test
+  SPRING_DATASOURCE_USERNAME: jobs
+  SPRING_DATASOURCE_PASSWORD: ${LOAD_DATABASE_PASSWORD:?Run the load harness to initialize its private env file}
+  SPRING_RABBITMQ_HOST: rabbitmq
+  SPRING_RABBITMQ_USERNAME: jobs
+  SPRING_RABBITMQ_PASSWORD: ${LOAD_BROKER_PASSWORD:?Run the load harness first}
+  JOB_LEASE_SECONDS: 6
+  JOB_HEARTBEAT_MILLIS: 1000
+  JOB_TIMEOUT_SECONDS: 180
+  JOB_RECOVERY_DELAY_MS: 500
+  JOB_DB_POOL_SIZE: ${LOAD_POOL_SIZE:-10}
+  WORKER_CONCURRENCY: ${LOAD_CONCURRENCY:-2}
+  JOB_WORKER_PREFETCH: ${LOAD_PREFETCH:-10}
+  JOB_DISPATCH_BATCH_SIZE: ${LOAD_BATCH_SIZE:-20}
+  JOB_DISPATCH_DELAY_MS: ${LOAD_DISPATCH_MS:-1000}
+  JAVA_TOOL_OPTIONS: -XX:MaxRAMPercentage=50.0
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    labels: *labels
+    mem_limit: 384m
+    cpus: 1
+    environment:
+      POSTGRES_DB: jobs_load_test
+      POSTGRES_USER: jobs
+      POSTGRES_PASSWORD: ${LOAD_DATABASE_PASSWORD:?Run the load harness first}
+    command: [postgres, -c, shared_buffers=64MB, -c, max_connections=100]
+    volumes: [load-postgres:/var/lib/postgresql/data]
+    healthcheck:
+      test: [CMD, pg_isready, -U, jobs, -d, jobs_load_test]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+  rabbitmq:
+    image: rabbitmq:4.1-management-alpine
+    labels: *labels
+    mem_limit: 384m
+    cpus: 1
+    environment:
+      RABBITMQ_DEFAULT_USER: jobs
+      RABBITMQ_DEFAULT_PASS: ${LOAD_BROKER_PASSWORD:?Run the load harness first}
+    ports: ["127.0.0.1:${LOAD_MANAGEMENT_PORT:-18082}:15672"]
+    volumes: [load-rabbitmq:/var/lib/rabbitmq]
+    healthcheck:
+      test: [CMD, rabbitmq-diagnostics, -q, ping]
+      interval: 3s
+      timeout: 5s
+      retries: 30
+  api:
+    image: job-platform:load
+    build: .
+    labels: *labels
+    mem_limit: 512m
+    cpus: 1
+    environment:
+      <<: *environment
+      JOBS_WORKER_ENABLED: "false"
+      JOB_BOOTSTRAP_API_KEY: ${LOAD_BOOTSTRAP_KEY:?Run the load harness first}
+    ports: ["127.0.0.1:${LOAD_API_PORT:-18080}:8080"]
+    depends_on:
+      postgres: {condition: service_healthy}
+      rabbitmq: {condition: service_healthy}
+    healthcheck:
+      test: [CMD, wget, -q, -O, /dev/null, "http://localhost:8080/actuator/health/readiness"]
+      interval: 2s
+      timeout: 6s
+      retries: 45
+  api2:
+    extends: {service: api}
+    ports: !override ["127.0.0.1:${LOAD_API2_PORT:-18081}:8080"]
+  worker:
+    image: job-platform:load
+    labels: *labels
+    mem_limit: 512m
+    cpus: 0.75
+    environment:
+      <<: *environment
+      JOBS_WORKER_ENABLED: "true"
+      JOBS_DISPATCHER_ENABLED: "false"
+      SPRING_MAIN_WEB_APPLICATION_TYPE: none
+    depends_on:
+      postgres: {condition: service_healthy}
+      rabbitmq: {condition: service_healthy}
+  controlled-worker:
+    extends: {service: worker}
+    image: job-platform:load-controlled
+    build: {context: ., dockerfile: Dockerfile.loadtest}
+    profiles: [fault]
+    environment:
+      <<: *environment
+      JOBS_WORKER_ENABLED: "true"
+      JOBS_DISPATCHER_ENABLED: "false"
+      SPRING_MAIN_WEB_APPLICATION_TYPE: none
+      LOAD_HANDLER_DELAY_MS: ${LOAD_HANDLER_DELAY_MS:-2000}
+
+volumes:
+  load-postgres:
+    labels: *labels
+  load-rabbitmq:
+    labels: *labels

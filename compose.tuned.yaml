@@ -1,0 +1,13 @@
+# Measured short-text throughput/priority profile; use together with compose.yaml.
+# Keep connection budgets and workload-specific latency requirements in mind when scaling.
+services:
+  api:
+    environment:
+      JOB_DISPATCH_BATCH_SIZE: "50"
+      JOB_DISPATCH_DELAY_MS: "250"
+      JOB_DB_POOL_SIZE: "6"
+  worker:
+    environment:
+      JOB_WORKER_PREFETCH: "1"
+      WORKER_CONCURRENCY: "2"
+      JOB_DB_POOL_SIZE: "6"

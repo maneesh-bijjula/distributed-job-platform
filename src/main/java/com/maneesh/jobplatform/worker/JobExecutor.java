@@ -61,7 +61,11 @@ public class JobExecutor {
             }
             // Each lifecycle method commits in its own short transaction.
             // No connection or row lock is held while the handler is running.
-            execution.succeed(claim, result);
+            if (!execution.succeed(claim, result)) {
+                log.atInfo().addKeyValue("event","completion_rejected").addKeyValue("job_id",id)
+                        .addKeyValue("attempt_id",claim.attempt().id())
+                        .log("Execution result rejected because its claim is no longer current or live");
+            }
         } finally {
             control.stop();
             heartbeat.cancel(false);

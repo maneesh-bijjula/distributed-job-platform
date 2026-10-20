@@ -8,7 +8,7 @@ spring:
     username: ${DATABASE_USER:jobs}
     password: ${DATABASE_PASSWORD:jobs-local}
     hikari:
-      maximum-pool-size: 10
+      maximum-pool-size: ${jobs.capacity.database-pool-size}
       connection-timeout: 5000
   rabbitmq:
     host: ${RABBITMQ_HOST:localhost}
@@ -22,8 +22,8 @@ spring:
     listener:
       simple:
         acknowledge-mode: auto
-        prefetch: 10
-        concurrency: ${WORKER_CONCURRENCY:2}
+        prefetch: ${jobs.capacity.prefetch}
+        concurrency: ${jobs.capacity.worker-concurrency}
         default-requeue-rejected: false
         retry:
           enabled: true
@@ -47,6 +47,10 @@ server:
   tomcat:
     max-http-form-post-size: 128KB
 jobs:
+  capacity:
+    database-pool-size: ${JOB_DB_POOL_SIZE:10}
+    worker-concurrency: ${WORKER_CONCURRENCY:2}
+    prefetch: ${JOB_WORKER_PREFETCH:10}
   metrics:
     refresh-ms: ${JOB_METRICS_REFRESH_MS:5000}
   auth:
@@ -62,7 +66,8 @@ jobs:
     enabled: true
   dispatcher:
     enabled: true
-    delay-ms: 1000
+    delay-ms: ${JOB_DISPATCH_DELAY_MS:1000}
+    batch-size: ${JOB_DISPATCH_BATCH_SIZE:20}
 management:
   endpoints:
     web:
