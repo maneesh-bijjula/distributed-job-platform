@@ -11,7 +11,7 @@ python3 scripts/init-auth.py
 docker compose -p job-platform up --build -d --wait api worker
 python3 scripts/init-observability.py
 docker compose -p job-platform --profile observability up -d --wait prometheus grafana
-python3 scripts/observability-smoke.py --report target/observability-smoke.json
+python3 scripts/observability-smoke.py --report reports/observability-smoke.json
 ```
 
 The profile pins Prometheus `v3.15.0` and Grafana `13.2.4`. Prometheus is at `http://localhost:9090`; Grafana is at `http://localhost:3001/d/job-platform`. Override `PROMETHEUS_PORT` or `GRAFANA_PORT` in `.env` when needed, then pass the corresponding URL to the verification scripts. `JOB_METRICS_REFRESH_MS` accepts 1000–60000, default 5000. Adjust freshness alert thresholds if using a longer interval.
@@ -108,7 +108,7 @@ docker compose -p job-platform --profile observability run --rm --no-deps -w /et
 Verify live values, scrape permissions, credential/payload exclusion, every provisioned panel expression, and an actual Grafana data-source response:
 
 ```sh
-python3 scripts/observability-smoke.py --report target/observability-smoke.json
+python3 scripts/observability-smoke.py --report reports/observability-smoke.json
 ```
 
 This creates three jobs (two successes and one cancelled scheduled source), verifies a linked manual retry, and leaves them available for inspection. It requires an operator key through the existing private credential helper.
@@ -116,7 +116,9 @@ This creates three jobs (two successes and one cancelled scheduled source), veri
 The following check **temporarily stops only this Compose project's RabbitMQ, restores it, then stops/restores PostgreSQL**. Run it when interrupting local work is acceptable. It never deletes volumes, restores stopped services in `finally` blocks, verifies the actual firing alerts, and checks that a job accepted during broker downtime finishes afterward:
 
 ```sh
-python3 scripts/observability-outage-smoke.py --report target/observability-outages.json
+python3 scripts/observability-outage-smoke.py --report reports/observability-outages.json
 ```
 
 CI runs the full 245-test suite and both monitoring checks against its packaged application. Integration coverage includes exact lifecycle/timing semantics, transaction and metric-flush rollback, suspended transactions, mixed-type concurrent batches, restart persistence, bounded tags, sanitized correlated logs, metric snapshot failure, and scrape-key scope/revocation. These operational checks establish the tested behavior, not production availability or a throughput benchmark.
+
+Monitoring scripts create the ignored `reports/` directory on the host for their JSON reports. Java test XML remains under `target/`, which the test container can own on Linux. CI uploads both locations without requiring the host scripts to write into the container-owned directory.

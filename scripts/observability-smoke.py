@@ -123,7 +123,9 @@ def main():
               "rulesLoaded": True, "scrapeKeyCannotAccessJobsOrAdmin": True,
               "workflowMetricDeltasVerified": expected}
     if args.report:
-        Path(args.report).write_text(json.dumps(report, indent=2) + "\n")
+        destination = Path(args.report)
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_text(json.dumps(report, indent=2) + "\n")
     print("PASS: committed lifecycle metrics and timings, authenticated Prometheus scrape, bounded labels,")
     print("      provisioned Grafana dashboard queries, live datasource values, and metrics-key isolation.")
     print("Dashboard panels verified: " + str(report["panelsVerified"]))

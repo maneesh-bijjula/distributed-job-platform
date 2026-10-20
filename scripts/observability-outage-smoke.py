@@ -109,7 +109,9 @@ def main():
         for service in list(stopped):
             restore(service)
     if args.report:
-        Path(args.report).write_text(json.dumps(report, indent=2) + "\n")
+        destination = Path(args.report)
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_text(json.dumps(report, indent=2) + "\n")
     print("PASS: broker/database outages, real firing alerts, correct probe behavior, durable job recovery, and service restoration.")
 
 

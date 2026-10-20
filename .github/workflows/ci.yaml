@@ -29,8 +29,8 @@ jobs:
           docker compose -p job-platform --profile observability up -d --wait --wait-timeout 180 prometheus grafana
           docker compose -p job-platform --profile observability run --rm --no-deps --entrypoint /bin/promtool prometheus check config /etc/prometheus/prometheus.yml
           docker compose -p job-platform --profile observability run --rm --no-deps -w /etc/prometheus --entrypoint /bin/promtool prometheus test rules alerts.test.yml
-          python3 scripts/observability-smoke.py --report target/observability-smoke.json
-          python3 scripts/observability-outage-smoke.py --report target/observability-outages.json
+          python3 scripts/observability-smoke.py --report reports/observability-smoke.json
+          python3 scripts/observability-outage-smoke.py --report reports/observability-outages.json
       - name: Upload test reports
         if: always()
         uses: actions/upload-artifact@v4
@@ -39,7 +39,7 @@ jobs:
           path: |
             target/surefire-reports/
             target/failsafe-reports/
-            target/observability-*.json
+            reports/observability-*.json
           if-no-files-found: ignore
       - name: Clean up services
         if: always()
