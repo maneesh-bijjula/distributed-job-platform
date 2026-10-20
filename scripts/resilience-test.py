@@ -155,6 +155,10 @@ def main():
             def rejected():
                 return any(row.get("event") == "completion_rejected" and row.get("attempt_id") == old_claim["id"] for row in stack.logs(frozen))
             wait(rejected, "Resumed worker did not reach and fail the stale final-write guard", timeout=30)
+            write_json(Path(args.output) / "stale-completion-rejected.json", {
+                "oldAttemptId": old_claim["id"],
+                "matchedLogs": [row for row in stack.logs(frozen)
+                                if row.get("event") == "completion_rejected" and row.get("attempt_id") == old_claim["id"]]})
             assert len([attempt for attempt in attempts(stale) if attempt["status"] == "SUCCEEDED"]) == 1
             injections.append({"fault": "worker_pause_resume", "attemptId": old_claim["id"], "replacementSucceededBeforeResume": True,
                                "staleFinalWriteRejected": True})
