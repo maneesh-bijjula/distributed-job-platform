@@ -74,10 +74,14 @@ Optional measured statements, with scope retained:
   pipeline tests through configuration tuning (34.50 to 97.81 jobs/sec).
 - Accounted for 194/194 accepted jobs without observed loss across the recorded
   bounded resilience, priority and admission scenarios.
+- Verified zero observed job loss in a separate [100-fault campaign](fault-campaign-results.md),
+  with 800/800 accepted jobs correct and exactly one successful attempt per job;
+  20 injections each of worker SIGKILL, worker pause/resume, broker crash, database crash and API crash.
 
 Use whichever details fit the intended description. Tuning improvement is not
 worker-count scaling. Four workers were slower for the measured short-text setup;
-500+ jobs/sec end-to-end, 3.4× worker scaling and 100 independent injected failure
-trials are not supported. See [raw measurements](benchmark-results.md). The
+500+ jobs/sec end-to-end and 3.4× worker scaling are not supported. The recorded
+100-fault campaign repeats five fault kinds on shared services; it is not 100
+statistically independent environments. See [raw measurements](benchmark-results.md). The
 single-host deployment, local restore drill and test suite do not establish an HA
 service, a production SLA, an independent security audit or universal capacity.

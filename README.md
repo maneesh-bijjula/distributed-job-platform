@@ -382,7 +382,7 @@ The [architecture and demo walkthrough](docs/project-walkthrough.md) explains de
 
 ### Load, resilience, and tuning
 
-The [repeated fault campaign](docs/fault-campaign.md) declares and journals real worker, broker, database and API crashes/suspensions with fresh workloads per trial. It supports 100 balanced injections with full accepted-job reconciliation; ordinary CI runs one trial per fault kind, and a separate manual workflow can repeat all 100.
+The [repeated fault campaign](docs/fault-campaign.md) declares and journals real worker, broker, database and API crashes/suspensions with fresh workloads per trial. The [recorded 100-trial campaign](docs/fault-campaign-results.md) verified **800/800 jobs with zero observed loss** across 80 SIGKILL crashes and 20 worker freezes. Ordinary CI runs one trial per fault kind, and a separate manual workflow can repeat all 100.
 
 The [performance guide](docs/performance.md) explains the separate disposable test stack, seeded workloads, 10000-job backlog comparisons, actual worker kill/freeze recovery, dependency restarts, duplicate deliveries, and priority/prefetch tradeoffs. It records raw request/job/attempt ledgers, resource limits, source/image identity, and independently verified results. [Recorded measurements](docs/benchmark-results.md) distinguish achieved rates from broader capacity claims.
 

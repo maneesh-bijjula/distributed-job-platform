@@ -65,6 +65,9 @@ automation. The normal application stack is outside the harness cleanup scope.
 
 ## Evidence and success criteria
 
+The [recorded full campaign](fault-campaign-results.md) passed all 100 trials and
+verified all 800 accepted jobs. Its raw evidence and offline audit are committed.
+
 - `plan.json` declares the schedule, workload count and fault-kind denominator.
 - `campaign.jsonl.gz` retains trial start, requested/observed injection, target
   container/actual state, accepted IDs, and successful recovery events.

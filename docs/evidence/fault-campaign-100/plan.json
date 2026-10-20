@@ -1,0 +1,615 @@
+{
+  "passed": false,
+  "startedAt": "2026-10-20T18:52:56.211566+00:00",
+  "plannedTrials": 100,
+  "jobsPerTrial": 8,
+  "faultKinds": {
+    "worker_pause_resume": 20,
+    "api_sigkill": 20,
+    "worker_sigkill": 20,
+    "database_sigkill": 20,
+    "broker_sigkill": 20
+  },
+  "plan": [
+    {
+      "trial": 1,
+      "kind": "worker_pause_resume",
+      "outageSeconds": 0.287,
+      "workloadSeed": 1364360807
+    },
+    {
+      "trial": 2,
+      "kind": "api_sigkill",
+      "outageSeconds": 0.939,
+      "workloadSeed": 1815747681
+    },
+    {
+      "trial": 3,
+      "kind": "worker_sigkill",
+      "outageSeconds": 0.914,
+      "workloadSeed": 377224088
+    },
+    {
+      "trial": 4,
+      "kind": "worker_pause_resume",
+      "outageSeconds": 0.598,
+      "workloadSeed": 1668813759
+    },
+    {
+      "trial": 5,
+      "kind": "api_sigkill",
+      "outageSeconds": 0.925,
+      "workloadSeed": 1225130568
+    },
+    {
+      "trial": 6,
+      "kind": "database_sigkill",
+      "outageSeconds": 0.371,
+      "workloadSeed": 23267977
+    },
+    {
+      "trial": 7,
+      "kind": "broker_sigkill",
+      "outageSeconds": 0.99,
+      "workloadSeed": 1505187901
+    },
+    {
+      "trial": 8,
+      "kind": "database_sigkill",
+      "outageSeconds": 0.759,
+      "workloadSeed": 590371497
+    },
+    {
+      "trial": 9,
+      "kind": "database_sigkill",
+      "outageSeconds": 0.442,
+      "workloadSeed": 953202044
+    },
+    {
+      "trial": 10,
+      "kind": "broker_sigkill",
+      "outageSeconds": 0.758,
+      "workloadSeed": 1159971607
+    },
+    {
+      "trial": 11,
+      "kind": "worker_sigkill",
+      "outageSeconds": 0.77,
+      "workloadSeed": 813955774
+    },
+    {
+      "trial": 12,
+      "kind": "broker_sigkill",
+      "outageSeconds": 0.608,
+      "workloadSeed": 471035986
+    },
+    {
+      "trial": 13,
+      "kind": "worker_pause_resume",
+      "outageSeconds": 0.579,
+      "workloadSeed": 195445461
+    },
+    {
+      "trial": 14,
+      "kind": "broker_sigkill",
+      "outageSeconds": 0.45,
+      "workloadSeed": 1621317064
+    },
+    {
+      "trial": 15,
+      "kind": "worker_pause_resume",
+      "outageSeconds": 0.952,
+      "workloadSeed": 1043647654
+    },
+    {
+      "trial": 16,
+      "kind": "broker_sigkill",
+      "outageSeconds": 0.333,
+      "workloadSeed": 180430775
+    },
+    {
+      "trial": 17,
+      "kind": "worker_sigkill",
+      "outageSeconds": 0.534,
+      "workloadSeed": 1552032833
+    },
+    {
+      "trial": 18,
+      "kind": "api_sigkill",
+      "outageSeconds": 0.536,
+      "workloadSeed": 1258041484
+    },
+    {
+      "trial": 19,
+      "kind": "api_sigkill",
+      "outageSeconds": 0.541,
+      "workloadSeed": 483469632
+    },
+    {
+      "trial": 20,
+      "kind": "worker_sigkill",
+      "outageSeconds": 0.909,
+      "workloadSeed": 1937943084
+    },
+    {
+      "trial": 21,
+      "kind": "api_sigkill",
+      "outageSeconds": 0.355,
+      "workloadSeed": 5841743
+    },
+    {
+      "trial": 22,
+      "kind": "worker_pause_resume",
+      "outageSeconds": 0.576,
+      "workloadSeed": 1069161538
+    },
+    {
+      "trial": 23,
+      "kind": "database_sigkill",
+      "outageSeconds": 0.842,
+      "workloadSeed": 1050457660
+    },
+    {
+      "trial": 24,
+      "kind": "worker_sigkill",
+      "outageSeconds": 0.543,
+      "workloadSeed": 1713294695
+    },
+    {
+      "trial": 25,
+      "kind": "api_sigkill",
+      "outageSeconds": 0.284,
+      "workloadSeed": 715299361
+    },
+    {
+      "trial": 26,
+      "kind": "worker_pause_resume",
+      "outageSeconds": 0.29,
+      "workloadSeed": 1111988471
+    },
+    {
+      "trial": 27,
+      "kind": "broker_sigkill",
+      "outageSeconds": 0.976,
+      "workloadSeed": 897746133
+    },
+    {
+      "trial": 28,
+      "kind": "worker_sigkill",
+      "outageSeconds": 0.631,
+      "workloadSeed": 1861754350
+    },
+    {
+      "trial": 29,
+      "kind": "worker_pause_resume",
+      "outageSeconds": 0.606,
+      "workloadSeed": 1870447935
+    },
+    {
+      "trial": 30,
+      "kind": "database_sigkill",
+      "outageSeconds": 0.705,
+      "workloadSeed": 136984634
+    },
+    {
+      "trial": 31,
+      "kind": "worker_pause_resume",
+      "outageSeconds": 0.395,
+      "workloadSeed": 1880305965
+    },
+    {
+      "trial": 32,
+      "kind": "database_sigkill",
+      "outageSeconds": 0.294,
+      "workloadSeed": 467812426
+    },
+    {
+      "trial": 33,
+      "kind": "database_sigkill",
+      "outageSeconds": 0.839,
+      "workloadSeed": 680634313
+    },
+    {
+      "trial": 34,
+      "kind": "broker_sigkill",
+      "outageSeconds": 0.518,
+      "workloadSeed": 1170150276
+    },
+    {
+      "trial": 35,
+      "kind": "worker_sigkill",
+      "outageSeconds": 0.402,
+      "workloadSeed": 1079803757
+    },
+    {
+      "trial": 36,
+      "kind": "api_sigkill",
+      "outageSeconds": 0.782,
+      "workloadSeed": 1374941779
+    },
+    {
+      "trial": 37,
+      "kind": "worker_sigkill",
+      "outageSeconds": 0.509,
+      "workloadSeed": 924352950
+    },
+    {
+      "trial": 38,
+      "kind": "broker_sigkill",
+      "outageSeconds": 0.328,
+      "workloadSeed": 1162996571
+    },
+    {
+      "trial": 39,
+      "kind": "broker_sigkill",
+      "outageSeconds": 0.483,
+      "workloadSeed": 204656856
+    },
+    {
+      "trial": 40,
+      "kind": "api_sigkill",
+      "outageSeconds": 0.362,
+      "workloadSeed": 1831684892
+    },
+    {
+      "trial": 41,
+      "kind": "database_sigkill",
+      "outageSeconds": 0.738,
+      "workloadSeed": 338753320
+    },
+    {
+      "trial": 42,
+      "kind": "broker_sigkill",
+      "outageSeconds": 0.505,
+      "workloadSeed": 1391246574
+    },
+    {
+      "trial": 43,
+      "kind": "database_sigkill",
+      "outageSeconds": 0.6,
+      "workloadSeed": 1447675207
+    },
+    {
+      "trial": 44,
+      "kind": "worker_pause_resume",
+      "outageSeconds": 0.962,
+      "workloadSeed": 79590965
+    },
+    {
+      "trial": 45,
+      "kind": "database_sigkill",
+      "outageSeconds": 0.902,
+      "workloadSeed": 1583362037
+    },
+    {
+      "trial": 46,
+      "kind": "worker_pause_resume",
+      "outageSeconds": 0.749,
+      "workloadSeed": 905821244
+    },
+    {
+      "trial": 47,
+      "kind": "worker_sigkill",
+      "outageSeconds": 0.801,
+      "workloadSeed": 192733119
+    },
+    {
+      "trial": 48,
+      "kind": "api_sigkill",
+      "outageSeconds": 0.599,
+      "workloadSeed": 1688605824
+    },
+    {
+      "trial": 49,
+      "kind": "broker_sigkill",
+      "outageSeconds": 0.546,
+      "workloadSeed": 1576050793
+    },
+    {
+      "trial": 50,
+      "kind": "broker_sigkill",
+      "outageSeconds": 0.596,
+      "workloadSeed": 922662715
+    },
+    {
+      "trial": 51,
+      "kind": "database_sigkill",
+      "outageSeconds": 0.503,
+      "workloadSeed": 1864976345
+    },
+    {
+      "trial": 52,
+      "kind": "api_sigkill",
+      "outageSeconds": 0.841,
+      "workloadSeed": 1723471632
+    },
+    {
+      "trial": 53,
+      "kind": "api_sigkill",
+      "outageSeconds": 0.625,
+      "workloadSeed": 366843086
+    },
+    {
+      "trial": 54,
+      "kind": "broker_sigkill",
+      "outageSeconds": 0.566,
+      "workloadSeed": 342548291
+    },
+    {
+      "trial": 55,
+      "kind": "database_sigkill",
+      "outageSeconds": 0.357,
+      "workloadSeed": 134713931
+    },
+    {
+      "trial": 56,
+      "kind": "database_sigkill",
+      "outageSeconds": 0.638,
+      "workloadSeed": 1284802441
+    },
+    {
+      "trial": 57,
+      "kind": "broker_sigkill",
+      "outageSeconds": 0.297,
+      "workloadSeed": 47335737
+    },
+    {
+      "trial": 58,
+      "kind": "worker_sigkill",
+      "outageSeconds": 0.845,
+      "workloadSeed": 487471999
+    },
+    {
+      "trial": 59,
+      "kind": "worker_sigkill",
+      "outageSeconds": 0.914,
+      "workloadSeed": 1262659358
+    },
+    {
+      "trial": 60,
+      "kind": "database_sigkill",
+      "outageSeconds": 0.684,
+      "workloadSeed": 1425009272
+    },
+    {
+      "trial": 61,
+      "kind": "worker_sigkill",
+      "outageSeconds": 0.518,
+      "workloadSeed": 1892844524
+    },
+    {
+      "trial": 62,
+      "kind": "worker_sigkill",
+      "outageSeconds": 0.342,
+      "workloadSeed": 251329308
+    },
+    {
+      "trial": 63,
+      "kind": "worker_pause_resume",
+      "outageSeconds": 0.749,
+      "workloadSeed": 1948828208
+    },
+    {
+      "trial": 64,
+      "kind": "broker_sigkill",
+      "outageSeconds": 0.909,
+      "workloadSeed": 61466556
+    },
+    {
+      "trial": 65,
+      "kind": "worker_sigkill",
+      "outageSeconds": 0.506,
+      "workloadSeed": 1972546923
+    },
+    {
+      "trial": 66,
+      "kind": "worker_pause_resume",
+      "outageSeconds": 0.998,
+      "workloadSeed": 373816571
+    },
+    {
+      "trial": 67,
+      "kind": "api_sigkill",
+      "outageSeconds": 0.295,
+      "workloadSeed": 1696510331
+    },
+    {
+      "trial": 68,
+      "kind": "worker_sigkill",
+      "outageSeconds": 0.867,
+      "workloadSeed": 1549091806
+    },
+    {
+      "trial": 69,
+      "kind": "broker_sigkill",
+      "outageSeconds": 0.752,
+      "workloadSeed": 726611690
+    },
+    {
+      "trial": 70,
+      "kind": "api_sigkill",
+      "outageSeconds": 0.748,
+      "workloadSeed": 1564462799
+    },
+    {
+      "trial": 71,
+      "kind": "api_sigkill",
+      "outageSeconds": 0.965,
+      "workloadSeed": 238397384
+    },
+    {
+      "trial": 72,
+      "kind": "api_sigkill",
+      "outageSeconds": 0.789,
+      "workloadSeed": 1973692399
+    },
+    {
+      "trial": 73,
+      "kind": "worker_sigkill",
+      "outageSeconds": 0.954,
+      "workloadSeed": 1708025828
+    },
+    {
+      "trial": 74,
+      "kind": "broker_sigkill",
+      "outageSeconds": 0.405,
+      "workloadSeed": 260231804
+    },
+    {
+      "trial": 75,
+      "kind": "worker_pause_resume",
+      "outageSeconds": 0.547,
+      "workloadSeed": 1841976672
+    },
+    {
+      "trial": 76,
+      "kind": "api_sigkill",
+      "outageSeconds": 0.305,
+      "workloadSeed": 852498463
+    },
+    {
+      "trial": 77,
+      "kind": "api_sigkill",
+      "outageSeconds": 0.884,
+      "workloadSeed": 863304485
+    },
+    {
+      "trial": 78,
+      "kind": "broker_sigkill",
+      "outageSeconds": 0.979,
+      "workloadSeed": 1667773311
+    },
+    {
+      "trial": 79,
+      "kind": "database_sigkill",
+      "outageSeconds": 0.577,
+      "workloadSeed": 369198199
+    },
+    {
+      "trial": 80,
+      "kind": "worker_pause_resume",
+      "outageSeconds": 0.264,
+      "workloadSeed": 792378038
+    },
+    {
+      "trial": 81,
+      "kind": "worker_pause_resume",
+      "outageSeconds": 0.385,
+      "workloadSeed": 1595105208
+    },
+    {
+      "trial": 82,
+      "kind": "api_sigkill",
+      "outageSeconds": 0.273,
+      "workloadSeed": 1694489762
+    },
+    {
+      "trial": 83,
+      "kind": "worker_pause_resume",
+      "outageSeconds": 0.687,
+      "workloadSeed": 1802835927
+    },
+    {
+      "trial": 84,
+      "kind": "database_sigkill",
+      "outageSeconds": 0.474,
+      "workloadSeed": 1311847077
+    },
+    {
+      "trial": 85,
+      "kind": "worker_pause_resume",
+      "outageSeconds": 0.572,
+      "workloadSeed": 1715563543
+    },
+    {
+      "trial": 86,
+      "kind": "worker_sigkill",
+      "outageSeconds": 0.68,
+      "workloadSeed": 258760899
+    },
+    {
+      "trial": 87,
+      "kind": "worker_pause_resume",
+      "outageSeconds": 0.816,
+      "workloadSeed": 654107190
+    },
+    {
+      "trial": 88,
+      "kind": "api_sigkill",
+      "outageSeconds": 0.678,
+      "workloadSeed": 1609587310
+    },
+    {
+      "trial": 89,
+      "kind": "database_sigkill",
+      "outageSeconds": 0.434,
+      "workloadSeed": 178671158
+    },
+    {
+      "trial": 90,
+      "kind": "worker_sigkill",
+      "outageSeconds": 0.516,
+      "workloadSeed": 1388748879
+    },
+    {
+      "trial": 91,
+      "kind": "database_sigkill",
+      "outageSeconds": 0.47,
+      "workloadSeed": 357948501
+    },
+    {
+      "trial": 92,
+      "kind": "worker_pause_resume",
+      "outageSeconds": 0.842,
+      "workloadSeed": 1970115615
+    },
+    {
+      "trial": 93,
+      "kind": "broker_sigkill",
+      "outageSeconds": 0.746,
+      "workloadSeed": 842368024
+    },
+    {
+      "trial": 94,
+      "kind": "worker_pause_resume",
+      "outageSeconds": 0.656,
+      "workloadSeed": 228322431
+    },
+    {
+      "trial": 95,
+      "kind": "broker_sigkill",
+      "outageSeconds": 0.637,
+      "workloadSeed": 673950716
+    },
+    {
+      "trial": 96,
+      "kind": "worker_sigkill",
+      "outageSeconds": 0.697,
+      "workloadSeed": 1246473397
+    },
+    {
+      "trial": 97,
+      "kind": "database_sigkill",
+      "outageSeconds": 0.533,
+      "workloadSeed": 1536006854
+    },
+    {
+      "trial": 98,
+      "kind": "worker_sigkill",
+      "outageSeconds": 0.835,
+      "workloadSeed": 656231860
+    },
+    {
+      "trial": 99,
+      "kind": "database_sigkill",
+      "outageSeconds": 0.979,
+      "workloadSeed": 954362014
+    },
+    {
+      "trial": 100,
+      "kind": "api_sigkill",
+      "outageSeconds": 0.392,
+      "workloadSeed": 1297516513
+    }
+  ]
+}

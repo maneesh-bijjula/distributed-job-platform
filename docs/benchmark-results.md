@@ -59,9 +59,20 @@ The [recorded resilience report](evidence/phase5/resilience/report.json) account
 
 These measurements do **not** establish 500+ end-to-end jobs/sec or 3.4x one-to-four-worker scaling. The best recorded backlog drain was 445.49 jobs/sec under its stated limits. Backlog drain and end-to-end rates are different measurements. Sustained production capacity, arbitrary handlers, larger deployments, and continuous-traffic fairness remain outside these observations.
 
+A separate [100-fault campaign](fault-campaign-results.md), recorded October 20,
+2026, passed all 100 actual injections with **800/800 jobs successful and zero
+observed loss, incorrect results or duplicate successful attempts**. It comprises
+20 trials each of worker SIGKILL, worker pause/resume, RabbitMQ SIGKILL, PostgreSQL
+SIGKILL and API SIGKILL. These are fresh workloads on shared durable services,
+not 100 distinct failure modes or statistically independent environments. The
+predeclared plan, observed fault journal, complete ledgers, source/image identity
+and offline audit are committed separately. The throughput figures above
+remain those of the earlier capacity measurements.
+
 Evidence-matching project wording:
 
 - Built a Java/Spring Boot job platform with PostgreSQL transactional outbox, RabbitMQ leased workers, idempotent APIs, retries, dead-letter recovery, and Prometheus/Grafana monitoring.
 - Verified 42400 synthetic benchmark jobs; improved median finite-workload completion throughput from 34.5 to 97.8 jobs/sec with measured dispatch/prefetch/pool settings. Tested real worker/dependency recovery and stale-result fencing with 194/194 scenario jobs accounted for.
+- Verified zero observed job loss across a separate 100 injected process/dependency fault campaign, with 800/800 accepted jobs completing correctly and one successful attempt per job.
 
 Implemented technologies include Java, Spring Boot, PostgreSQL, RabbitMQ, Docker, Prometheus, and Grafana.

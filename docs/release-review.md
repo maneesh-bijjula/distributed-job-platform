@@ -20,6 +20,7 @@ limits. Public hosting is a separate deployment decision.
 | Failed startup | Deliberately failing application entrypoint; unchanged database; restored compatible image passes readiness/job checks |
 | Database restore | Custom archive restored to scratch database and empty replacement volumes; all 12 public tables and two sequences match before startup |
 | Broker data loss | Queued jobs reconstructed through missing outbox entries, repeat maintenance is a no-op, original results and future schedules preserved |
+| Repeated process/dependency faults | Separate [100-trial campaign](fault-campaign-results.md): 800/800 jobs successful, 80 observed SIGKILLs and 20 worker freezes; complete audited evidence |
 
 The [deployment guide](deployment.md) supplies reproducible commands and TLS
 guidance. The [recovery runbook](recovery.md) specifies maintenance boundaries,
@@ -50,7 +51,7 @@ local timings only; a small local restore is not a production recovery-time targ
 - TLS termination is documented with a proxy template. No public certificate,
   cloud host, managed database, external alert receiver or public endpoint is provisioned.
 - Measurements do not establish 500+ jobs/sec end-to-end, 3.4× worker scaling,
-  100 independent fault injections, a security audit or an availability SLA.
+  statistically independent fault environments, a security audit or an availability SLA.
 
 Future changes can extend this scope based on observed needs: profile shared
 persistence costs, tune another workload, implement reviewed retention, or deploy
