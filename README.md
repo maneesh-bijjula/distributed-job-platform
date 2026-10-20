@@ -19,7 +19,9 @@ An asynchronous job service built with **Java 21, Spring Boot, PostgreSQL, and R
 - Idempotent request submission and duplicate delivery handling.
 - Bounded infrastructure retries and a dead-letter queue.
 - Independent API and worker containers, with configurable worker concurrency.
-- Health checks, Prometheus metrics, automated tests, and GitHub Actions CI.
+- Durable job counters and attempt timings, bounded backlog metrics, and correlated JSON logs.
+- Optional local Prometheus/Grafana profile with a provisioned dashboard and tested alert rules.
+- Liveness/readiness probes, automated tests, and GitHub Actions CI.
 
 ## Run locally
 
@@ -64,7 +66,7 @@ This example shows the result fields; the full response also includes the ID, ty
 
 ## Access keys and ownership
 
-Send exactly one `Authorization: Bearer KEY` header on API requests. Missing, malformed, unknown, and revoked keys return `401` with a bearer challenge. Authentication storage failure returns `503` and grants no access. Keys in query parameters, HTTP Basic credentials, and cookies are not authentication mechanisms. The service is stateless and does not create login sessions. Health at `/actuator/health` is public and exposes no component details; Prometheus and info require an operator. Environment, configuration, and other unlisted management endpoints are denied.
+Send exactly one `Authorization: Bearer KEY` header on API requests. Missing, malformed, unknown, and revoked keys return `401` with a bearer challenge. Authentication storage failure returns `503` and grants no access. Keys in query parameters, HTTP Basic credentials, and cookies are not authentication mechanisms. The service is stateless and does not create login sessions. Health and the liveness/readiness probes are public and expose no component details; Prometheus requires `METRICS` or `OPERATOR`, and info requires `OPERATOR`. Environment, configuration, and other unlisted management endpoints are denied.
 
 Keys contain 256 random bits. PostgreSQL stores SHA-256 hashes and identifying prefixes, never the full tokens. Issuance returns a token once with `Cache-Control: no-store`; retain it privately. Listings and audit responses omit tokens and hashes. Every authenticated request checks current database state, with no credential cache. Revocation takes effect on subsequent authentications across API instances; requests already authenticated may finish.
 
@@ -72,6 +74,7 @@ Keys contain 256 random bits. PostgreSQL stores SHA-256 hashes and identifying p
 | --- | --- | --- |
 | `USER` | Submit, list, read results/history/attempts, cancel, and retry within its owner | Read its own identity and owner quota |
 | `OPERATOR` | The same owner restriction | Global dead-letter operations, owner/key administration, access audit, Prometheus, and info |
+| `METRICS` | None | Prometheus scrape and its own identity only |
 
 Operators are trusted account administrators and can explicitly issue keys for any owner, including other operator keys. Operator status does not implicitly bypass ownership on ordinary job endpoints. Missing and other-owner job IDs both return `404`, including control and history endpoints. Client JSON cannot choose a job owner. Automatic attempts and linked retries retain the source owner; the database also rejects cross-owner retry links.
 
@@ -128,6 +131,8 @@ Compose binds to localhost and uses HTTP for local work. Use TLS and private sec
 | POST | `/api/v1/dead-letters/{id}/recover` | Deliberately recover valid work; requires an idempotency key |
 | POST | `/api/v1/dead-letters/{id}/discard` | Resolve an inbox entry without scheduling work; requires an idempotency key |
 | GET | `/actuator/health` | Check service health |
+| GET | `/actuator/health/liveness` | Check process liveness without depending on PostgreSQL or RabbitMQ |
+| GET | `/actuator/health/readiness` | Check API readiness and PostgreSQL; a broker outage does not block durable admission |
 | GET | `/actuator/prometheus` | Read Prometheus metrics |
 
 List responses contain `items`, `page`, `size`, and `hasNext`. Page size is limited to 100. `text` must be nonblank and at most 16,000 UTF-16 code units. Unknown properties, invalid types, and malformed identifiers return `400`; missing jobs return `404`. Errors use Spring's problem detail responses.
@@ -310,9 +315,25 @@ Handler exceptions follow the persisted policy above. Database and infrastructur
 
 The included Compose setup uses one PostgreSQL instance and one RabbitMQ node with persistent local volumes. Exposed ports bind to localhost. The HTTP API requires bearer authentication and is packaged for local development.
 
+## Monitoring
+
+With the API and worker running, initialize private monitoring credentials and start the optional profile:
+
+```sh
+python3 scripts/init-observability.py
+docker compose --profile observability up -d --wait prometheus grafana
+python3 scripts/observability-smoke.py
+```
+
+Open [Prometheus](http://localhost:9090) or [Grafana's operations dashboard](http://localhost:3001/d/job-platform). Grafana uses username `admin` and the generated password in ignored `.observability/grafana-admin-password`; read that file privately to sign in. The initializer does not print credentials. Prometheus receives a dedicated `METRICS` key with no job or administration access. Ports bind to localhost, and the monitoring profile is optional.
+
+The dashboard shows committed outcomes, current states, queue/attempt mean durations, outbox and retry backlogs, broker depth, recovery activity, snapshot freshness, and operation failures. Eight local example alerts cover unavailable scrapes/broker, stale snapshots, delayed dispatch/workers, expired leases, dead letters, and terminal failures. Alert delivery to email or other services is not configured.
+
+See the [observability guide](docs/observability.md) for metric definitions, credentials, outage behavior, and repeatable verification. Timings expose counts and sums for calculating means; they do not establish percentiles or throughput benchmarks.
+
 ## Tests
 
-The suite contains **100 unit tests and 126 integration tests**. CI also builds the image and runs all three packaged smoke checks.
+The suite contains **106 unit tests and 139 integration tests**. CI also builds the image, runs all three packaged regression checks, validates Prometheus rules, checks live dashboard data, and verifies real broker/database outages and restoration.
 
 See the [execution verification matrix](docs/execution-verification.md) for the covered guarantees and limits.
 
@@ -353,6 +374,8 @@ For integration tests outside Docker, set `SPRING_DATASOURCE_URL`, `SPRING_DATAS
 To upgrade an existing checkout, stop application containers before rebuilding. Flyway applies the new database migration automatically and retains existing jobs. The worker continues consuming the original `jobs.ready` queue alongside `jobs.priority.ready`, so previously queued messages can drain without deleting queues or volumes.
 
 V6 changes the submission idempotency constraint from global to owner scoped. Upgrade API and worker binaries together; do not run an older API against the migrated schema. Existing HTTP clients must send an API key after upgrading. Retain the ignored credential file privately; migration does not generate a recoverable plaintext copy of any key.
+
+V7 adds transactional metric rollups and internal eligibility/timing fields. It preserves earlier rows and starts lifecycle counters at upgrade time without fabricating historical timing samples. Upgrade all application instances together so every subsequent lifecycle transition contributes to the rollups. Current-state gauges include earlier jobs.
 
 ```sh
 docker compose stop api worker

@@ -14,6 +14,7 @@ x-app-environment: &app-environment
   JOB_MONITOR_THREADS: ${JOB_MONITOR_THREADS:-4}
   JOB_RECOVERY_DELAY_MS: ${JOB_RECOVERY_DELAY_MS:-1000}
   WORKER_CONCURRENCY: ${WORKER_CONCURRENCY:-2}
+  JOB_METRICS_REFRESH_MS: ${JOB_METRICS_REFRESH_MS:-5000}
 
 services:
   postgres:
@@ -57,7 +58,7 @@ services:
       postgres: {condition: service_healthy}
       rabbitmq: {condition: service_healthy}
     healthcheck:
-      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/actuator/health"]
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/actuator/health/readiness"]
       interval: 5s
       timeout: 3s
       retries: 20
@@ -117,7 +118,67 @@ services:
       timeout: 5s
       retries: 20
 
+  prometheus:
+    image: prom/prometheus:v3.15.0
+    profiles: ["observability"]
+    user: "0:0" # Local mode-0600 secret files remain private on the host.
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=7d
+    ports: ["127.0.0.1:${PROMETHEUS_PORT:-9090}:9090"]
+    volumes:
+      - ./monitoring/prometheus:/etc/prometheus:ro
+      - prometheus-data:/prometheus
+    secrets: [job_metrics_token]
+    depends_on:
+      api: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:9090/-/ready"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    cap_drop: [ALL]
+    cap_add: [DAC_OVERRIDE]
+    security_opt: ["no-new-privileges:true"]
+
+  grafana:
+    image: grafana/grafana:13.2.4
+    profiles: ["observability"]
+    user: "0:0"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD__FILE: /run/secrets/grafana_admin_password
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+    ports: ["127.0.0.1:${GRAFANA_PORT:-3001}:3000"]
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    secrets: [grafana_admin_password]
+    depends_on:
+      prometheus: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:3000/api/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    cap_drop: [ALL]
+    cap_add: [DAC_OVERRIDE]
+    security_opt: ["no-new-privileges:true"]
+
+secrets:
+  job_metrics_token:
+    file: ./.observability/metrics-token
+  grafana_admin_password:
+    file: ./.observability/grafana-admin-password
+
 volumes:
   postgres-data:
   rabbitmq-data:
   maven-cache:
+  prometheus-data:
+  grafana-data:

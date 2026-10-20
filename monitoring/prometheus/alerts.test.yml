@@ -1,0 +1,45 @@
+rule_files:
+  - alerts.yml
+evaluation_interval: 5s
+tests:
+  - interval: 5s
+    input_series:
+      - series: 'job_platform_dependency_up{dependency="rabbitmq"}'
+        values: '0+0x12'
+    alert_rule_test:
+      - eval_time: 40s
+        alertname: JobPlatformBrokerUnavailable
+        exp_alerts:
+          - exp_labels:
+              dependency: rabbitmq
+              severity: warning
+            exp_annotations:
+              summary: RabbitMQ is unavailable
+              description: Accepted jobs remain in the PostgreSQL outbox. The API can remain ready while delivery is delayed.
+  - interval: 5s
+    input_series:
+      - series: 'up{job="job-platform"}'
+        values: '0+0x12'
+    alert_rule_test:
+      - eval_time: 40s
+        alertname: JobPlatformScrapeUnavailable
+        exp_alerts:
+          - exp_labels:
+              job: job-platform
+              severity: critical
+            exp_annotations:
+              summary: Job platform metrics cannot be scraped
+              description: Check API readiness, PostgreSQL availability, and the dedicated scrape key. Database-backed authentication fails closed during a database outage.
+  - interval: 5s
+    input_series:
+      - series: 'up{job="job-platform"}'
+        values: '1+0x30'
+      - series: 'job_platform_dependency_up{dependency="rabbitmq"}'
+        values: '1+0x30'
+    alert_rule_test:
+      - eval_time: 2m
+        alertname: JobPlatformBrokerUnavailable
+        exp_alerts: []
+      - eval_time: 2m
+        alertname: JobPlatformScrapeUnavailable
+        exp_alerts: []

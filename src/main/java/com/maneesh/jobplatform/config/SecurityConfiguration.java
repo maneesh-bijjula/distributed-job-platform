@@ -21,9 +21,11 @@ public class SecurityConfiguration {
                 .requestCache(cache -> cache.disable())
                 .authorizeHttpRequests(auth -> auth
                         .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
-                        .requestMatchers("/actuator/health").permitAll()
-                        .requestMatchers("/api/v1/admin/**","/api/v1/dead-letters/**","/actuator/prometheus","/actuator/info").hasRole("OPERATOR")
-                        .requestMatchers("/api/v1/jobs","/api/v1/jobs/**","/api/v1/auth/me").authenticated()
+                        .requestMatchers("/actuator/health","/actuator/health/liveness","/actuator/health/readiness").permitAll()
+                        .requestMatchers("/actuator/prometheus").hasAnyRole("OPERATOR","METRICS")
+                        .requestMatchers("/api/v1/admin/**","/api/v1/dead-letters/**","/actuator/info").hasRole("OPERATOR")
+                        .requestMatchers("/api/v1/jobs","/api/v1/jobs/**").hasAnyRole("USER","OPERATOR")
+                        .requestMatchers("/api/v1/auth/me").authenticated()
                         .anyRequest().denyAll())
                 .exceptionHandling(errors -> errors
                         .authenticationEntryPoint((req,res,error) -> ApiKeyFilter.write(mapper,res,401,"A valid bearer API key is required"))

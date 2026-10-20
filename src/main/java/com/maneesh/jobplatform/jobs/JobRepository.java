@@ -15,15 +15,18 @@ import java.sql.Timestamp;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 import com.maneesh.jobplatform.auth.ApiPrincipal;
+import com.maneesh.jobplatform.observability.LifecycleMetrics;
 
 @Repository
 public class JobRepository {
     private final NamedParameterJdbcTemplate jdbc;
     private final ObjectMapper mapper;
+    private final LifecycleMetrics metrics;
 
-    public JobRepository(NamedParameterJdbcTemplate jdbc, ObjectMapper mapper) {
+    public JobRepository(NamedParameterJdbcTemplate jdbc, ObjectMapper mapper, LifecycleMetrics metrics) {
         this.jdbc = jdbc;
         this.mapper = mapper;
+        this.metrics = metrics;
     }
 
     public Optional<UUID> insert(UUID id, JobType type, String text, String key, int priority,
@@ -53,8 +56,9 @@ public class JobRepository {
         params.put("maxBackoff", policy.maxBackoffSeconds());
         return jdbc.query("""
                 INSERT INTO jobs (id, type, input_text, idempotency_key, priority, scheduled_at, retry_of, timeout_seconds,
-                    max_attempts, initial_backoff_seconds, max_backoff_seconds, owner_id)
-                VALUES (:id, :type, :text, :key, :priority, :scheduledAt, :retryOf, :timeout, :maxAttempts, :initialBackoff, :maxBackoff, :owner)
+                    max_attempts, initial_backoff_seconds, max_backoff_seconds, owner_id, eligible_at)
+                VALUES (:id, :type, :text, :key, :priority, :scheduledAt, :retryOf, :timeout, :maxAttempts, :initialBackoff, :maxBackoff, :owner,
+                    greatest(clock_timestamp(),CAST(:scheduledAt AS timestamptz)))
                 ON CONFLICT (owner_id,idempotency_key) DO NOTHING RETURNING id
                 """, params, (rs, row) -> rs.getObject("id", UUID.class)).stream().findFirst();
     }
@@ -155,6 +159,7 @@ public class JobRepository {
                 INSERT INTO job_events (job_id, event_type, status, related_job_id, attempt_id)
                 VALUES (:id, :type, :status, :related, :attempt)
                 """, params);
+        metrics.record(id,type,status,attemptId);
     }
 
     public List<JobEvent> events(UUID id, int page, int size) {

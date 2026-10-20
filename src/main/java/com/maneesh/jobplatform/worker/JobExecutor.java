@@ -39,7 +39,9 @@ public class JobExecutor {
                 else control.stop();
             } catch (RuntimeException exception) {
                 // Never extend the local lease on an unconfirmed renewal.
-                log.warn("Cannot renew lease for job {} attempt {}", id, claim.attempt().id(), exception);
+                log.atWarn().addKeyValue("event","heartbeat_failed").addKeyValue("job_id",id)
+                        .addKeyValue("attempt_id",claim.attempt().id()).addKeyValue("error_kind","LEASE_RENEWAL_UNCONFIRMED")
+                        .log("Cannot confirm execution lease renewal");
             }
         }, properties.heartbeatMillis(), properties.heartbeatMillis(), TimeUnit.MILLISECONDS);
         try {
@@ -51,7 +53,8 @@ public class JobExecutor {
                 return;
             } catch (RuntimeException exception) {
                 var kind = HandlerFailure.classify(exception);
-                log.warn("Handler failure {} for job {} attempt {}", kind, id, claim.attempt().id());
+                log.atWarn().addKeyValue("event","handler_failed").addKeyValue("job_id",id)
+                        .addKeyValue("attempt_id",claim.attempt().id()).addKeyValue("error_kind",kind.name()).log("Job handler failed");
                 if (kind == HandlerFailure.PERMANENT_HANDLER) execution.fail(claim);
                 else execution.fail(claim, kind);
                 return;

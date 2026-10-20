@@ -107,6 +107,7 @@ class MigrationIT {
                     assertThat(isolated.queryForMap("SELECT status,active_attempt_id,attempt_count,recovery_count,deadline_at,generation FROM jobs WHERE id=?", job)).isEqualTo(before);
                     var attemptAfter = isolated.queryForMap("SELECT * FROM job_attempts WHERE id=?", attempt);
                     assertThat(attemptAfter.remove("failure_kind")).isNull();
+                    assertThat(attemptAfter.remove("queue_delay_seconds")).isNull();
                     assertThat(attemptAfter).isEqualTo(attemptBefore);
                     assertThat(isolated.queryForObject("SELECT max_attempts FROM jobs WHERE id=?", Integer.class, job)).isEqualTo(25);
                     assertThat(isolated.queryForObject("SELECT generation FROM job_outbox WHERE job_id=?", Integer.class, job)).isEqualTo(2);

@@ -1,0 +1,726 @@
+{
+  "uid": "job-platform",
+  "title": "Job Platform — Operations",
+  "tags": [
+    "jobs",
+    "local",
+    "operations"
+  ],
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": false,
+  "refresh": "5s",
+  "timezone": "browser",
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Scrape available",
+      "type": "stat",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "job-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "max(up{job=\"job-platform\"})",
+          "legendFormat": "{{type}}{{status}}{{state}}{{queue}}{{outcome}}{{mode}}{{operation}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 2,
+      "title": "RabbitMQ available",
+      "type": "stat",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "job-prometheus"
+      },
+      "gridPos": {
+        "x": 6,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "max(job_platform_dependency_up{dependency=\"rabbitmq\"})",
+          "legendFormat": "{{type}}{{status}}{{state}}{{queue}}{{outcome}}{{mode}}{{operation}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 3,
+      "title": "Database snapshot age",
+      "type": "stat",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "job-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "max(job_platform_snapshot_age_seconds)",
+          "legendFormat": "{{type}}{{status}}{{state}}{{queue}}{{outcome}}{{mode}}{{operation}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 4,
+      "title": "Open dead letters",
+      "type": "stat",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "job-prometheus"
+      },
+      "gridPos": {
+        "x": 18,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "max(job_platform_dead_letters{state=\"OPEN\"})",
+          "legendFormat": "{{type}}{{status}}{{state}}{{queue}}{{outcome}}{{mode}}{{operation}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 5,
+      "title": "Job outcomes per second",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "job-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (outcome) (label_replace(rate(job_platform_jobs_succeeded_total[5m]),\"outcome\",\"succeeded\",\"type\",\".*\") or label_replace(rate(job_platform_jobs_failed_total[5m]),\"outcome\",\"failed\",\"type\",\".*\") or label_replace(rate(job_platform_jobs_cancelled_total[5m]),\"outcome\",\"cancelled\",\"type\",\".*\"))",
+          "legendFormat": "{{type}}{{status}}{{state}}{{queue}}{{outcome}}{{mode}}{{operation}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 6,
+      "title": "Current durable jobs",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "job-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 4,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (status) (job_platform_jobs)",
+          "legendFormat": "{{type}}{{status}}{{state}}{{queue}}{{outcome}}{{mode}}{{operation}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 7,
+      "title": "Mean eligible queue delay",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "job-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 12,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (type) (rate(job_platform_queue_delay_seconds_sum[5m])) / clamp_min(sum by (type) (rate(job_platform_queue_delay_seconds_count[5m])),0.000001)",
+          "legendFormat": "{{type}}{{status}}{{state}}{{queue}}{{outcome}}{{mode}}{{operation}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 8,
+      "title": "Mean attempt wall duration",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "job-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 12,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (outcome) (rate(job_platform_execution_duration_seconds_sum[5m])) / clamp_min(sum by (outcome) (rate(job_platform_execution_duration_seconds_count[5m])),0.000001)",
+          "legendFormat": "{{type}}{{status}}{{state}}{{queue}}{{outcome}}{{mode}}{{operation}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 9,
+      "title": "Outbox due and scheduled",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "job-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 20,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (state) (job_platform_outbox_entries)",
+          "legendFormat": "{{type}}{{status}}{{state}}{{queue}}{{outcome}}{{mode}}{{operation}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 10,
+      "title": "Retry backlog",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "job-prometheus"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 20,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (state) (job_platform_retry_jobs)",
+          "legendFormat": "{{type}}{{status}}{{state}}{{queue}}{{outcome}}{{mode}}{{operation}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 11,
+      "title": "Broker messages ready and dead",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "job-prometheus"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 20,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (queue) (job_platform_broker_messages)",
+          "legendFormat": "{{type}}{{status}}{{state}}{{queue}}{{outcome}}{{mode}}{{operation}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 12,
+      "title": "Oldest eligible queue wait",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "job-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 28,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "max(job_platform_queue_oldest_due_age_seconds)",
+          "legendFormat": "{{type}}{{status}}{{state}}{{queue}}{{outcome}}{{mode}}{{operation}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 13,
+      "title": "Oldest due outbox wait",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "job-prometheus"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 28,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "max(job_platform_outbox_oldest_due_age_seconds)",
+          "legendFormat": "{{type}}{{status}}{{state}}{{queue}}{{outcome}}{{mode}}{{operation}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 14,
+      "title": "Expired leases awaiting recovery",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "job-prometheus"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 28,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "max(job_platform_expired_leases)",
+          "legendFormat": "{{type}}{{status}}{{state}}{{queue}}{{outcome}}{{mode}}{{operation}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 15,
+      "title": "Automatic and linked retries per second",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "job-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 36,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (mode) (rate(job_platform_jobs_retried_total[5m]))",
+          "legendFormat": "{{type}}{{status}}{{state}}{{queue}}{{outcome}}{{mode}}{{operation}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 16,
+      "title": "Worker recovery requeues per second",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "job-prometheus"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 36,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(rate(job_platform_worker_recoveries_total[5m]))",
+          "legendFormat": "{{type}}{{status}}{{state}}{{queue}}{{outcome}}{{mode}}{{operation}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 17,
+      "title": "Operational failures per second",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "job-prometheus"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 36,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (operation) (rate(job_platform_operation_failures_total[5m]))",
+          "legendFormat": "{{type}}{{status}}{{state}}{{queue}}{{outcome}}{{mode}}{{operation}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    }
+  ],
+  "description": "Global durable lifecycle metrics since migration V7. Timing panels show means, not percentiles. State gauges include legacy jobs. This dashboard expects one global API scrape target; do not sum duplicate API exports."
+}

@@ -1,4 +1,6 @@
 spring:
+  main:
+    banner-mode: off
   application:
     name: job-platform
   datasource:
@@ -45,6 +47,8 @@ server:
   tomcat:
     max-http-form-post-size: 128KB
 jobs:
+  metrics:
+    refresh-ms: ${JOB_METRICS_REFRESH_MS:5000}
   auth:
     bootstrap-key: ${JOB_BOOTSTRAP_API_KEY:}
   execution:
@@ -67,3 +71,16 @@ management:
   endpoint:
     health:
       show-details: never
+      probes:
+        enabled: true
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState,db
+logging:
+  structured:
+    format:
+      console: ecs
+    json:
+      exclude: error.message,error.stack_trace

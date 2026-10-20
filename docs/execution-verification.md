@@ -31,6 +31,14 @@ The platform is covered by **100 unit tests and 126 integration tests**, plus th
 | Scheduling and legacy delivery | An early legacy message cannot start a future job. UUID-only generation-zero messages still execute eligible legacy jobs; they cannot claim a recovered generation. |
 | Upgrade | Automated migrations preserve earlier jobs, results, active attempts, deadlines, and outbox generations. The execution upgrade retained eight jobs and eleven history records. The retry-policy upgrade retained all 25 existing jobs, 62 history records, and 15 attempts with unchanged checksums of their original fields; no old attempts or dead letters were fabricated. |
 | Ownership upgrade | The packaged V6 upgrade retained all 29 jobs, 75 history records, 17 attempts, and 2 dead-letter records with matching checksums of their original fields. All earlier jobs belong to the legacy owner; only keys for that owner can use the ordinary job API for them. |
+| Durable observability | Lifecycle counters and attempt timings commit with job state. Replays, duplicate delivery, and rollbacks do not inflate totals. Metric-flush failure rolls back lifecycle/audit/outbox/admission changes. Restart preserves totals; V7 does not invent earlier samples. |
+| Concurrent metric updates | Mixed-type lifecycle batches and suspended/new transactions preserve committed counts without inverse metric-row locks. |
+| Timing semantics | Queue samples exclude future scheduling and retry backoff. Attempt samples include retryable failures, abandoned attempts, cancellation, timeout, and success; terminal job failures are counted separately. |
+| Safe metric export | Fixed enum labels, no IDs/inputs/keys, retained snapshots with explicit failure/freshness indicators, and a restricted/revocable METRICS role. |
+| Correlated logging | Committed lifecycle logs include job/attempt IDs and omit inputs, keys, and private exception messages. Rolled-back transitions produce no committed-transition log. |
+| Monitoring profile | Promtool validates configuration and alert cases. The packaged smoke executes all 17 provisioned panel expressions and retrieves actual job data through Grafana's data source. |
+| Real dependency outages | The packaged check physically stops/restores this Compose project's broker and database, verifies actual firing alerts, public probes, fail-closed authentication, durable admission during broker downtime, and completion after restoration. |
+| Observability upgrade | The packaged V7 upgrade preserved 37 jobs, 96 events, 20 attempts, 2 outbox entries, 4 dead letters, 4 key records, owners, access audit, and admission records with matching checksums of their original fields. |
 
 Run the automated suite:
 
@@ -46,6 +54,8 @@ python3 scripts/smoke.py
 python3 scripts/dead-letter-smoke.py
 python3 scripts/auth-smoke.py
 ```
+
+The [observability guide](observability.md) includes the optional monitoring profile, live metric/dashboard check, and controlled outage verification. CI runs these checks too. The automated suite totals **245 passing tests** (106 unit and 139 integration).
 
 The smoke check creates a scheduled job, cancels it, creates and replays a linked manual retry, waits for the real worker result, and checks attempt persistence, lifecycle history, pagination, and conflict responses. The generated jobs remain available for inspection.
 

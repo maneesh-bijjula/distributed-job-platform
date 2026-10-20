@@ -20,6 +20,6 @@ class IntegrationDatabaseTest {
         JdbcTemplate jdbc = mock(JdbcTemplate.class);
         when(jdbc.queryForObject("SELECT current_database()", String.class)).thenReturn("jobs_test");
         IntegrationDatabase.reset(jdbc);
-        verify(jdbc).execute("TRUNCATE dead_letters, job_events, job_attempts, job_outbox, jobs, submission_usage");
+        verify(jdbc).execute("TRUNCATE job_metric_counts, job_metric_timings, dead_letters, job_events, job_attempts, job_outbox, jobs, submission_usage");
     }
 }

@@ -1,0 +1,67 @@
+groups:
+  - name: job-platform
+    rules:
+      - alert: JobPlatformScrapeUnavailable
+        expr: up{job="job-platform"} == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: Job platform metrics cannot be scraped
+          description: Check API readiness, PostgreSQL availability, and the dedicated scrape key. Database-backed authentication fails closed during a database outage.
+      - alert: JobPlatformSnapshotStale
+        expr: job_platform_snapshot_up == 0 or job_platform_snapshot_age_seconds > 30
+        for: 30s
+        labels:
+          severity: warning
+        annotations:
+          summary: Job platform database metrics are stale
+          description: Values retain the last committed snapshot. Check database access before relying on backlog gauges.
+      - alert: JobPlatformBrokerUnavailable
+        expr: job_platform_dependency_up{dependency="rabbitmq"} == 0
+        for: 30s
+        labels:
+          severity: warning
+        annotations:
+          summary: RabbitMQ is unavailable
+          description: Accepted jobs remain in the PostgreSQL outbox. The API can remain ready while delivery is delayed.
+      - alert: JobPlatformDispatchDelayed
+        expr: job_platform_outbox_oldest_due_age_seconds > 30
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: Due outbox work has been waiting for delivery
+          description: Inspect broker availability and dispatcher operation failures. Future scheduled work does not contribute to this age.
+      - alert: JobPlatformWorkersDelayed
+        expr: job_platform_queue_oldest_due_age_seconds > 60
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: Eligible queued work is not starting
+          description: Check workers, consumer capacity, and broker backlog. Scheduled wait and retry backoff are excluded.
+      - alert: JobPlatformExpiredLeases
+        expr: job_platform_expired_leases > 0
+        for: 30s
+        labels:
+          severity: warning
+        annotations:
+          summary: Expired executions await recovery
+          description: Keep a dispatcher-enabled API running and inspect recovery operation failures.
+      - alert: JobPlatformOpenDeadLetters
+        expr: job_platform_dead_letters{state="OPEN"} > 0 or job_platform_broker_messages{queue="dead"} > 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: Dead-letter work needs operator inspection
+          description: Inspect the persistent inbox and deliberately collect broker messages. Collection and recovery are explicit operator operations.
+      - alert: JobPlatformTerminalFailures
+        expr: sum(increase(job_platform_jobs_failed_total[5m])) > 0
+        for: 0s
+        labels:
+          severity: warning
+        annotations:
+          summary: Jobs reached a failed terminal state
+          description: Inspect attempt outcomes and the persistent inbox. This counts failed jobs, not retryable attempt failures.

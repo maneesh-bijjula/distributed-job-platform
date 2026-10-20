@@ -36,9 +36,11 @@ public class ExecutionRepository {
                 WITH timing AS MATERIALIZED (SELECT clock_timestamp() AS at),
                      deadline AS (SELECT at, COALESCE(CAST(:deadline AS timestamptz), at + make_interval(secs => :timeout)) AS until FROM timing)
                 INSERT INTO job_attempts(id,job_id,attempt_number,generation,claim_token,worker_id,status,
-                    started_at,heartbeat_at,lease_until,deadline_at)
+                    started_at,heartbeat_at,lease_until,deadline_at,queue_delay_seconds)
                 SELECT :id,:job,:number,:generation,:token,:worker,'RUNNING',at,at,
-                    LEAST(at + make_interval(secs => :lease),until),until FROM deadline RETURNING *
+                    LEAST(at + make_interval(secs => :lease),until),until,
+                    CASE WHEN j.eligible_at IS NULL THEN NULL ELSE greatest(0,extract(epoch FROM (at-j.eligible_at))) END
+                FROM deadline CROSS JOIN jobs j WHERE j.id=:job RETURNING *
                 """, params, this::map).getFirst();
         jdbc.update("""
                 UPDATE jobs SET status='RUNNING',active_attempt_id=:attempt,attempt_count=attempt_count+1,
@@ -93,6 +95,7 @@ public class ExecutionRepository {
                 UPDATE jobs SET status='QUEUED',active_attempt_id=NULL,generation=generation+1,error=NULL,completed_at=NULL,
                     retry_at=clock_timestamp()+make_interval(secs => :delay) WHERE id=:id
                 """, Map.of("id", id, "delay", delaySeconds));
+        jdbc.update("UPDATE jobs SET eligible_at=retry_at WHERE id=:id",Map.of("id",id));
         enqueueCurrent(id);
     }
 
@@ -132,7 +135,7 @@ public class ExecutionRepository {
     }
 
     public void requeue(UUID id) {
-        jdbc.update("UPDATE jobs SET status='QUEUED',active_attempt_id=NULL,generation=generation+1,recovery_count=recovery_count+1 WHERE id=:id", Map.of("id", id));
+        jdbc.update("UPDATE jobs SET status='QUEUED',active_attempt_id=NULL,generation=generation+1,recovery_count=recovery_count+1,eligible_at=clock_timestamp() WHERE id=:id", Map.of("id", id));
         // The outbox replacement and generation advance commit together.
         enqueueCurrent(id);
     }

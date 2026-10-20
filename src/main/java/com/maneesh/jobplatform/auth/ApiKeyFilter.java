@@ -21,7 +21,7 @@ public class ApiKeyFilter extends OncePerRequestFilter {
     public ApiKeyFilter(ApiKeyService service, ObjectMapper mapper) { this.service=service; this.mapper=mapper; }
 
     @Override protected boolean shouldNotFilter(HttpServletRequest request) {
-        return request.getServletPath().equals("/actuator/health");
+        return java.util.Set.of("/actuator/health","/actuator/health/liveness","/actuator/health/readiness").contains(request.getServletPath());
     }
     @Override protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {

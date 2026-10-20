@@ -23,6 +23,14 @@ jobs:
           python3 scripts/smoke.py
           python3 scripts/dead-letter-smoke.py
           python3 scripts/auth-smoke.py
+      - name: Verify monitoring and outage visibility
+        run: |
+          python3 scripts/init-observability.py
+          docker compose -p job-platform --profile observability up -d --wait --wait-timeout 180 prometheus grafana
+          docker compose -p job-platform --profile observability run --rm --no-deps --entrypoint /bin/promtool prometheus check config /etc/prometheus/prometheus.yml
+          docker compose -p job-platform --profile observability run --rm --no-deps -w /etc/prometheus --entrypoint /bin/promtool prometheus test rules alerts.test.yml
+          python3 scripts/observability-smoke.py --report target/observability-smoke.json
+          python3 scripts/observability-outage-smoke.py --report target/observability-outages.json
       - name: Upload test reports
         if: always()
         uses: actions/upload-artifact@v4
@@ -31,7 +39,8 @@ jobs:
           path: |
             target/surefire-reports/
             target/failsafe-reports/
+            target/observability-*.json
           if-no-files-found: ignore
       - name: Clean up services
         if: always()
-        run: docker compose -p job-platform --profile test down
+        run: docker compose -p job-platform --profile test --profile observability down

@@ -19,7 +19,7 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(DataAccessException.class)
     public ProblemDetail unavailable(DataAccessException exception) {
-        log.error("Database operation failed", exception);
+        log.atError().addKeyValue("event","api_storage_failed").addKeyValue("error_kind","STORAGE_UNAVAILABLE").log("Database operation failed");
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.SERVICE_UNAVAILABLE,
                 "Job storage is temporarily unavailable");
         problem.setType(URI.create("about:blank"));
@@ -28,7 +28,7 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(AmqpException.class)
     public ProblemDetail brokerUnavailable(AmqpException exception) {
-        log.warn("Dead-letter broker operation failed: {}", exception.getClass().getSimpleName());
+        log.atWarn().addKeyValue("event","dead_letter_broker_failed").addKeyValue("error_kind","BROKER_UNAVAILABLE").log("Dead-letter broker operation failed");
         return ProblemDetail.forStatusAndDetail(HttpStatus.SERVICE_UNAVAILABLE, "Message broker is temporarily unavailable");
     }
 
