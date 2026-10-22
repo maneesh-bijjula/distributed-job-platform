@@ -20,10 +20,11 @@ public class MetricsSnapshotRepository {
     public Snapshot load() {
         var values=new HashMap<String,Double>();
         var timings=new HashMap<String,Timing>();
-        jdbc.query("SELECT event,job_type,value FROM job_metric_counts",Map.of(),rs -> {
+        jdbc.query("SELECT event,job_type,sum(value) AS value FROM job_metric_counts GROUP BY event,job_type",Map.of(),rs -> {
             values.put("event:"+rs.getString("event")+":"+rs.getString("job_type"),rs.getDouble("value"));
         });
-        jdbc.query("SELECT * FROM job_metric_timings",Map.of(),rs -> {
+        jdbc.query("SELECT kind,job_type,outcome,sum(sample_count) AS sample_count,sum(total_seconds) AS total_seconds "
+                +"FROM job_metric_timings GROUP BY kind,job_type,outcome",Map.of(),rs -> {
             timings.put(rs.getString("kind")+":"+rs.getString("job_type")+":"+rs.getString("outcome"),
                     new Timing(rs.getLong("sample_count"),rs.getDouble("total_seconds")));
         });

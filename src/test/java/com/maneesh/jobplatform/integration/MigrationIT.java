@@ -20,6 +20,34 @@ class MigrationIT {
     @Autowired JdbcTemplate jdbc;
 
     @Test
+    void metricsStripingUpgradePreservesAllExistingDurableCountsAndTimings() throws Exception {
+        IntegrationDatabase.requireTestDatabase(jdbc);
+        String schema="upgrade_"+UUID.randomUUID().toString().replace("-","");
+        jdbc.execute("CREATE SCHEMA "+schema);
+        try {
+            Flyway.configure().dataSource(dataSource).schemas(schema).defaultSchema(schema).target("7").load().migrate();
+            try(var connection=dataSource.getConnection()) {
+                String original=connection.getSchema();
+                try {
+                    connection.setSchema(schema);
+                    var isolated=new JdbcTemplate(new SingleConnectionDataSource(connection,true));
+                    isolated.update("INSERT INTO job_metric_counts(event,job_type,value) VALUES ('SUCCEEDED','SHA256',123456)");
+                    isolated.update("INSERT INTO job_metric_timings(kind,job_type,outcome,sample_count,total_seconds) VALUES ('EXECUTION','SHA256','SUCCEEDED',123456,9876.5)");
+                    var counts=isolated.queryForMap("SELECT * FROM job_metric_counts");
+                    var timings=isolated.queryForMap("SELECT * FROM job_metric_timings");
+                    Flyway.configure().dataSource(dataSource).schemas(schema).defaultSchema(schema).load().migrate();
+                    var afterCounts=isolated.queryForMap("SELECT * FROM job_metric_counts");
+                    var afterTimings=isolated.queryForMap("SELECT * FROM job_metric_timings");
+                    assertThat(((Number)afterCounts.remove("stripe")).intValue()).isZero();
+                    assertThat(((Number)afterTimings.remove("stripe")).intValue()).isZero();
+                    assertThat(afterCounts).isEqualTo(counts);
+                    assertThat(afterTimings).isEqualTo(timings);
+                } finally { connection.setSchema(original); }
+            }
+        } finally { jdbc.execute("DROP SCHEMA "+schema+" CASCADE"); }
+    }
+
+    @Test
     void upgradeRetainsExistingJobsAndRecordsOnlyTheirKnownBaseline() throws Exception {
         IntegrationDatabase.requireTestDatabase(jdbc);
         String schema = "upgrade_" + UUID.randomUUID().toString().replace("-", "");

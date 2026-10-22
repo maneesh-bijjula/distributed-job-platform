@@ -61,6 +61,45 @@ class ObservabilityIT extends AuthenticatedIntegrationTest {
     private double count(String event) { return snapshots.load().value("event:"+event+":UPPERCASE"); }
     private MetricsSnapshotRepository.Timing time(String outcome) { return snapshots.load().timing("EXECUTION:UPPERCASE:"+outcome); }
 
+    @Test void oneLockedMetricsStripeDoesNotBlockAnUnrelatedJobsCancellation() throws Exception {
+        UUID first=new UUID(0,1),second=new UUID(0,2);
+        for(UUID id:new UUID[]{first,second})
+            jdbc.update("INSERT INTO jobs(id,type,input_text) VALUES (?,'UPPERCASE','stripe isolation')",id);
+        jobs.cancel(first);
+        var locked=new CountDownLatch(1);
+        var release=new CountDownLatch(1);
+        try(var pool=Executors.newVirtualThreadPerTaskExecutor()) {
+            var holder=pool.submit(()->new TransactionTemplate(transactions).executeWithoutResult(status->{
+                jdbc.queryForObject("SELECT value FROM job_metric_counts WHERE event='CANCELLED' AND job_type='UPPERCASE' AND stripe=? FOR UPDATE",Long.class,first.hashCode() & 31);
+                locked.countDown();
+                try { if(!release.await(10,TimeUnit.SECONDS)) throw new IllegalStateException("Stripe test timed out"); }
+                catch(InterruptedException error) { Thread.currentThread().interrupt(); throw new IllegalStateException(error); }
+            }));
+            try {
+                assertThat(locked.await(5,TimeUnit.SECONDS)).isTrue();
+                assertThat(pool.submit(()->jobs.cancel(second)).get(5,TimeUnit.SECONDS).status()).isEqualTo(JobStatus.CANCELLED);
+            } finally { release.countDown(); }
+            holder.get(5,TimeUnit.SECONDS);
+        }
+        assertThat(count("CANCELLED")).isEqualTo(2);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM job_metric_counts WHERE event='CANCELLED'",Integer.class)).isEqualTo(2);
+    }
+
+    @Test void legacyStripeAndNewStripesExportOneBoundedTotal() {
+        jdbc.update("INSERT INTO job_metric_counts(event,job_type,value) VALUES ('SUBMITTED','UPPERCASE',70)");
+        jdbc.update("INSERT INTO job_metric_counts(event,job_type,stripe,value) VALUES ('SUBMITTED','UPPERCASE',31,30)");
+        jdbc.update("INSERT INTO job_metric_timings(kind,job_type,outcome,sample_count,total_seconds) VALUES ('EXECUTION','UPPERCASE','SUCCEEDED',7,3.5)");
+        jdbc.update("INSERT INTO job_metric_timings(kind,job_type,outcome,stripe,sample_count,total_seconds) VALUES ('EXECUTION','UPPERCASE','SUCCEEDED',31,3,1.5)");
+        assertThat(count("SUBMITTED")).isEqualTo(100);
+        assertThat(time("SUCCEEDED")).isEqualTo(new MetricsSnapshotRepository.Timing(10,5));
+        assertThatThrownBy(()->jdbc.update("INSERT INTO job_metric_counts(event,job_type,stripe,value) VALUES ('STARTED','UPPERCASE',32,1)"))
+                .isInstanceOf(DataAccessException.class);
+        exporter.refresh();
+        assertThat(registry.get("job.platform.jobs.accepted").tag("type","UPPERCASE").functionCounter().count()).isEqualTo(100);
+        assertThat(registry.getMeters().stream().filter(m->m.getId().getName().startsWith("job.platform."))
+                .flatMap(m->m.getId().getTags().stream()).map(t->t.getKey())).doesNotContain("stripe");
+    }
+
     @Test void successfulWorkAndDuplicateReplaysProduceOneCommittedCountAndTiming() {
         Job first=jobs.submit(JobType.UPPERCASE,"hello","metrics-replay").job();
         jobs.submit(JobType.UPPERCASE,"hello","metrics-replay");

@@ -25,13 +25,14 @@ public class LifecycleMetrics {
     @Transactional(propagation=Propagation.MANDATORY)
     public void record(UUID jobId, JobEvent.Type event, JobStatus status, UUID attemptId) {
         JobType type=JobType.valueOf(jdbc.queryForObject("SELECT type FROM jobs WHERE id=:id",Map.of("id",jobId),String.class));
+        int stripe=jobId.hashCode() & 31;
         Pending pending=pending();
-        pending.counts.merge(event.name()+":"+type.name(),1L,Long::sum);
+        pending.counts.merge(event.name()+":"+type.name()+":"+stripe,1L,Long::sum);
         var params=new HashMap<String,Object>(); params.put("attempt",attemptId);
         if(attemptId!=null) {
             if(event==JobEvent.Type.STARTED) {
                 jdbc.query("SELECT queue_delay_seconds FROM job_attempts WHERE id=:attempt AND queue_delay_seconds IS NOT NULL",params,
-                        (rs,n) -> rs.getDouble(1)).forEach(seconds -> timing(pending,"QUEUE_DELAY",type,"STARTED",seconds));
+                        (rs,n) -> rs.getDouble(1)).forEach(seconds -> timing(pending,"QUEUE_DELAY",type,"STARTED",stripe,seconds));
             } else if(event==JobEvent.Type.SUCCEEDED || event==JobEvent.Type.FAILED || event==JobEvent.Type.CANCELLED
                     || event==JobEvent.Type.RETRY_SCHEDULED || event==JobEvent.Type.RETRIES_EXHAUSTED
                     || event==JobEvent.Type.LEASE_EXPIRED || event==JobEvent.Type.TIMED_OUT || event==JobEvent.Type.RECOVERY_EXHAUSTED) {
@@ -39,7 +40,7 @@ public class LifecycleMetrics {
                         SELECT status,greatest(0,extract(epoch FROM (finished_at-started_at))) AS seconds
                         FROM job_attempts WHERE id=:attempt AND finished_at IS NOT NULL
                         """,params,(rs,n) -> Map.entry(rs.getString("status"),rs.getDouble("seconds")))
-                        .forEach(sample -> timing(pending,"EXECUTION",type,sample.getKey(),sample.getValue()));
+                        .forEach(sample -> timing(pending,"EXECUTION",type,sample.getKey(),stripe,sample.getValue()));
             }
         }
         pending.logs.add(() -> {
@@ -49,8 +50,8 @@ public class LifecycleMetrics {
                 entry.log("Job lifecycle transition committed");
         });
     }
-    private void timing(Pending pending,String kind,JobType type,String outcome,double seconds) {
-        pending.timings.merge(kind+":"+type.name()+":"+outcome,new MetricsSnapshotRepository.Timing(1,seconds),
+    private void timing(Pending pending,String kind,JobType type,String outcome,int stripe,double seconds) {
+        pending.timings.merge(kind+":"+type.name()+":"+outcome+":"+stripe,new MetricsSnapshotRepository.Timing(1,seconds),
                 (a,b)->new MetricsSnapshotRepository.Timing(a.count()+b.count(),a.seconds()+b.seconds()));
     }
     private Pending pending() {
@@ -76,18 +77,18 @@ public class LifecycleMetrics {
         pending.counts.forEach((key,count)-> {
             String[] parts=key.split(":");
             jdbc.update("""
-                    INSERT INTO job_metric_counts(event,job_type,value) VALUES (:event,:type,:count)
-                    ON CONFLICT(event,job_type) DO UPDATE SET value=job_metric_counts.value+EXCLUDED.value
-                    """,Map.of("event",parts[0],"type",parts[1],"count",count));
+                    INSERT INTO job_metric_counts(event,job_type,stripe,value) VALUES (:event,:type,:stripe,:count)
+                    ON CONFLICT(event,job_type,stripe) DO UPDATE SET value=job_metric_counts.value+EXCLUDED.value
+                    """,Map.of("event",parts[0],"type",parts[1],"stripe",Integer.parseInt(parts[2]),"count",count));
         });
         pending.timings.forEach((key,sample)-> {
             String[] parts=key.split(":");
             jdbc.update("""
-                    INSERT INTO job_metric_timings(kind,job_type,outcome,sample_count,total_seconds)
-                    VALUES (:kind,:type,:outcome,:count,:seconds)
-                    ON CONFLICT(kind,job_type,outcome) DO UPDATE SET sample_count=job_metric_timings.sample_count+EXCLUDED.sample_count,
+                    INSERT INTO job_metric_timings(kind,job_type,outcome,stripe,sample_count,total_seconds)
+                    VALUES (:kind,:type,:outcome,:stripe,:count,:seconds)
+                    ON CONFLICT(kind,job_type,outcome,stripe) DO UPDATE SET sample_count=job_metric_timings.sample_count+EXCLUDED.sample_count,
                         total_seconds=job_metric_timings.total_seconds+EXCLUDED.total_seconds
-                    """,Map.of("kind",parts[0],"type",parts[1],"outcome",parts[2],"count",sample.count(),"seconds",sample.seconds()));
+                    """,Map.of("kind",parts[0],"type",parts[1],"outcome",parts[2],"stripe",Integer.parseInt(parts[3]),"count",sample.count(),"seconds",sample.seconds()));
         });
     }
     private static final class Pending {
