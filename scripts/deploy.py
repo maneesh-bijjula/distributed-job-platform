@@ -94,6 +94,8 @@ class Deployment:
             if key not in allowed or key in values:
                 raise ValueError("Unknown or duplicate deployment setting")
             values[key] = value
+        if not {"APP_IMAGE", "DEPLOY_API_PORT"} <= values.keys():
+            raise ValueError("Deployment settings require APP_IMAGE and DEPLOY_API_PORT")
         image_name(values["APP_IMAGE"])
         for key in ("POSTGRES_IMAGE", "RABBITMQ_IMAGE"):
             if key in values:
@@ -147,6 +149,7 @@ class Deployment:
                 raise ValueError("Refusing symlinked error file")
             fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
             with os.fdopen(fd, "wb") as stream:
+                os.fchmod(stream.fileno(), 0o600)
                 stream.write(result.stderr)
                 if output is None:
                     stream.write(result.stdout)
@@ -193,7 +196,11 @@ class Deployment:
     def backup(self):
         self.guard(offline=True)
         directory = self.directory / "backups"
+        if directory.is_symlink():
+            raise ValueError("Refusing symlinked backup directory")
         directory.mkdir(mode=0o700, exist_ok=True)
+        if directory.stat().st_mode & 0o077:
+            raise ValueError("Backup directory must be private to its owner")
         destination = directory / (datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ-") + uuid4().hex[:8])
         destination.mkdir(mode=0o700)
         before = self.fingerprint()
@@ -217,10 +224,39 @@ class Deployment:
     def checked_archive(self, directory):
         directory = Path(directory).resolve()
         archive = directory / "database.dump"
-        manifest = json.loads((directory / "manifest.json").read_text())
+        manifest_path = directory / "manifest.json"
+        if any(path.is_symlink() or not path.is_file() for path in (archive, manifest_path)):
+            raise ValueError("Backup archive and manifest must be regular files, not symlinks")
+        manifest = json.loads(manifest_path.read_text())
+        # Validate the verification target before pg_restore can mutate the empty database.
+        # A matching archive checksum alone cannot make an incomplete manifest restorable.
+        if not isinstance(manifest, dict) or type(manifest.get("format")) is not int or manifest["format"] != 1:
+            raise ValueError("Unsupported backup manifest format")
+        expected = manifest.get("fingerprint")
+        if not isinstance(expected, dict) or set(expected) != {"tables", "sequences"}:
+            raise ValueError("Backup manifest requires table and sequence fingerprints")
+        for kind in ("tables", "sequences"):
+            entries = expected[kind]
+            if not isinstance(entries, dict):
+                raise ValueError("Invalid backup fingerprints")
+            for name, value in entries.items():
+                sql_identifier(name)
+                if not isinstance(value, dict):
+                    raise ValueError("Invalid backup fingerprints")
+                if kind == "tables":
+                    valid = (set(value) == {"rows", "md5"} and type(value["rows"]) is int
+                             and value["rows"] >= 0 and isinstance(value["md5"], str)
+                             and re.fullmatch(r"[0-9a-f]{32}", value["md5"]))
+                else:
+                    valid = (set(value) == {"lastValue", "called"} and type(value["lastValue"]) is int
+                             and type(value["called"]) is bool)
+                if not valid:
+                    raise ValueError("Invalid backup fingerprints")
+        if not isinstance(manifest.get("sha256"), str) or not re.fullmatch(r"[0-9a-f]{64}", manifest["sha256"]):
+            raise ValueError("Backup manifest requires a SHA-256 digest")
         with archive.open("rb") as stream:
             digest = hashlib.file_digest(stream, "sha256").hexdigest()
-        if manifest.get("format") != 1 or digest != manifest.get("sha256"):
+        if digest != manifest["sha256"]:
             raise ValueError("Backup integrity check failed")
         return archive, manifest
 

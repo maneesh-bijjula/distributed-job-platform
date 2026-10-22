@@ -25,6 +25,7 @@ jobs:
           python3 scripts/smoke.py
           python3 scripts/dead-letter-smoke.py
           python3 scripts/auth-smoke.py
+          python3 scripts/api-boundary-smoke.py
       - name: Verify monitoring and outage visibility
         run: |
           python3 scripts/init-observability.py

@@ -1,5 +1,7 @@
 # Single-host deployment
 
+The [completion review](completion-review.md) records the final feature checklist and deployment trust boundaries. JSON bodies are capped at 128 KiB by the application as well as the example proxy; see the [API reference](api.md).
+
 This profile packages the scoped platform for a Docker host. It has one PostgreSQL
 server, one RabbitMQ node, one API/dispatcher and one worker. It is not a highly
 available deployment. All persistent application data resides on the host's Docker

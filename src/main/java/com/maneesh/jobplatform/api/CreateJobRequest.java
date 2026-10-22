@@ -12,9 +12,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.time.Instant;
 import jakarta.validation.Valid;
 import com.maneesh.jobplatform.jobs.RetryPolicy;
+import com.maneesh.jobplatform.validation.WellFormedUnicode;
 
 public record CreateJobRequest(@NotNull JobType type,
-                               @NotBlank @Size(max = 16000)
+                               @NotBlank @Size(max = 16000) @WellFormedUnicode
                                @Pattern(regexp = "[^\\x00]*", message = "must not contain null characters") String text,
                                @Min(0) @Max(9) int priority,
                                Instant scheduledAt,

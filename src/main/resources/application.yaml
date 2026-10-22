@@ -34,7 +34,10 @@ spring:
           multiplier: 2
           max-interval: 2s
   jackson:
+    parser:
+      strict-duplicate-detection: true
     deserialization:
+      fail-on-trailing-tokens: true
       fail-on-unknown-properties: true
       fail-on-numbers-for-enums: true
       accept-float-as-int: false

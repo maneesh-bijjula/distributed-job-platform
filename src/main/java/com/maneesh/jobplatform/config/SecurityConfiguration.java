@@ -2,6 +2,7 @@ package com.maneesh.jobplatform.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.maneesh.jobplatform.auth.*;
+import com.maneesh.jobplatform.api.RequestBodyLimitFilter;
 import jakarta.servlet.DispatcherType;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.context.annotation.Bean;
@@ -10,6 +11,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.access.intercept.AuthorizationFilter;
 
 @Configuration
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
@@ -31,6 +33,7 @@ public class SecurityConfiguration {
                         .authenticationEntryPoint((req,res,error) -> ApiKeyFilter.write(mapper,res,401,"A valid bearer API key is required"))
                         .accessDeniedHandler((req,res,error) -> ApiKeyFilter.write(mapper,res,403,"This key does not have permission for this operation")))
                 .addFilterBefore(new ApiKeyFilter(keys,mapper), UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(new RequestBodyLimitFilter(mapper), AuthorizationFilter.class)
                 .build();
     }
 }

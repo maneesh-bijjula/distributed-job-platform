@@ -2,6 +2,7 @@ package com.maneesh.jobplatform.api;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.maneesh.jobplatform.auth.*;
+import com.maneesh.jobplatform.validation.WellFormedUnicode;
 import com.maneesh.jobplatform.auth.AccessRecords.*;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
@@ -19,9 +20,9 @@ import org.springframework.web.server.ResponseStatusException;
 public class AccessController {
     private final ApiKeyService service;
     public AccessController(ApiKeyService service) { this.service=service; }
-    public record OwnerRequest(@NotBlank @Size(max=80) @Pattern(regexp="[^\\x00]*") String name,
+    public record OwnerRequest(@NotBlank @Size(max=80) @WellFormedUnicode @Pattern(regexp="[^\\x00]*") String name,
                                @Min(1) @Max(10000) Integer submissionLimitPerMinute) {}
-    public record KeyRequest(@NotBlank @Size(max=80) @Pattern(regexp="[^\\x00]*") String name, ApiPrincipal.Role role) {}
+    public record KeyRequest(@NotBlank @Size(max=80) @WellFormedUnicode @Pattern(regexp="[^\\x00]*") String name, ApiPrincipal.Role role) {}
     public record LimitRequest(@Min(1) @Max(10000) int submissionLimitPerMinute) {}
     public record Page<T>(List<T> items, int page, int size, boolean hasNext) {}
     public record Me(ApiPrincipal identity, Owner owner) {}

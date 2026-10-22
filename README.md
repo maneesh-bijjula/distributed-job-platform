@@ -2,6 +2,8 @@
 
 An asynchronous job service built with **Java 21, Spring Boot, PostgreSQL, and RabbitMQ**. Submit a job over HTTP, process it in a separate worker, and retrieve its status and result.
 
+[API reference](docs/api.md) · [Architecture and demo](docs/project-walkthrough.md) · [Deployment](docs/deployment.md) · [Completion checklist](docs/completion-review.md)
+
 ## Features
 
 - REST endpoints for job submission, retrieval, and paginated status filtering.
@@ -25,6 +27,7 @@ An asynchronous job service built with **Java 21, Spring Boot, PostgreSQL, and R
 - Validated dispatch, prefetch, concurrency, and connection-pool controls with an optional measured tuning profile.
 - Liveness/readiness probes, automated tests, and GitHub Actions CI.
 - Separate single-host deployment with mounted secrets, bounded graceful shutdown, verified PostgreSQL backup/restore, and recovery runbooks.
+- Bounded JSON request bodies, strict duplicate/trailing-content rejection, and validated Unicode input with real HTTP streaming checks.
 
 ## Run locally
 
@@ -336,7 +339,7 @@ See the [observability guide](docs/observability.md) for metric definitions, cre
 
 ## Tests
 
-The Java suite contains **122 unit tests and 141 integration tests**. Twenty-four Python tests check load-harness arithmetic, isolation, replay safety, offline recovery guards and fault-campaign accounting. CI also builds the images, runs all three packaged regression checks, validates Prometheus rules and live dashboard data, exercises bounded load and real failures, and verifies fresh deployment, graceful shutdown, backup/restore and broker recovery.
+The Java suite contains **138 unit tests and 141 integration tests**. Twenty-nine Python tests check load-harness arithmetic, isolation, replay safety, offline recovery guards and fault-campaign accounting. CI also builds the images, runs all four packaged API regression checks, validates Prometheus rules and live dashboard data, exercises bounded load and real failures, and verifies fresh deployment, graceful shutdown, backup/restore and broker recovery. The [completion review](docs/completion-review.md) maps each planned capability to its evidence and deployment limits.
 
 See the [execution verification matrix](docs/execution-verification.md) for the covered guarantees and limits.
 
@@ -356,6 +359,7 @@ With the packaged application running, check the complete control workflow with 
 python3 scripts/smoke.py
 python3 scripts/dead-letter-smoke.py
 python3 scripts/auth-smoke.py
+python3 scripts/api-boundary-smoke.py
 ```
 
 This creates two inspectable jobs: a cancelled scheduled job and its successful immediate retry. It verifies replay behavior, worker output, persisted execution attempts, history pagination, and conflict responses. Use `--base-url` to select a different application address.

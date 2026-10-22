@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import static com.maneesh.jobplatform.auth.AccessRecords.*;
+import com.maneesh.jobplatform.validation.WellFormedUnicode;
 
 @Service
 public class ApiKeyService {
@@ -77,7 +78,8 @@ public class ApiKeyService {
         if (actor == null || actor.role() != ApiPrincipal.Role.OPERATOR) throw new ResponseStatusException(HttpStatus.FORBIDDEN,"Operator access required");
     }
     private void validName(String name) {
-        if (name == null || name.isBlank() || name.length() > 80 || name.indexOf('\0') >= 0)
+        if (name == null || name.isBlank() || name.length() > 80 || name.indexOf('\0') >= 0
+                || !WellFormedUnicode.Validator.valid(name))
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Name must be nonblank, contain no null characters, and have at most 80 characters");
     }
     private void validLimit(int limit) {
