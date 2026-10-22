@@ -105,12 +105,14 @@ def main():
     parser.add_argument("--output", required=True)
     parser.add_argument("--jobs", type=int, default=3000)
     parser.add_argument("--workers", type=int, choices=(1, 4), default=4)
+    parser.add_argument("--database-cpus", type=int, choices=(1,2), default=1)
     parser.add_argument("--mode", choices=("pipeline", "backlog"), default="backlog")
     parser.add_argument("--skip-build", action="store_true")
     args = parser.parse_args()
     if not 100 <= args.jobs <= 10000:
         parser.error("jobs must be between 100 and 10000")
-    stack = ProfiledStack(args.output, batch=50, delay=250, prefetch=1, pool=6, concurrency=2, workers=args.workers)
+    stack = ProfiledStack(args.output, batch=50, delay=250, prefetch=1, pool=6, concurrency=2,
+                          workers=args.workers,database_cpus=args.database_cpus)
     report = None
     try:
         stack.start(build=not args.skip_build)

@@ -35,7 +35,7 @@ class PersistenceIT {
     @Autowired JobExecutor executor;
     @Autowired OutboxRelay relay;
     @Autowired JdbcTemplate jdbc;
-    @MockitoBean JobPublisher publisher;
+    @MockitoBean(answers=org.mockito.Answers.CALLS_REAL_METHODS) JobPublisher publisher;
     @MockitoSpyBean JobProcessor processor;
 
     @BeforeEach

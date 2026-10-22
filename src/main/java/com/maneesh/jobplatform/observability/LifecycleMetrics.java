@@ -1,7 +1,6 @@
 package com.maneesh.jobplatform.observability;
 
 import com.maneesh.jobplatform.jobs.*;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.ArrayList;
 import java.util.TreeMap;
@@ -22,25 +21,22 @@ public class LifecycleMetrics {
     private final NamedParameterJdbcTemplate jdbc;
     public LifecycleMetrics(NamedParameterJdbcTemplate jdbc) { this.jdbc=jdbc; }
 
+    public record EventSample(JobType type,Double queueSeconds,String attemptOutcome,Double executionSeconds) {}
+
     @Transactional(propagation=Propagation.MANDATORY)
-    public void record(UUID jobId, JobEvent.Type event, JobStatus status, UUID attemptId) {
-        JobType type=JobType.valueOf(jdbc.queryForObject("SELECT type FROM jobs WHERE id=:id",Map.of("id",jobId),String.class));
+    public void record(UUID jobId, JobEvent.Type event, JobStatus status, UUID attemptId, EventSample sample) {
+        JobType type=sample.type();
         int stripe=jobId.hashCode() & 31;
         Pending pending=pending();
         pending.counts.merge(event.name()+":"+type.name()+":"+stripe,1L,Long::sum);
-        var params=new HashMap<String,Object>(); params.put("attempt",attemptId);
         if(attemptId!=null) {
             if(event==JobEvent.Type.STARTED) {
-                jdbc.query("SELECT queue_delay_seconds FROM job_attempts WHERE id=:attempt AND queue_delay_seconds IS NOT NULL",params,
-                        (rs,n) -> rs.getDouble(1)).forEach(seconds -> timing(pending,"QUEUE_DELAY",type,"STARTED",stripe,seconds));
+                if(sample.queueSeconds()!=null) timing(pending,"QUEUE_DELAY",type,"STARTED",stripe,sample.queueSeconds());
             } else if(event==JobEvent.Type.SUCCEEDED || event==JobEvent.Type.FAILED || event==JobEvent.Type.CANCELLED
                     || event==JobEvent.Type.RETRY_SCHEDULED || event==JobEvent.Type.RETRIES_EXHAUSTED
                     || event==JobEvent.Type.LEASE_EXPIRED || event==JobEvent.Type.TIMED_OUT || event==JobEvent.Type.RECOVERY_EXHAUSTED) {
-                jdbc.query("""
-                        SELECT status,greatest(0,extract(epoch FROM (finished_at-started_at))) AS seconds
-                        FROM job_attempts WHERE id=:attempt AND finished_at IS NOT NULL
-                        """,params,(rs,n) -> Map.entry(rs.getString("status"),rs.getDouble("seconds")))
-                        .forEach(sample -> timing(pending,"EXECUTION",type,sample.getKey(),stripe,sample.getValue()));
+                if(sample.executionSeconds()!=null)
+                    timing(pending,"EXECUTION",type,sample.attemptOutcome(),stripe,sample.executionSeconds());
             }
         }
         pending.logs.add(() -> {

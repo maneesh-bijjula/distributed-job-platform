@@ -25,15 +25,14 @@ public class OutboxRelay {
                 SELECT job_id, priority, generation FROM job_outbox WHERE available_at <= now()
                 ORDER BY priority DESC, available_at, created_at, job_id
                 LIMIT :batch FOR UPDATE SKIP LOCKED
-                """, Map.of("batch",properties.batchSize()), (rs, row) -> new PendingJob(rs.getObject("job_id", UUID.class), rs.getInt("priority"), rs.getInt("generation")));
-        for (PendingJob message : messages) {
-            // A crash after confirmation can redeliver; the worker locks and checks job state.
-            publisher.publish(message.id(), message.priority(), message.generation());
-            jdbc.update("DELETE FROM job_outbox WHERE job_id = :id AND generation = :generation",
-                    Map.of("id", message.id(), "generation", message.generation()));
-        }
+                """, Map.of("batch",properties.batchSize()), (rs, row) -> new JobPublisher.Delivery(rs.getObject("job_id", UUID.class), rs.getInt("priority"), rs.getInt("generation")));
+        if(messages.isEmpty()) return 0;
+        // Every message must be confirmed and routed before any outbox removal can commit.
+        // Partial delivery or a crash still permits duplicates, never at-most-once deletion.
+        publisher.publishBatch(messages);
+        var keys=messages.stream().map(message->new Object[]{message.id(),message.generation()}).toList();
+        jdbc.update("DELETE FROM job_outbox WHERE (job_id,generation) IN (:keys)",Map.of("keys",keys));
         return messages.size();
     }
 
-    private record PendingJob(UUID id, int priority, int generation) {}
 }

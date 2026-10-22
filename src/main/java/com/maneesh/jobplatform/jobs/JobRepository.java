@@ -105,6 +105,15 @@ public class JobRepository {
                 .stream().findFirst();
     }
 
+    public Optional<Job> lockClaim(UUID id, UUID attempt, UUID token, int generation) {
+        return jdbc.query("""
+                SELECT j.* FROM jobs j JOIN job_attempts a ON a.id=j.active_attempt_id
+                WHERE j.id=:id AND j.status='RUNNING' AND j.generation=:generation
+                    AND a.id=:attempt AND a.claim_token=:token AND a.status='RUNNING'
+                FOR UPDATE OF j
+                """,Map.of("id",id,"attempt",attempt,"token",token,"generation",generation),this::map).stream().findFirst();
+    }
+
     public List<Job> list(JobStatus status, int page, int size) {
         Map<String, Object> params = new HashMap<>();
         params.put("size", size + 1);
@@ -155,11 +164,19 @@ public class JobRepository {
         params.put("status", status.name());
         params.put("related", relatedJobId);
         params.put("attempt", attemptId);
-        jdbc.update("""
-                INSERT INTO job_events (job_id, event_type, status, related_job_id, attempt_id)
-                VALUES (:id, :type, :status, :related, :attempt)
-                """, params);
-        metrics.record(id,type,status,attemptId);
+        // Return metric inputs with the event write instead of performing two extra JDBC round trips.
+        var sample=jdbc.queryForObject("""
+                WITH inserted AS (
+                    INSERT INTO job_events (job_id,event_type,status,related_job_id,attempt_id)
+                    VALUES (:id,:type,:status,:related,:attempt) RETURNING job_id,attempt_id)
+                SELECT j.type,a.queue_delay_seconds,a.status AS attempt_status,
+                    CASE WHEN a.finished_at IS NULL THEN NULL
+                         ELSE greatest(0,extract(epoch FROM (a.finished_at-a.started_at))) END::double precision AS execution_seconds
+                FROM inserted e JOIN jobs j ON j.id=e.job_id LEFT JOIN job_attempts a ON a.id=e.attempt_id
+                """,params,(rs,row)->new LifecycleMetrics.EventSample(JobType.valueOf(rs.getString("type")),
+                        rs.getObject("queue_delay_seconds",Double.class),rs.getString("attempt_status"),
+                        rs.getObject("execution_seconds",Double.class)));
+        metrics.record(id,type,status,attemptId,sample);
     }
 
     public List<JobEvent> events(UUID id, int page, int size) {

@@ -34,7 +34,7 @@ class LifecycleIT {
     @Autowired JobExecutor executor;
     @Autowired OutboxRelay relay;
     @Autowired JdbcTemplate jdbc;
-    @MockitoBean JobPublisher publisher;
+    @MockitoBean(answers=org.mockito.Answers.CALLS_REAL_METHODS) JobPublisher publisher;
     @MockitoSpyBean JobProcessor processor;
     @MockitoSpyBean JobRepository repository;
 
