@@ -142,7 +142,12 @@ public class ExecutionService {
     }
 
     private Job owned(Claim claim) {
-        return jobs.lockClaim(claim.job().id(),claim.attempt().id(),claim.token(),claim.attempt().generation()).orElse(null);
+        var found = jobs.lock(claim.job().id());
+        if (found.isEmpty()) return null;
+        Job job = found.get();
+        if (job.status() != JobStatus.RUNNING || !claim.attempt().id().equals(job.activeAttemptId())
+                || job.generation() != claim.attempt().generation()) return null;
+        return attempts.owned(claim.attempt().id(), claim.token()).isPresent() ? job : null;
     }
 
     private void expire(Job job, JobAttempt attempt) {

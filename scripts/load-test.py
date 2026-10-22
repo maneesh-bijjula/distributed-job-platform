@@ -22,6 +22,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", required=True, help="new output directory; existing results are never overwritten")
     parser.add_argument("--jobs", type=bounded(1, 10000), default=300)
+    parser.add_argument("--warmup-jobs", type=bounded(1, 1000), default=12,
+                        help="verified unmeasured jobs before measurement; retain the value when comparing runs")
     parser.add_argument("--clients", type=bounded(1, 64), default=16)
     parser.add_argument("--workers", type=bounded(1, 4), default=1)
     parser.add_argument("--concurrency", type=bounded(1, 8), default=2)
@@ -40,7 +42,7 @@ def main():
                   pool=args.pool, concurrency=args.concurrency, workers=args.workers, database_cpus=args.database_cpus)
     try:
         stack.start(build=not args.skip_build)
-        warmup = Workload(stack, "warmup", specs(12, sizes=(128,)), 4)
+        warmup = Workload(stack, "warmup", specs(args.warmup_jobs, sizes=(128,)), 4)
         warmup.submit(); warmup.await_terminal(); warmup.evidence()
         paused = []
         if args.mode == "backlog":
@@ -60,7 +62,7 @@ def main():
             stack.container_action("unpause", *paused)
         workload.await_terminal(timeout=600)
         report = workload.evidence(drain_started=drain_started)
-        report.update(mode=args.mode, seed=args.seed, settings=stack.settings,
+        report.update(mode=args.mode, seed=args.seed, settings=stack.settings,warmupJobs=args.warmup_jobs,
                       scheduledFraction="one in five" if args.schedule_seconds else "none",
                       workload="round-robin WORD_COUNT/SHA256/UPPERCASE, ASCII payloads of 128/4096/16000 bytes",
                       throughputScope="Includes two APIs, PostgreSQL, RabbitMQ and unmodified production workers; no artificial handler delay")

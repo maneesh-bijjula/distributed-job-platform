@@ -15,6 +15,7 @@ Response timestamps are UTC instants. IDs are UUID strings. Nullable fields are 
 | Method and path | Success | Behavior |
 | --- | --- | --- |
 | `POST /jobs` | `202`, or `200` replay | Submit a job; optional `Idempotency-Key`; returns a Job and `Location` |
+| `POST /jobs/batch` | `202`, `200`, or `207` | Submit 1–100 items with per-item keys and outcomes; details below |
 | `GET /jobs/{id}` | `200` | Read an owned Job, including status and result |
 | `GET /jobs` | `200` | Owned Job page; optional `status` filter |
 | `POST /jobs/{id}/cancel` | `200` | Cancel queued/running work; repeated cancellation returns the cancelled Job |
@@ -66,6 +67,27 @@ A Job contains `id`, `type`, `text`, `status`, `result`, `error`, `createdAt`, `
 | `UPPERCASE` | `{"text":"HELLO DISTRIBUTED JOBS"}`; Java `Locale.ROOT` conversion |
 
 The result shapes above are independent examples. Event records include `id`, `jobId`, `type`, `status`, `relatedJobId`, `occurredAt`, `attemptId`. Attempt records include `id`, `jobId`, `number`, `generation`, `workerId`, `status`, `startedAt`, `heartbeatAt`, `leaseUntil`, `deadlineAt`, `finishedAt`, `error`, `failureKind`. Claim tokens are never returned.
+
+## Bulk submission
+
+`POST /api/v1/jobs/batch` accepts the same authenticated job roles and owner scope:
+
+```json
+{
+  "items": [
+    {"idempotencyKey":"bulk-1","job":{"type":"WORD_COUNT","text":"hello jobs"}},
+    {"idempotencyKey":"bulk-2","job":{"type":"SHA256","text":"hello jobs"}}
+  ]
+}
+```
+
+The list contains 1–100 items with distinct required keys. Each `job` follows ordinary submission validation. The entire JSON body, including all items, shares the 131072-byte cap. Structural/nested validation runs before any item is submitted; an invalid envelope returns `400` without admitting its items.
+
+Each item uses an independent transaction, in input order. Successful items remain committed if another item fails. The response contains `items`, `created`, `replayed`, and `unsuccessful`; every item includes `idempotencyKey`, `status`, `job`, `error`, and `retryAfterSeconds` (unused fields are null). All-success responses use `202` if any item is new and `200` for all replays. Any unsuccessful item makes the envelope **`207`**; clients must inspect every item status. `unsuccessful` includes rejected, unattempted and unconfirmed items, and does not prove that a storage-ambiguous commit failed.
+
+Per-item statuses follow ordinary submission: `202` created, `200` replay, `409` conflicting key/body, `429` owner quota with per-item `retryAfterSeconds`, and sanitized `503` storage/unconfirmed admission. Unexpected item failures use sanitized `500` and increment operational metrics. A cooperative five-second budget stops starting further item transactions; remaining items get `503`. An already-started transaction finishes normally and may exceed that budget. Owner limits are shared with single submissions and other keys/API instances; only committed new jobs consume quota.
+
+Retry transient or unconfirmed items with the **same per-item key and body**, honoring quota delays and bounded backoff. A whole-envelope transport failure can be resolved by replaying the same items. Idempotency is per item, not a claim of whole-batch atomicity. A `207` response alone is insufficient to infer admission success. The process-local `job_platform_batch_items_total{status}` metric exposes item outcomes even when the HTTP envelope is `207`; labels are a fixed status set, never IDs or payloads. `scripts/batch-smoke.py` verifies real packaged results, replay IDs, mixed conflicts/quotas, validation and temporary-key cleanup.
 
 ## Pagination
 

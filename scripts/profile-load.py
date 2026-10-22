@@ -137,6 +137,10 @@ def main():
         stack.finish_profile()
         report = work.evidence(drain_started=started if paused else None)
         report.update(mode=args.mode, databaseProfile=True, settings=stack.settings)
+    except BaseException as error:
+        write_json(Path(args.output)/"failed.json",{"passed":False,"errorType":type(error).__name__,
+                   "message":"Profiling failed; the local runner log retains diagnostic context"})
+        raise
     finally:
         stack.profile_stop.set()
         if stack.profile_thread:
