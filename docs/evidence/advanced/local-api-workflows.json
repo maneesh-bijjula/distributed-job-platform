@@ -1,0 +1,27 @@
+{
+  "passed": true,
+  "recordedAt": "2026-10-24T02:21:15.773794+00:00",
+  "runtimeSourceCommit": "1929ab9a943d0442da9ba880c88cbc992e9b577c",
+  "workflows": [
+    {
+      "workflow": "smoke.py",
+      "exitCode": 0
+    },
+    {
+      "workflow": "dead-letter-smoke.py",
+      "exitCode": 0
+    },
+    {
+      "workflow": "auth-smoke.py",
+      "exitCode": 0
+    },
+    {
+      "workflow": "api-boundary-smoke.py",
+      "exitCode": 0
+    },
+    {
+      "workflow": "batch-smoke.py",
+      "exitCode": 0
+    }
+  ]
+}

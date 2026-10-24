@@ -1,0 +1,54 @@
+{
+  "passed": true,
+  "activeSessionSamples": 539,
+  "samplingErrors": [],
+  "waitSamples": [
+    {
+      "type": "CPU_OR_RUNNABLE",
+      "event": "NONE",
+      "samples": 212
+    },
+    {
+      "type": "LWLock",
+      "event": "WALWrite",
+      "samples": 193
+    },
+    {
+      "type": "IO",
+      "event": "WalSync",
+      "samples": 89
+    },
+    {
+      "type": "Client",
+      "event": "ClientRead",
+      "samples": 36
+    },
+    {
+      "type": "LWLock",
+      "event": "WALInsert",
+      "samples": 3
+    },
+    {
+      "type": "LWLock",
+      "event": "BufferContent",
+      "samples": 2
+    },
+    {
+      "type": "Lock",
+      "event": "transactionid",
+      "samples": 2
+    },
+    {
+      "type": "IO",
+      "event": "WalWrite",
+      "samples": 1
+    },
+    {
+      "type": "IO",
+      "event": "WalInitWrite",
+      "samples": 1
+    }
+  ],
+  "blockedSamples": 2,
+  "scope": "Measured admission+drain for pipeline; drain only for backlog. Statistics reset after warmup/preload. Docker/psql sampling adds observer overhead; samples are not independent or exact wait-time percentages."
+}

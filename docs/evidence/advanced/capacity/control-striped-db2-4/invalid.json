@@ -1,0 +1,6 @@
+{
+  "validMeasurement": false,
+  "reason": "The metrics-only image tag selection failed. Run interrupted; not included in capacity conclusions.",
+  "expectedSource": "b58dd1c",
+  "observedApplicationImage": "sha256:e023d6bc9973d43ea2d1de887881ac13754e66e1fe093725e57b09818ffc9712"
+}

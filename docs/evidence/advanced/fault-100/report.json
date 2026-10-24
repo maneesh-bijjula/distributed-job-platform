@@ -1,0 +1,2606 @@
+{
+  "passed": true,
+  "startedAt": "2026-10-24T02:15:20.625965+00:00",
+  "plannedTrials": 100,
+  "jobsPerTrial": 8,
+  "faultKinds": {
+    "database_sigkill": 20,
+    "broker_sigkill": 20,
+    "worker_sigkill": 20,
+    "api_sigkill": 20,
+    "worker_pause_resume": 20
+  },
+  "completedTrials": 100,
+  "observedInjections": 100,
+  "acceptedJobs": 800,
+  "accountedJobs": 800,
+  "lostJobs": 0,
+  "incorrectResults": 0,
+  "duplicateSuccessfulAttempts": 0,
+  "elapsedSeconds": 1729.0156894999673,
+  "trials": [
+    {
+      "trial": 1,
+      "kind": "database_sigkill",
+      "outageSeconds": 0.363,
+      "workloadSeed": 1550599444,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-001-database_sigkill"
+      ],
+      "attemptOutcomes": {
+        "SUCCEEDED": 8
+      }
+    },
+    {
+      "trial": 2,
+      "kind": "broker_sigkill",
+      "outageSeconds": 0.636,
+      "workloadSeed": 2072818853,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-002-broker_sigkill-before",
+        "trial-002-broker_sigkill-during"
+      ],
+      "attemptOutcomes": {
+        "SUCCEEDED": 8
+      },
+      "confirmedBeforeCrash": 4,
+      "durablyAdmittedWhileDown": 4
+    },
+    {
+      "trial": 3,
+      "kind": "worker_sigkill",
+      "outageSeconds": 0.925,
+      "workloadSeed": 1007478622,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-003-worker_sigkill"
+      ],
+      "attemptOutcomes": {
+        "ABANDONED": 1,
+        "SUCCEEDED": 8
+      },
+      "abandonedAttempt": {
+        "id": "e6306a47-3c7b-4a07-96ed-8b8524272bc2",
+        "job_id": "4f292867-3ad3-4565-9ec8-20999cb7ef3b",
+        "status": "ABANDONED",
+        "generation": 0,
+        "started_at": "2026-10-24T02:16:27.451984+00:00",
+        "finished_at": "2026-10-24T02:16:33.581677+00:00"
+      },
+      "replacementAttempt": {
+        "id": "7bd97f6e-636f-4005-b074-b9ab88fbf94e",
+        "job_id": "4f292867-3ad3-4565-9ec8-20999cb7ef3b",
+        "status": "SUCCEEDED",
+        "generation": 1,
+        "started_at": "2026-10-24T02:16:36.136852+00:00",
+        "finished_at": "2026-10-24T02:16:36.141671+00:00"
+      }
+    },
+    {
+      "trial": 4,
+      "kind": "database_sigkill",
+      "outageSeconds": 0.631,
+      "workloadSeed": 370721979,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-004-database_sigkill"
+      ],
+      "attemptOutcomes": {
+        "SUCCEEDED": 8
+      }
+    },
+    {
+      "trial": 5,
+      "kind": "api_sigkill",
+      "outageSeconds": 0.67,
+      "workloadSeed": 1763951980,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-005-api_sigkill"
+      ],
+      "attemptOutcomes": {
+        "SUCCEEDED": 8
+      },
+      "survivingApiIndex": 1
+    },
+    {
+      "trial": 6,
+      "kind": "database_sigkill",
+      "outageSeconds": 0.905,
+      "workloadSeed": 1868067925,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-006-database_sigkill"
+      ],
+      "attemptOutcomes": {
+        "SUCCEEDED": 8
+      }
+    },
+    {
+      "trial": 7,
+      "kind": "broker_sigkill",
+      "outageSeconds": 0.879,
+      "workloadSeed": 1030860099,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-007-broker_sigkill-before",
+        "trial-007-broker_sigkill-during"
+      ],
+      "attemptOutcomes": {
+        "SUCCEEDED": 8
+      },
+      "confirmedBeforeCrash": 4,
+      "durablyAdmittedWhileDown": 4
+    },
+    {
+      "trial": 8,
+      "kind": "broker_sigkill",
+      "outageSeconds": 0.697,
+      "workloadSeed": 799258718,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-008-broker_sigkill-before",
+        "trial-008-broker_sigkill-during"
+      ],
+      "attemptOutcomes": {
+        "SUCCEEDED": 8
+      },
+      "confirmedBeforeCrash": 4,
+      "durablyAdmittedWhileDown": 4
+    },
+    {
+      "trial": 9,
+      "kind": "worker_pause_resume",
+      "outageSeconds": 0.962,
+      "workloadSeed": 966595959,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-009-worker_pause_resume"
+      ],
+      "attemptOutcomes": {
+        "ABANDONED": 1,
+        "SUCCEEDED": 8
+      },
+      "abandonedAttempt": {
+        "id": "9bb71e03-67cb-40b9-9072-17768a92119c",
+        "job_id": "aa3f72b9-c965-4ded-a00e-a747dd34acc6",
+        "status": "ABANDONED",
+        "generation": 0,
+        "started_at": "2026-10-24T02:18:09.005869+00:00",
+        "finished_at": "2026-10-24T02:18:15.220695+00:00"
+      },
+      "replacementAttempt": {
+        "id": "39b0bc12-7dd8-44b5-bfaf-12f4a8a07e93",
+        "job_id": "aa3f72b9-c965-4ded-a00e-a747dd34acc6",
+        "status": "SUCCEEDED",
+        "generation": 1,
+        "started_at": "2026-10-24T02:18:19.953326+00:00",
+        "finished_at": "2026-10-24T02:18:19.962218+00:00"
+      },
+      "staleCompletionRejected": true
+    },
+    {
+      "trial": 10,
+      "kind": "database_sigkill",
+      "outageSeconds": 0.995,
+      "workloadSeed": 334056858,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-010-database_sigkill"
+      ],
+      "attemptOutcomes": {
+        "SUCCEEDED": 8
+      }
+    },
+    {
+      "trial": 11,
+      "kind": "database_sigkill",
+      "outageSeconds": 0.542,
+      "workloadSeed": 1647621450,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-011-database_sigkill"
+      ],
+      "attemptOutcomes": {
+        "SUCCEEDED": 8
+      }
+    },
+    {
+      "trial": 12,
+      "kind": "worker_pause_resume",
+      "outageSeconds": 0.46,
+      "workloadSeed": 324929962,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-012-worker_pause_resume"
+      ],
+      "attemptOutcomes": {
+        "ABANDONED": 1,
+        "SUCCEEDED": 8
+      },
+      "abandonedAttempt": {
+        "id": "8afdf12d-01fa-4091-b120-fb1b9b2d7856",
+        "job_id": "9b46a8c9-410d-4bfc-9175-83fe77f5296a",
+        "status": "ABANDONED",
+        "generation": 0,
+        "started_at": "2026-10-24T02:18:57.253258+00:00",
+        "finished_at": "2026-10-24T02:19:03.620464+00:00"
+      },
+      "replacementAttempt": {
+        "id": "17d8b232-26cc-4304-badf-7cd3dc097e3a",
+        "job_id": "9b46a8c9-410d-4bfc-9175-83fe77f5296a",
+        "status": "SUCCEEDED",
+        "generation": 1,
+        "started_at": "2026-10-24T02:19:07.628334+00:00",
+        "finished_at": "2026-10-24T02:19:07.633842+00:00"
+      },
+      "staleCompletionRejected": true
+    },
+    {
+      "trial": 13,
+      "kind": "broker_sigkill",
+      "outageSeconds": 0.525,
+      "workloadSeed": 1363815630,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-013-broker_sigkill-before",
+        "trial-013-broker_sigkill-during"
+      ],
+      "attemptOutcomes": {
+        "SUCCEEDED": 8
+      },
+      "confirmedBeforeCrash": 4,
+      "durablyAdmittedWhileDown": 4
+    },
+    {
+      "trial": 14,
+      "kind": "worker_sigkill",
+      "outageSeconds": 0.781,
+      "workloadSeed": 590072043,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-014-worker_sigkill"
+      ],
+      "attemptOutcomes": {
+        "ABANDONED": 1,
+        "SUCCEEDED": 8
+      },
+      "abandonedAttempt": {
+        "id": "92d6bcda-28fb-4f93-ac25-e62d26eed0ba",
+        "job_id": "2a877550-34a4-4878-a84d-1926a1dc5072",
+        "status": "ABANDONED",
+        "generation": 0,
+        "started_at": "2026-10-24T02:19:31.288244+00:00",
+        "finished_at": "2026-10-24T02:19:37.362525+00:00"
+      },
+      "replacementAttempt": {
+        "id": "1bc1103c-8d39-42a5-80f2-837f5188ea45",
+        "job_id": "2a877550-34a4-4878-a84d-1926a1dc5072",
+        "status": "SUCCEEDED",
+        "generation": 1,
+        "started_at": "2026-10-24T02:19:41.607544+00:00",
+        "finished_at": "2026-10-24T02:19:41.612181+00:00"
+      }
+    },
+    {
+      "trial": 15,
+      "kind": "database_sigkill",
+      "outageSeconds": 0.595,
+      "workloadSeed": 1400786771,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-015-database_sigkill"
+      ],
+      "attemptOutcomes": {
+        "SUCCEEDED": 8
+      }
+    },
+    {
+      "trial": 16,
+      "kind": "broker_sigkill",
+      "outageSeconds": 0.496,
+      "workloadSeed": 1577270176,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-016-broker_sigkill-before",
+        "trial-016-broker_sigkill-during"
+      ],
+      "attemptOutcomes": {
+        "SUCCEEDED": 8
+      },
+      "confirmedBeforeCrash": 4,
+      "durablyAdmittedWhileDown": 4
+    },
+    {
+      "trial": 17,
+      "kind": "api_sigkill",
+      "outageSeconds": 0.418,
+      "workloadSeed": 101747664,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-017-api_sigkill"
+      ],
+      "attemptOutcomes": {
+        "SUCCEEDED": 8
+      },
+      "survivingApiIndex": 1
+    },
+    {
+      "trial": 18,
+      "kind": "worker_sigkill",
+      "outageSeconds": 0.409,
+      "workloadSeed": 1441821392,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-018-worker_sigkill"
+      ],
+      "attemptOutcomes": {
+        "ABANDONED": 1,
+        "SUCCEEDED": 8
+      },
+      "abandonedAttempt": {
+        "id": "dcc78360-e87d-4127-96c7-0a4f96d3f883",
+        "job_id": "5da26388-7729-42be-9b18-fa76eafc9bec",
+        "status": "ABANDONED",
+        "generation": 0,
+        "started_at": "2026-10-24T02:20:37.120577+00:00",
+        "finished_at": "2026-10-24T02:20:43.157087+00:00"
+      },
+      "replacementAttempt": {
+        "id": "bf8beb41-a9d1-474b-9542-df09d5bed200",
+        "job_id": "5da26388-7729-42be-9b18-fa76eafc9bec",
+        "status": "SUCCEEDED",
+        "generation": 1,
+        "started_at": "2026-10-24T02:20:44.995056+00:00",
+        "finished_at": "2026-10-24T02:20:44.998957+00:00"
+      }
+    },
+    {
+      "trial": 19,
+      "kind": "worker_pause_resume",
+      "outageSeconds": 0.974,
+      "workloadSeed": 1403741170,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-019-worker_pause_resume"
+      ],
+      "attemptOutcomes": {
+        "ABANDONED": 1,
+        "SUCCEEDED": 8
+      },
+      "abandonedAttempt": {
+        "id": "a72c8c23-6a6b-4d4f-8a8f-5757fa7e4cf6",
+        "job_id": "7c55c907-cf9d-48b4-a369-96d5811ed035",
+        "status": "ABANDONED",
+        "generation": 0,
+        "started_at": "2026-10-24T02:20:55.299149+00:00",
+        "finished_at": "2026-10-24T02:21:01.308815+00:00"
+      },
+      "replacementAttempt": {
+        "id": "cba44af5-2a23-410d-a1e6-21633605f343",
+        "job_id": "7c55c907-cf9d-48b4-a369-96d5811ed035",
+        "status": "SUCCEEDED",
+        "generation": 1,
+        "started_at": "2026-10-24T02:21:04.214127+00:00",
+        "finished_at": "2026-10-24T02:21:04.219951+00:00"
+      },
+      "staleCompletionRejected": true
+    },
+    {
+      "trial": 20,
+      "kind": "worker_sigkill",
+      "outageSeconds": 0.443,
+      "workloadSeed": 1701148903,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-020-worker_sigkill"
+      ],
+      "attemptOutcomes": {
+        "ABANDONED": 1,
+        "SUCCEEDED": 8
+      },
+      "abandonedAttempt": {
+        "id": "f50dd0fc-0884-4a62-904f-91f4f61df8f5",
+        "job_id": "b91e401b-cc2d-4ca4-8e9b-51855e5b79f6",
+        "status": "ABANDONED",
+        "generation": 0,
+        "started_at": "2026-10-24T02:21:14.502727+00:00",
+        "finished_at": "2026-10-24T02:21:20.690597+00:00"
+      },
+      "replacementAttempt": {
+        "id": "e57022f4-f34a-46f0-827d-150370504320",
+        "job_id": "b91e401b-cc2d-4ca4-8e9b-51855e5b79f6",
+        "status": "SUCCEEDED",
+        "generation": 1,
+        "started_at": "2026-10-24T02:21:23.957721+00:00",
+        "finished_at": "2026-10-24T02:21:23.962678+00:00"
+      }
+    },
+    {
+      "trial": 21,
+      "kind": "api_sigkill",
+      "outageSeconds": 0.253,
+      "workloadSeed": 1894140877,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-021-api_sigkill"
+      ],
+      "attemptOutcomes": {
+        "SUCCEEDED": 8
+      },
+      "survivingApiIndex": 1
+    },
+    {
+      "trial": 22,
+      "kind": "api_sigkill",
+      "outageSeconds": 0.665,
+      "workloadSeed": 1624826293,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-022-api_sigkill"
+      ],
+      "attemptOutcomes": {
+        "SUCCEEDED": 8
+      },
+      "survivingApiIndex": 0
+    },
+    {
+      "trial": 23,
+      "kind": "database_sigkill",
+      "outageSeconds": 0.73,
+      "workloadSeed": 1629514348,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-023-database_sigkill"
+      ],
+      "attemptOutcomes": {
+        "SUCCEEDED": 8
+      }
+    },
+    {
+      "trial": 24,
+      "kind": "worker_sigkill",
+      "outageSeconds": 0.758,
+      "workloadSeed": 1358409349,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-024-worker_sigkill"
+      ],
+      "attemptOutcomes": {
+        "ABANDONED": 1,
+        "SUCCEEDED": 8
+      },
+      "abandonedAttempt": {
+        "id": "e12862c5-fefc-43cd-ad44-92354c4f4e69",
+        "job_id": "b7f628da-0a62-47e4-9fe0-a47ab4f93d97",
+        "status": "ABANDONED",
+        "generation": 0,
+        "started_at": "2026-10-24T02:22:23.622769+00:00",
+        "finished_at": "2026-10-24T02:22:29.692899+00:00"
+      },
+      "replacementAttempt": {
+        "id": "83fc693d-afca-4512-b5c6-e3d4c3b02cbc",
+        "job_id": "b7f628da-0a62-47e4-9fe0-a47ab4f93d97",
+        "status": "SUCCEEDED",
+        "generation": 1,
+        "started_at": "2026-10-24T02:22:32.106153+00:00",
+        "finished_at": "2026-10-24T02:22:32.111149+00:00"
+      }
+    },
+    {
+      "trial": 25,
+      "kind": "worker_pause_resume",
+      "outageSeconds": 0.786,
+      "workloadSeed": 268177655,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-025-worker_pause_resume"
+      ],
+      "attemptOutcomes": {
+        "ABANDONED": 1,
+        "SUCCEEDED": 8
+      },
+      "abandonedAttempt": {
+        "id": "d2cb35e9-93ef-4c8a-89b8-ee7f8972d09a",
+        "job_id": "41d383b6-7e80-47ab-9735-da76adc6c24b",
+        "status": "ABANDONED",
+        "generation": 0,
+        "started_at": "2026-10-24T02:22:39.720462+00:00",
+        "finished_at": "2026-10-24T02:22:45.789521+00:00"
+      },
+      "replacementAttempt": {
+        "id": "f2ed76b3-86cc-4e00-bab6-8ef3d2c2350f",
+        "job_id": "41d383b6-7e80-47ab-9735-da76adc6c24b",
+        "status": "SUCCEEDED",
+        "generation": 1,
+        "started_at": "2026-10-24T02:22:49.309072+00:00",
+        "finished_at": "2026-10-24T02:22:49.315534+00:00"
+      },
+      "staleCompletionRejected": true
+    },
+    {
+      "trial": 26,
+      "kind": "database_sigkill",
+      "outageSeconds": 0.456,
+      "workloadSeed": 1096909552,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-026-database_sigkill"
+      ],
+      "attemptOutcomes": {
+        "SUCCEEDED": 8
+      }
+    },
+    {
+      "trial": 27,
+      "kind": "database_sigkill",
+      "outageSeconds": 0.303,
+      "workloadSeed": 505188032,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-027-database_sigkill"
+      ],
+      "attemptOutcomes": {
+        "SUCCEEDED": 8
+      }
+    },
+    {
+      "trial": 28,
+      "kind": "broker_sigkill",
+      "outageSeconds": 0.868,
+      "workloadSeed": 236761953,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-028-broker_sigkill-before",
+        "trial-028-broker_sigkill-during"
+      ],
+      "attemptOutcomes": {
+        "SUCCEEDED": 8
+      },
+      "confirmedBeforeCrash": 4,
+      "durablyAdmittedWhileDown": 4
+    },
+    {
+      "trial": 29,
+      "kind": "worker_pause_resume",
+      "outageSeconds": 0.328,
+      "workloadSeed": 1478379262,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-029-worker_pause_resume"
+      ],
+      "attemptOutcomes": {
+        "ABANDONED": 1,
+        "SUCCEEDED": 8
+      },
+      "abandonedAttempt": {
+        "id": "6f0f0c37-67d2-473c-9b83-054b1cad2698",
+        "job_id": "57742711-4122-4831-b8de-b0343d5448a6",
+        "status": "ABANDONED",
+        "generation": 0,
+        "started_at": "2026-10-24T02:23:39.327214+00:00",
+        "finished_at": "2026-10-24T02:23:45.507858+00:00"
+      },
+      "replacementAttempt": {
+        "id": "61beeb0a-4681-4f81-8d10-56f2a0469992",
+        "job_id": "57742711-4122-4831-b8de-b0343d5448a6",
+        "status": "SUCCEEDED",
+        "generation": 1,
+        "started_at": "2026-10-24T02:23:47.740566+00:00",
+        "finished_at": "2026-10-24T02:23:47.745011+00:00"
+      },
+      "staleCompletionRejected": true
+    },
+    {
+      "trial": 30,
+      "kind": "database_sigkill",
+      "outageSeconds": 0.826,
+      "workloadSeed": 1274685602,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-030-database_sigkill"
+      ],
+      "attemptOutcomes": {
+        "SUCCEEDED": 8
+      }
+    },
+    {
+      "trial": 31,
+      "kind": "broker_sigkill",
+      "outageSeconds": 0.904,
+      "workloadSeed": 1955037594,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-031-broker_sigkill-before",
+        "trial-031-broker_sigkill-during"
+      ],
+      "attemptOutcomes": {
+        "SUCCEEDED": 8
+      },
+      "confirmedBeforeCrash": 4,
+      "durablyAdmittedWhileDown": 4
+    },
+    {
+      "trial": 32,
+      "kind": "api_sigkill",
+      "outageSeconds": 0.957,
+      "workloadSeed": 1191782697,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-032-api_sigkill"
+      ],
+      "attemptOutcomes": {
+        "SUCCEEDED": 8
+      },
+      "survivingApiIndex": 0
+    },
+    {
+      "trial": 33,
+      "kind": "worker_pause_resume",
+      "outageSeconds": 0.488,
+      "workloadSeed": 820140234,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-033-worker_pause_resume"
+      ],
+      "attemptOutcomes": {
+        "ABANDONED": 1,
+        "SUCCEEDED": 8
+      },
+      "abandonedAttempt": {
+        "id": "8c3f77d1-5a92-4664-8d26-1e13369edb33",
+        "job_id": "b43c12d1-f0e9-46b5-9c48-d05ba59a7590",
+        "status": "ABANDONED",
+        "generation": 0,
+        "started_at": "2026-10-24T02:24:44.909886+00:00",
+        "finished_at": "2026-10-24T02:24:50.930735+00:00"
+      },
+      "replacementAttempt": {
+        "id": "bcde8c04-5c45-4079-bc4d-2378ca14679f",
+        "job_id": "b43c12d1-f0e9-46b5-9c48-d05ba59a7590",
+        "status": "SUCCEEDED",
+        "generation": 1,
+        "started_at": "2026-10-24T02:24:54.075249+00:00",
+        "finished_at": "2026-10-24T02:24:54.085015+00:00"
+      },
+      "staleCompletionRejected": true
+    },
+    {
+      "trial": 34,
+      "kind": "api_sigkill",
+      "outageSeconds": 0.498,
+      "workloadSeed": 554413076,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-034-api_sigkill"
+      ],
+      "attemptOutcomes": {
+        "SUCCEEDED": 8
+      },
+      "survivingApiIndex": 0
+    },
+    {
+      "trial": 35,
+      "kind": "database_sigkill",
+      "outageSeconds": 0.492,
+      "workloadSeed": 719662501,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-035-database_sigkill"
+      ],
+      "attemptOutcomes": {
+        "SUCCEEDED": 8
+      }
+    },
+    {
+      "trial": 36,
+      "kind": "worker_sigkill",
+      "outageSeconds": 0.845,
+      "workloadSeed": 1788067448,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-036-worker_sigkill"
+      ],
+      "attemptOutcomes": {
+        "ABANDONED": 1,
+        "SUCCEEDED": 8
+      },
+      "abandonedAttempt": {
+        "id": "a155e59e-486e-4d42-aee5-b6b6a1e54757",
+        "job_id": "480bf794-152c-4c56-82e7-60b480075e3f",
+        "status": "ABANDONED",
+        "generation": 0,
+        "started_at": "2026-10-24T02:25:34.491218+00:00",
+        "finished_at": "2026-10-24T02:25:40.601724+00:00"
+      },
+      "replacementAttempt": {
+        "id": "9770ee06-eaee-4eec-b25d-177462c3b9b1",
+        "job_id": "480bf794-152c-4c56-82e7-60b480075e3f",
+        "status": "SUCCEEDED",
+        "generation": 1,
+        "started_at": "2026-10-24T02:25:43.505387+00:00",
+        "finished_at": "2026-10-24T02:25:43.509984+00:00"
+      }
+    },
+    {
+      "trial": 37,
+      "kind": "broker_sigkill",
+      "outageSeconds": 0.277,
+      "workloadSeed": 1762385116,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-037-broker_sigkill-before",
+        "trial-037-broker_sigkill-during"
+      ],
+      "attemptOutcomes": {
+        "SUCCEEDED": 8
+      },
+      "confirmedBeforeCrash": 4,
+      "durablyAdmittedWhileDown": 4
+    },
+    {
+      "trial": 38,
+      "kind": "api_sigkill",
+      "outageSeconds": 0.279,
+      "workloadSeed": 810818755,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-038-api_sigkill"
+      ],
+      "attemptOutcomes": {
+        "SUCCEEDED": 8
+      },
+      "survivingApiIndex": 0
+    },
+    {
+      "trial": 39,
+      "kind": "broker_sigkill",
+      "outageSeconds": 0.395,
+      "workloadSeed": 2050680830,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-039-broker_sigkill-before",
+        "trial-039-broker_sigkill-during"
+      ],
+      "attemptOutcomes": {
+        "SUCCEEDED": 8
+      },
+      "confirmedBeforeCrash": 4,
+      "durablyAdmittedWhileDown": 4
+    },
+    {
+      "trial": 40,
+      "kind": "api_sigkill",
+      "outageSeconds": 0.931,
+      "workloadSeed": 609736848,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-040-api_sigkill"
+      ],
+      "attemptOutcomes": {
+        "SUCCEEDED": 8
+      },
+      "survivingApiIndex": 0
+    },
+    {
+      "trial": 41,
+      "kind": "worker_sigkill",
+      "outageSeconds": 0.997,
+      "workloadSeed": 506478497,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-041-worker_sigkill"
+      ],
+      "attemptOutcomes": {
+        "ABANDONED": 1,
+        "SUCCEEDED": 8
+      },
+      "abandonedAttempt": {
+        "id": "18edd108-cb90-467a-b64d-7349f90610af",
+        "job_id": "58457027-681a-4e70-a9ce-42a3b777cd04",
+        "status": "ABANDONED",
+        "generation": 0,
+        "started_at": "2026-10-24T02:26:59.286855+00:00",
+        "finished_at": "2026-10-24T02:27:05.323525+00:00"
+      },
+      "replacementAttempt": {
+        "id": "d0a99f4a-acd7-41fa-88cf-2541d9f54530",
+        "job_id": "58457027-681a-4e70-a9ce-42a3b777cd04",
+        "status": "SUCCEEDED",
+        "generation": 1,
+        "started_at": "2026-10-24T02:27:08.216707+00:00",
+        "finished_at": "2026-10-24T02:27:08.226919+00:00"
+      }
+    },
+    {
+      "trial": 42,
+      "kind": "worker_pause_resume",
+      "outageSeconds": 0.257,
+      "workloadSeed": 1329075650,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-042-worker_pause_resume"
+      ],
+      "attemptOutcomes": {
+        "ABANDONED": 1,
+        "SUCCEEDED": 8
+      },
+      "abandonedAttempt": {
+        "id": "6d149dab-b7be-4422-9891-2c28681ad658",
+        "job_id": "26effe75-a5ad-4ab4-8258-7bd85325edbc",
+        "status": "ABANDONED",
+        "generation": 0,
+        "started_at": "2026-10-24T02:27:15.944179+00:00",
+        "finished_at": "2026-10-24T02:27:22.34197+00:00"
+      },
+      "replacementAttempt": {
+        "id": "4e449ab8-6623-497b-b6c5-85f334638894",
+        "job_id": "26effe75-a5ad-4ab4-8258-7bd85325edbc",
+        "status": "SUCCEEDED",
+        "generation": 1,
+        "started_at": "2026-10-24T02:27:24.099344+00:00",
+        "finished_at": "2026-10-24T02:27:24.104141+00:00"
+      },
+      "staleCompletionRejected": true
+    },
+    {
+      "trial": 43,
+      "kind": "worker_sigkill",
+      "outageSeconds": 0.745,
+      "workloadSeed": 136446330,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-043-worker_sigkill"
+      ],
+      "attemptOutcomes": {
+        "ABANDONED": 1,
+        "SUCCEEDED": 8
+      },
+      "abandonedAttempt": {
+        "id": "10047df8-cc48-4c11-8bf4-df83fbd68327",
+        "job_id": "564d8e95-631b-448f-a4f7-710ced56ab82",
+        "status": "ABANDONED",
+        "generation": 0,
+        "started_at": "2026-10-24T02:27:32.8324+00:00",
+        "finished_at": "2026-10-24T02:27:38.938564+00:00"
+      },
+      "replacementAttempt": {
+        "id": "dff29348-698a-4504-9cb5-43c5f4cba127",
+        "job_id": "564d8e95-631b-448f-a4f7-710ced56ab82",
+        "status": "SUCCEEDED",
+        "generation": 1,
+        "started_at": "2026-10-24T02:27:41.72455+00:00",
+        "finished_at": "2026-10-24T02:27:41.728712+00:00"
+      }
+    },
+    {
+      "trial": 44,
+      "kind": "worker_sigkill",
+      "outageSeconds": 0.305,
+      "workloadSeed": 271075093,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-044-worker_sigkill"
+      ],
+      "attemptOutcomes": {
+        "ABANDONED": 1,
+        "SUCCEEDED": 8
+      },
+      "abandonedAttempt": {
+        "id": "bdc9c32e-778d-42a6-beff-30b746f87c26",
+        "job_id": "053cb3e7-560c-4017-983b-bafeb9bf95a4",
+        "status": "ABANDONED",
+        "generation": 0,
+        "started_at": "2026-10-24T02:27:49.407338+00:00",
+        "finished_at": "2026-10-24T02:27:55.537626+00:00"
+      },
+      "replacementAttempt": {
+        "id": "caf3d14d-9008-41a5-a069-a73c1d87f4cb",
+        "job_id": "053cb3e7-560c-4017-983b-bafeb9bf95a4",
+        "status": "SUCCEEDED",
+        "generation": 1,
+        "started_at": "2026-10-24T02:27:57.944563+00:00",
+        "finished_at": "2026-10-24T02:27:58.023486+00:00"
+      }
+    },
+    {
+      "trial": 45,
+      "kind": "broker_sigkill",
+      "outageSeconds": 0.342,
+      "workloadSeed": 1704133716,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-045-broker_sigkill-before",
+        "trial-045-broker_sigkill-during"
+      ],
+      "attemptOutcomes": {
+        "SUCCEEDED": 8
+      },
+      "confirmedBeforeCrash": 4,
+      "durablyAdmittedWhileDown": 4
+    },
+    {
+      "trial": 46,
+      "kind": "worker_pause_resume",
+      "outageSeconds": 0.364,
+      "workloadSeed": 1158522667,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-046-worker_pause_resume"
+      ],
+      "attemptOutcomes": {
+        "ABANDONED": 1,
+        "SUCCEEDED": 8
+      },
+      "abandonedAttempt": {
+        "id": "e8d375eb-4de5-438e-8197-9604d01d55e5",
+        "job_id": "a1a7bea7-1f6f-48c1-9f6a-0e981fc21878",
+        "status": "ABANDONED",
+        "generation": 0,
+        "started_at": "2026-10-24T02:28:20.290213+00:00",
+        "finished_at": "2026-10-24T02:28:26.694771+00:00"
+      },
+      "replacementAttempt": {
+        "id": "187014ab-9e34-4ccf-b642-bab9558edb32",
+        "job_id": "a1a7bea7-1f6f-48c1-9f6a-0e981fc21878",
+        "status": "SUCCEEDED",
+        "generation": 1,
+        "started_at": "2026-10-24T02:28:29.005598+00:00",
+        "finished_at": "2026-10-24T02:28:29.089805+00:00"
+      },
+      "staleCompletionRejected": true
+    },
+    {
+      "trial": 47,
+      "kind": "worker_sigkill",
+      "outageSeconds": 0.908,
+      "workloadSeed": 253493354,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-047-worker_sigkill"
+      ],
+      "attemptOutcomes": {
+        "ABANDONED": 1,
+        "SUCCEEDED": 8
+      },
+      "abandonedAttempt": {
+        "id": "4e19c197-bfa6-4247-a2b8-3fd1fbb6843b",
+        "job_id": "a433dbda-4030-4c8f-a673-59abdca9d076",
+        "status": "ABANDONED",
+        "generation": 0,
+        "started_at": "2026-10-24T02:28:38.675437+00:00",
+        "finished_at": "2026-10-24T02:28:44.796779+00:00"
+      },
+      "replacementAttempt": {
+        "id": "ba79a50e-c0ac-4c70-a4ec-402db0c957a4",
+        "job_id": "a433dbda-4030-4c8f-a673-59abdca9d076",
+        "status": "SUCCEEDED",
+        "generation": 1,
+        "started_at": "2026-10-24T02:28:47.798388+00:00",
+        "finished_at": "2026-10-24T02:28:47.878177+00:00"
+      }
+    },
+    {
+      "trial": 48,
+      "kind": "worker_sigkill",
+      "outageSeconds": 0.705,
+      "workloadSeed": 572431989,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-048-worker_sigkill"
+      ],
+      "attemptOutcomes": {
+        "ABANDONED": 1,
+        "SUCCEEDED": 8
+      },
+      "abandonedAttempt": {
+        "id": "0e9bae47-fe03-4338-b1a3-d9d9d1cbd0fb",
+        "job_id": "ab514ec8-9d2e-4e82-baae-0b555610dd78",
+        "status": "ABANDONED",
+        "generation": 0,
+        "started_at": "2026-10-24T02:28:56.728729+00:00",
+        "finished_at": "2026-10-24T02:29:02.893412+00:00"
+      },
+      "replacementAttempt": {
+        "id": "df058a40-9da2-4ac4-810a-99632ae85ed9",
+        "job_id": "ab514ec8-9d2e-4e82-baae-0b555610dd78",
+        "status": "SUCCEEDED",
+        "generation": 1,
+        "started_at": "2026-10-24T02:29:05.667237+00:00",
+        "finished_at": "2026-10-24T02:29:05.753166+00:00"
+      }
+    },
+    {
+      "trial": 49,
+      "kind": "worker_sigkill",
+      "outageSeconds": 0.558,
+      "workloadSeed": 381228382,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-049-worker_sigkill"
+      ],
+      "attemptOutcomes": {
+        "ABANDONED": 1,
+        "SUCCEEDED": 8
+      },
+      "abandonedAttempt": {
+        "id": "d14262fe-8bcb-4352-9d56-9217c430af5b",
+        "job_id": "56430f57-0492-411f-ab9e-32b08b05e08b",
+        "status": "ABANDONED",
+        "generation": 0,
+        "started_at": "2026-10-24T02:29:13.816373+00:00",
+        "finished_at": "2026-10-24T02:29:19.987865+00:00"
+      },
+      "replacementAttempt": {
+        "id": "d7c428c7-8487-4de6-989b-a030ab636fe6",
+        "job_id": "56430f57-0492-411f-ab9e-32b08b05e08b",
+        "status": "SUCCEEDED",
+        "generation": 1,
+        "started_at": "2026-10-24T02:29:23.14584+00:00",
+        "finished_at": "2026-10-24T02:29:23.152553+00:00"
+      }
+    },
+    {
+      "trial": 50,
+      "kind": "api_sigkill",
+      "outageSeconds": 0.78,
+      "workloadSeed": 105357174,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-050-api_sigkill"
+      ],
+      "attemptOutcomes": {
+        "SUCCEEDED": 8
+      },
+      "survivingApiIndex": 0
+    },
+    {
+      "trial": 51,
+      "kind": "worker_pause_resume",
+      "outageSeconds": 0.803,
+      "workloadSeed": 915222628,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-051-worker_pause_resume"
+      ],
+      "attemptOutcomes": {
+        "ABANDONED": 1,
+        "SUCCEEDED": 8
+      },
+      "abandonedAttempt": {
+        "id": "a51730d6-67a0-40ac-9ae5-ce0a47521b2b",
+        "job_id": "fd8ba4f4-aac0-488c-afe0-34c2e7b3f9cf",
+        "status": "ABANDONED",
+        "generation": 0,
+        "started_at": "2026-10-24T02:29:51.52254+00:00",
+        "finished_at": "2026-10-24T02:29:57.655133+00:00"
+      },
+      "replacementAttempt": {
+        "id": "2dd16991-ed41-48ae-8e67-fb915eba2f56",
+        "job_id": "fd8ba4f4-aac0-488c-afe0-34c2e7b3f9cf",
+        "status": "SUCCEEDED",
+        "generation": 1,
+        "started_at": "2026-10-24T02:30:00.945748+00:00",
+        "finished_at": "2026-10-24T02:30:00.952023+00:00"
+      },
+      "staleCompletionRejected": true
+    },
+    {
+      "trial": 52,
+      "kind": "api_sigkill",
+      "outageSeconds": 0.427,
+      "workloadSeed": 361415914,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-052-api_sigkill"
+      ],
+      "attemptOutcomes": {
+        "SUCCEEDED": 8
+      },
+      "survivingApiIndex": 0
+    },
+    {
+      "trial": 53,
+      "kind": "worker_sigkill",
+      "outageSeconds": 0.729,
+      "workloadSeed": 980959430,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-053-worker_sigkill"
+      ],
+      "attemptOutcomes": {
+        "ABANDONED": 1,
+        "SUCCEEDED": 8
+      },
+      "abandonedAttempt": {
+        "id": "901ded48-c868-4447-a2fc-baf372fa062a",
+        "job_id": "6c302995-3849-42f9-9c09-28ee56a5dea9",
+        "status": "ABANDONED",
+        "generation": 0,
+        "started_at": "2026-10-24T02:30:26.995283+00:00",
+        "finished_at": "2026-10-24T02:30:33.118102+00:00"
+      },
+      "replacementAttempt": {
+        "id": "218f9940-8f40-4cd5-ab9b-5716c61597ec",
+        "job_id": "6c302995-3849-42f9-9c09-28ee56a5dea9",
+        "status": "SUCCEEDED",
+        "generation": 1,
+        "started_at": "2026-10-24T02:30:36.067842+00:00",
+        "finished_at": "2026-10-24T02:30:36.144705+00:00"
+      }
+    },
+    {
+      "trial": 54,
+      "kind": "broker_sigkill",
+      "outageSeconds": 0.574,
+      "workloadSeed": 324500456,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-054-broker_sigkill-before",
+        "trial-054-broker_sigkill-during"
+      ],
+      "attemptOutcomes": {
+        "SUCCEEDED": 8
+      },
+      "confirmedBeforeCrash": 4,
+      "durablyAdmittedWhileDown": 4
+    },
+    {
+      "trial": 55,
+      "kind": "broker_sigkill",
+      "outageSeconds": 0.582,
+      "workloadSeed": 502453364,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-055-broker_sigkill-before",
+        "trial-055-broker_sigkill-during"
+      ],
+      "attemptOutcomes": {
+        "SUCCEEDED": 8
+      },
+      "confirmedBeforeCrash": 4,
+      "durablyAdmittedWhileDown": 4
+    },
+    {
+      "trial": 56,
+      "kind": "database_sigkill",
+      "outageSeconds": 0.718,
+      "workloadSeed": 1793674413,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-056-database_sigkill"
+      ],
+      "attemptOutcomes": {
+        "SUCCEEDED": 8
+      }
+    },
+    {
+      "trial": 57,
+      "kind": "worker_sigkill",
+      "outageSeconds": 0.504,
+      "workloadSeed": 1407294817,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-057-worker_sigkill"
+      ],
+      "attemptOutcomes": {
+        "ABANDONED": 1,
+        "SUCCEEDED": 8
+      },
+      "abandonedAttempt": {
+        "id": "2bfb5fa8-8f1d-4f10-a246-f3d819550da5",
+        "job_id": "3690c3a7-d2de-40ba-9341-9beb11ae9a2b",
+        "status": "ABANDONED",
+        "generation": 0,
+        "started_at": "2026-10-24T02:31:28.117673+00:00",
+        "finished_at": "2026-10-24T02:31:34.175149+00:00"
+      },
+      "replacementAttempt": {
+        "id": "2120e040-4641-41ce-91e9-d1c8fd6e2e40",
+        "job_id": "3690c3a7-d2de-40ba-9341-9beb11ae9a2b",
+        "status": "SUCCEEDED",
+        "generation": 1,
+        "started_at": "2026-10-24T02:31:37.100292+00:00",
+        "finished_at": "2026-10-24T02:31:37.106774+00:00"
+      }
+    },
+    {
+      "trial": 58,
+      "kind": "broker_sigkill",
+      "outageSeconds": 0.363,
+      "workloadSeed": 924282129,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-058-broker_sigkill-before",
+        "trial-058-broker_sigkill-during"
+      ],
+      "attemptOutcomes": {
+        "SUCCEEDED": 8
+      },
+      "confirmedBeforeCrash": 4,
+      "durablyAdmittedWhileDown": 4
+    },
+    {
+      "trial": 59,
+      "kind": "worker_sigkill",
+      "outageSeconds": 0.927,
+      "workloadSeed": 183047460,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-059-worker_sigkill"
+      ],
+      "attemptOutcomes": {
+        "ABANDONED": 1,
+        "SUCCEEDED": 8
+      },
+      "abandonedAttempt": {
+        "id": "44275c9a-b845-48c9-9f4c-7f17d3300d4d",
+        "job_id": "000cf7fb-8827-4b26-bfe0-3152aab7b0ef",
+        "status": "ABANDONED",
+        "generation": 0,
+        "started_at": "2026-10-24T02:32:00.076748+00:00",
+        "finished_at": "2026-10-24T02:32:06.329711+00:00"
+      },
+      "replacementAttempt": {
+        "id": "645f6522-dc4f-416d-9692-77978d1fb7b9",
+        "job_id": "000cf7fb-8827-4b26-bfe0-3152aab7b0ef",
+        "status": "SUCCEEDED",
+        "generation": 1,
+        "started_at": "2026-10-24T02:32:09.671834+00:00",
+        "finished_at": "2026-10-24T02:32:09.676776+00:00"
+      }
+    },
+    {
+      "trial": 60,
+      "kind": "worker_pause_resume",
+      "outageSeconds": 0.729,
+      "workloadSeed": 975956948,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-060-worker_pause_resume"
+      ],
+      "attemptOutcomes": {
+        "ABANDONED": 1,
+        "SUCCEEDED": 8
+      },
+      "abandonedAttempt": {
+        "id": "41bfe8f8-2b02-48b7-b9c3-4da5646adeef",
+        "job_id": "df6a576a-07b1-4180-9fdc-fc540a330482",
+        "status": "ABANDONED",
+        "generation": 0,
+        "started_at": "2026-10-24T02:32:18.54713+00:00",
+        "finished_at": "2026-10-24T02:32:24.982743+00:00"
+      },
+      "replacementAttempt": {
+        "id": "e3fa50bd-eae7-4248-87fe-811f497a9a4c",
+        "job_id": "df6a576a-07b1-4180-9fdc-fc540a330482",
+        "status": "SUCCEEDED",
+        "generation": 1,
+        "started_at": "2026-10-24T02:32:28.97106+00:00",
+        "finished_at": "2026-10-24T02:32:28.978716+00:00"
+      },
+      "staleCompletionRejected": true
+    },
+    {
+      "trial": 61,
+      "kind": "worker_pause_resume",
+      "outageSeconds": 0.426,
+      "workloadSeed": 838331288,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-061-worker_pause_resume"
+      ],
+      "attemptOutcomes": {
+        "ABANDONED": 1,
+        "SUCCEEDED": 8
+      },
+      "abandonedAttempt": {
+        "id": "02e6ffad-b7d6-4cdc-9076-101a22d265f0",
+        "job_id": "29d10ee8-5569-4095-90e2-d729a106ef02",
+        "status": "ABANDONED",
+        "generation": 0,
+        "started_at": "2026-10-24T02:32:37.944364+00:00",
+        "finished_at": "2026-10-24T02:32:44.077479+00:00"
+      },
+      "replacementAttempt": {
+        "id": "8c8752b6-4d75-43a1-8eee-8f35d440b0f3",
+        "job_id": "29d10ee8-5569-4095-90e2-d729a106ef02",
+        "status": "SUCCEEDED",
+        "generation": 1,
+        "started_at": "2026-10-24T02:32:46.725302+00:00",
+        "finished_at": "2026-10-24T02:32:46.731397+00:00"
+      },
+      "staleCompletionRejected": true
+    },
+    {
+      "trial": 62,
+      "kind": "broker_sigkill",
+      "outageSeconds": 0.517,
+      "workloadSeed": 1300081524,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-062-broker_sigkill-before",
+        "trial-062-broker_sigkill-during"
+      ],
+      "attemptOutcomes": {
+        "SUCCEEDED": 8
+      },
+      "confirmedBeforeCrash": 4,
+      "durablyAdmittedWhileDown": 4
+    },
+    {
+      "trial": 63,
+      "kind": "worker_pause_resume",
+      "outageSeconds": 0.305,
+      "workloadSeed": 1577628758,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-063-worker_pause_resume"
+      ],
+      "attemptOutcomes": {
+        "ABANDONED": 1,
+        "SUCCEEDED": 8
+      },
+      "abandonedAttempt": {
+        "id": "aa62382c-bfd4-4173-8a2f-d6cdb984c7b2",
+        "job_id": "6afb0ae7-2613-4322-abdc-39a66cb58370",
+        "status": "ABANDONED",
+        "generation": 0,
+        "started_at": "2026-10-24T02:33:13.209093+00:00",
+        "finished_at": "2026-10-24T02:33:19.247106+00:00"
+      },
+      "replacementAttempt": {
+        "id": "d7b3cf42-d48c-4a72-bc3d-eb875bff05c9",
+        "job_id": "6afb0ae7-2613-4322-abdc-39a66cb58370",
+        "status": "SUCCEEDED",
+        "generation": 1,
+        "started_at": "2026-10-24T02:33:21.509746+00:00",
+        "finished_at": "2026-10-24T02:33:21.51503+00:00"
+      },
+      "staleCompletionRejected": true
+    },
+    {
+      "trial": 64,
+      "kind": "worker_pause_resume",
+      "outageSeconds": 0.786,
+      "workloadSeed": 918655381,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-064-worker_pause_resume"
+      ],
+      "attemptOutcomes": {
+        "ABANDONED": 1,
+        "SUCCEEDED": 8
+      },
+      "abandonedAttempt": {
+        "id": "a495e560-2139-4d99-9b6f-7659f99bf92c",
+        "job_id": "5c6359d7-89c5-4b18-b029-ee457fb8e676",
+        "status": "ABANDONED",
+        "generation": 0,
+        "started_at": "2026-10-24T02:33:31.57148+00:00",
+        "finished_at": "2026-10-24T02:33:37.855961+00:00"
+      },
+      "replacementAttempt": {
+        "id": "87e2270e-35b8-4688-aa4d-31f14757b0e0",
+        "job_id": "5c6359d7-89c5-4b18-b029-ee457fb8e676",
+        "status": "SUCCEEDED",
+        "generation": 1,
+        "started_at": "2026-10-24T02:33:40.375083+00:00",
+        "finished_at": "2026-10-24T02:33:40.380633+00:00"
+      },
+      "staleCompletionRejected": true
+    },
+    {
+      "trial": 65,
+      "kind": "broker_sigkill",
+      "outageSeconds": 0.504,
+      "workloadSeed": 2020161487,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-065-broker_sigkill-before",
+        "trial-065-broker_sigkill-during"
+      ],
+      "attemptOutcomes": {
+        "SUCCEEDED": 8
+      },
+      "confirmedBeforeCrash": 4,
+      "durablyAdmittedWhileDown": 4
+    },
+    {
+      "trial": 66,
+      "kind": "database_sigkill",
+      "outageSeconds": 0.863,
+      "workloadSeed": 1394926420,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-066-database_sigkill"
+      ],
+      "attemptOutcomes": {
+        "SUCCEEDED": 8
+      }
+    },
+    {
+      "trial": 67,
+      "kind": "api_sigkill",
+      "outageSeconds": 0.749,
+      "workloadSeed": 1326269337,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-067-api_sigkill"
+      ],
+      "attemptOutcomes": {
+        "SUCCEEDED": 8
+      },
+      "survivingApiIndex": 1
+    },
+    {
+      "trial": 68,
+      "kind": "worker_pause_resume",
+      "outageSeconds": 0.333,
+      "workloadSeed": 255355003,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-068-worker_pause_resume"
+      ],
+      "attemptOutcomes": {
+        "ABANDONED": 1,
+        "SUCCEEDED": 8
+      },
+      "abandonedAttempt": {
+        "id": "b1ef2674-70dd-4753-a8fe-376173355c8d",
+        "job_id": "e2138938-633f-40bc-b661-765473739756",
+        "status": "ABANDONED",
+        "generation": 0,
+        "started_at": "2026-10-24T02:34:40.561339+00:00",
+        "finished_at": "2026-10-24T02:34:46.738192+00:00"
+      },
+      "replacementAttempt": {
+        "id": "20b02071-9258-4b04-855c-fb696f555432",
+        "job_id": "e2138938-633f-40bc-b661-765473739756",
+        "status": "SUCCEEDED",
+        "generation": 1,
+        "started_at": "2026-10-24T02:34:49.053722+00:00",
+        "finished_at": "2026-10-24T02:34:49.121188+00:00"
+      },
+      "staleCompletionRejected": true
+    },
+    {
+      "trial": 69,
+      "kind": "database_sigkill",
+      "outageSeconds": 0.823,
+      "workloadSeed": 1446820203,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-069-database_sigkill"
+      ],
+      "attemptOutcomes": {
+        "SUCCEEDED": 8
+      }
+    },
+    {
+      "trial": 70,
+      "kind": "api_sigkill",
+      "outageSeconds": 0.282,
+      "workloadSeed": 1205538385,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-070-api_sigkill"
+      ],
+      "attemptOutcomes": {
+        "SUCCEEDED": 8
+      },
+      "survivingApiIndex": 0
+    },
+    {
+      "trial": 71,
+      "kind": "database_sigkill",
+      "outageSeconds": 0.448,
+      "workloadSeed": 1190755724,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-071-database_sigkill"
+      ],
+      "attemptOutcomes": {
+        "SUCCEEDED": 8
+      }
+    },
+    {
+      "trial": 72,
+      "kind": "broker_sigkill",
+      "outageSeconds": 0.868,
+      "workloadSeed": 1236209493,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-072-broker_sigkill-before",
+        "trial-072-broker_sigkill-during"
+      ],
+      "attemptOutcomes": {
+        "SUCCEEDED": 8
+      },
+      "confirmedBeforeCrash": 4,
+      "durablyAdmittedWhileDown": 4
+    },
+    {
+      "trial": 73,
+      "kind": "database_sigkill",
+      "outageSeconds": 0.318,
+      "workloadSeed": 1196866284,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-073-database_sigkill"
+      ],
+      "attemptOutcomes": {
+        "SUCCEEDED": 8
+      }
+    },
+    {
+      "trial": 74,
+      "kind": "api_sigkill",
+      "outageSeconds": 0.904,
+      "workloadSeed": 482239921,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-074-api_sigkill"
+      ],
+      "attemptOutcomes": {
+        "SUCCEEDED": 8
+      },
+      "survivingApiIndex": 0
+    },
+    {
+      "trial": 75,
+      "kind": "database_sigkill",
+      "outageSeconds": 0.757,
+      "workloadSeed": 1125767180,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-075-database_sigkill"
+      ],
+      "attemptOutcomes": {
+        "SUCCEEDED": 8
+      }
+    },
+    {
+      "trial": 76,
+      "kind": "worker_pause_resume",
+      "outageSeconds": 0.625,
+      "workloadSeed": 1224803260,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-076-worker_pause_resume"
+      ],
+      "attemptOutcomes": {
+        "ABANDONED": 1,
+        "SUCCEEDED": 8
+      },
+      "abandonedAttempt": {
+        "id": "41873613-5691-4c9c-a9d3-580704af3c88",
+        "job_id": "6e9734b2-7da2-410c-bb58-64b3ad10c9cf",
+        "status": "ABANDONED",
+        "generation": 0,
+        "started_at": "2026-10-24T02:36:37.924072+00:00",
+        "finished_at": "2026-10-24T02:36:44.115152+00:00"
+      },
+      "replacementAttempt": {
+        "id": "6f6faf9e-250f-4f9f-a92a-fa85d87e46ac",
+        "job_id": "6e9734b2-7da2-410c-bb58-64b3ad10c9cf",
+        "status": "SUCCEEDED",
+        "generation": 1,
+        "started_at": "2026-10-24T02:36:46.448505+00:00",
+        "finished_at": "2026-10-24T02:36:46.45401+00:00"
+      },
+      "staleCompletionRejected": true
+    },
+    {
+      "trial": 77,
+      "kind": "broker_sigkill",
+      "outageSeconds": 0.929,
+      "workloadSeed": 2003567140,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-077-broker_sigkill-before",
+        "trial-077-broker_sigkill-during"
+      ],
+      "attemptOutcomes": {
+        "SUCCEEDED": 8
+      },
+      "confirmedBeforeCrash": 4,
+      "durablyAdmittedWhileDown": 4
+    },
+    {
+      "trial": 78,
+      "kind": "api_sigkill",
+      "outageSeconds": 0.272,
+      "workloadSeed": 1696864458,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-078-api_sigkill"
+      ],
+      "attemptOutcomes": {
+        "SUCCEEDED": 8
+      },
+      "survivingApiIndex": 0
+    },
+    {
+      "trial": 79,
+      "kind": "worker_sigkill",
+      "outageSeconds": 0.337,
+      "workloadSeed": 916044842,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-079-worker_sigkill"
+      ],
+      "attemptOutcomes": {
+        "ABANDONED": 1,
+        "SUCCEEDED": 8
+      },
+      "abandonedAttempt": {
+        "id": "0e887556-14c5-4598-869f-7ec9e8ef8009",
+        "job_id": "a7e7e078-e301-4698-9416-2d635ee0cd43",
+        "status": "ABANDONED",
+        "generation": 0,
+        "started_at": "2026-10-24T02:37:28.080242+00:00",
+        "finished_at": "2026-10-24T02:37:34.414082+00:00"
+      },
+      "replacementAttempt": {
+        "id": "8fb9fb72-3f73-43a6-8daa-a2df9e82af9e",
+        "job_id": "a7e7e078-e301-4698-9416-2d635ee0cd43",
+        "status": "SUCCEEDED",
+        "generation": 1,
+        "started_at": "2026-10-24T02:37:36.536128+00:00",
+        "finished_at": "2026-10-24T02:37:36.544711+00:00"
+      }
+    },
+    {
+      "trial": 80,
+      "kind": "broker_sigkill",
+      "outageSeconds": 0.354,
+      "workloadSeed": 57195695,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-080-broker_sigkill-before",
+        "trial-080-broker_sigkill-during"
+      ],
+      "attemptOutcomes": {
+        "SUCCEEDED": 8
+      },
+      "confirmedBeforeCrash": 4,
+      "durablyAdmittedWhileDown": 4
+    },
+    {
+      "trial": 81,
+      "kind": "worker_sigkill",
+      "outageSeconds": 0.859,
+      "workloadSeed": 2085268456,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-081-worker_sigkill"
+      ],
+      "attemptOutcomes": {
+        "ABANDONED": 1,
+        "SUCCEEDED": 8
+      },
+      "abandonedAttempt": {
+        "id": "6c7179bd-5f7e-4f5f-940d-c2ab4486ea61",
+        "job_id": "908e2c65-6431-4d91-a87a-f5199bfe984c",
+        "status": "ABANDONED",
+        "generation": 0,
+        "started_at": "2026-10-24T02:37:59.128837+00:00",
+        "finished_at": "2026-10-24T02:38:05.22854+00:00"
+      },
+      "replacementAttempt": {
+        "id": "b5292960-8e6e-4fec-a9a6-5084b45bd2ea",
+        "job_id": "908e2c65-6431-4d91-a87a-f5199bfe984c",
+        "status": "SUCCEEDED",
+        "generation": 1,
+        "started_at": "2026-10-24T02:38:07.950605+00:00",
+        "finished_at": "2026-10-24T02:38:08.030141+00:00"
+      }
+    },
+    {
+      "trial": 82,
+      "kind": "worker_sigkill",
+      "outageSeconds": 0.529,
+      "workloadSeed": 1261726305,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-082-worker_sigkill"
+      ],
+      "attemptOutcomes": {
+        "ABANDONED": 1,
+        "SUCCEEDED": 8
+      },
+      "abandonedAttempt": {
+        "id": "06ea4cae-0131-44bb-80c8-d7f20ed3941a",
+        "job_id": "2811e524-b21e-4915-a500-e83e1bb06dd6",
+        "status": "ABANDONED",
+        "generation": 0,
+        "started_at": "2026-10-24T02:38:16.459249+00:00",
+        "finished_at": "2026-10-24T02:38:22.658772+00:00"
+      },
+      "replacementAttempt": {
+        "id": "d6ae1063-9584-4823-93ed-8daeca1b6c3b",
+        "job_id": "2811e524-b21e-4915-a500-e83e1bb06dd6",
+        "status": "SUCCEEDED",
+        "generation": 1,
+        "started_at": "2026-10-24T02:38:26.672193+00:00",
+        "finished_at": "2026-10-24T02:38:26.679523+00:00"
+      }
+    },
+    {
+      "trial": 83,
+      "kind": "api_sigkill",
+      "outageSeconds": 0.59,
+      "workloadSeed": 1530470724,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-083-api_sigkill"
+      ],
+      "attemptOutcomes": {
+        "SUCCEEDED": 8
+      },
+      "survivingApiIndex": 1
+    },
+    {
+      "trial": 84,
+      "kind": "worker_pause_resume",
+      "outageSeconds": 0.98,
+      "workloadSeed": 594423546,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-084-worker_pause_resume"
+      ],
+      "attemptOutcomes": {
+        "ABANDONED": 1,
+        "SUCCEEDED": 8
+      },
+      "abandonedAttempt": {
+        "id": "29ccd791-fd58-405d-b7c1-9a37deaf2b91",
+        "job_id": "5e570171-7bb3-41ac-9441-87c8ea5bcf8b",
+        "status": "ABANDONED",
+        "generation": 0,
+        "started_at": "2026-10-24T02:38:52.105973+00:00",
+        "finished_at": "2026-10-24T02:38:58.429984+00:00"
+      },
+      "replacementAttempt": {
+        "id": "20961f3b-68d1-40e1-9137-3c913e08b769",
+        "job_id": "5e570171-7bb3-41ac-9441-87c8ea5bcf8b",
+        "status": "SUCCEEDED",
+        "generation": 1,
+        "started_at": "2026-10-24T02:39:01.48477+00:00",
+        "finished_at": "2026-10-24T02:39:01.491371+00:00"
+      },
+      "staleCompletionRejected": true
+    },
+    {
+      "trial": 85,
+      "kind": "broker_sigkill",
+      "outageSeconds": 0.688,
+      "workloadSeed": 1106661495,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-085-broker_sigkill-before",
+        "trial-085-broker_sigkill-during"
+      ],
+      "attemptOutcomes": {
+        "SUCCEEDED": 8
+      },
+      "confirmedBeforeCrash": 4,
+      "durablyAdmittedWhileDown": 4
+    },
+    {
+      "trial": 86,
+      "kind": "database_sigkill",
+      "outageSeconds": 0.76,
+      "workloadSeed": 235929360,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-086-database_sigkill"
+      ],
+      "attemptOutcomes": {
+        "SUCCEEDED": 8
+      }
+    },
+    {
+      "trial": 87,
+      "kind": "worker_sigkill",
+      "outageSeconds": 0.42,
+      "workloadSeed": 532837093,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-087-worker_sigkill"
+      ],
+      "attemptOutcomes": {
+        "ABANDONED": 1,
+        "SUCCEEDED": 8
+      },
+      "abandonedAttempt": {
+        "id": "849a74b3-2726-4717-82d4-6a6e036ba263",
+        "job_id": "1e065aa0-6e19-4417-a63c-7052978a1302",
+        "status": "ABANDONED",
+        "generation": 0,
+        "started_at": "2026-10-24T02:39:46.456083+00:00",
+        "finished_at": "2026-10-24T02:39:52.486121+00:00"
+      },
+      "replacementAttempt": {
+        "id": "43462542-dba5-41dd-ac60-486b7c7ec460",
+        "job_id": "1e065aa0-6e19-4417-a63c-7052978a1302",
+        "status": "SUCCEEDED",
+        "generation": 1,
+        "started_at": "2026-10-24T02:39:58.518553+00:00",
+        "finished_at": "2026-10-24T02:39:58.524907+00:00"
+      }
+    },
+    {
+      "trial": 88,
+      "kind": "database_sigkill",
+      "outageSeconds": 0.789,
+      "workloadSeed": 1713512166,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-088-database_sigkill"
+      ],
+      "attemptOutcomes": {
+        "SUCCEEDED": 8
+      }
+    },
+    {
+      "trial": 89,
+      "kind": "api_sigkill",
+      "outageSeconds": 0.454,
+      "workloadSeed": 1158620294,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-089-api_sigkill"
+      ],
+      "attemptOutcomes": {
+        "SUCCEEDED": 8
+      },
+      "survivingApiIndex": 1
+    },
+    {
+      "trial": 90,
+      "kind": "worker_pause_resume",
+      "outageSeconds": 0.624,
+      "workloadSeed": 692631367,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-090-worker_pause_resume"
+      ],
+      "attemptOutcomes": {
+        "ABANDONED": 1,
+        "SUCCEEDED": 8
+      },
+      "abandonedAttempt": {
+        "id": "9e4ae7f0-fd46-4fe5-8162-c0f4abccbd93",
+        "job_id": "c2769c15-67ab-46b6-9382-400da47b98da",
+        "status": "ABANDONED",
+        "generation": 0,
+        "started_at": "2026-10-24T02:40:55.389655+00:00",
+        "finished_at": "2026-10-24T02:41:01.642206+00:00"
+      },
+      "replacementAttempt": {
+        "id": "d875bfb6-d24c-40b1-8cf4-5c6bb243c69c",
+        "job_id": "c2769c15-67ab-46b6-9382-400da47b98da",
+        "status": "SUCCEEDED",
+        "generation": 1,
+        "started_at": "2026-10-24T02:41:05.621768+00:00",
+        "finished_at": "2026-10-24T02:41:05.704686+00:00"
+      },
+      "staleCompletionRejected": true
+    },
+    {
+      "trial": 91,
+      "kind": "api_sigkill",
+      "outageSeconds": 0.586,
+      "workloadSeed": 1430387789,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-091-api_sigkill"
+      ],
+      "attemptOutcomes": {
+        "SUCCEEDED": 8
+      },
+      "survivingApiIndex": 1
+    },
+    {
+      "trial": 92,
+      "kind": "broker_sigkill",
+      "outageSeconds": 0.846,
+      "workloadSeed": 2023217742,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-092-broker_sigkill-before",
+        "trial-092-broker_sigkill-during"
+      ],
+      "attemptOutcomes": {
+        "SUCCEEDED": 8
+      },
+      "confirmedBeforeCrash": 4,
+      "durablyAdmittedWhileDown": 4
+    },
+    {
+      "trial": 93,
+      "kind": "worker_pause_resume",
+      "outageSeconds": 0.992,
+      "workloadSeed": 1470267752,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-093-worker_pause_resume"
+      ],
+      "attemptOutcomes": {
+        "ABANDONED": 1,
+        "SUCCEEDED": 8
+      },
+      "abandonedAttempt": {
+        "id": "de9b8bbb-d0bf-486d-82b8-22affd1363b2",
+        "job_id": "edba840c-d81b-45e7-ac4c-ed6ff10399f4",
+        "status": "ABANDONED",
+        "generation": 0,
+        "started_at": "2026-10-24T02:41:55.690853+00:00",
+        "finished_at": "2026-10-24T02:42:01.795871+00:00"
+      },
+      "replacementAttempt": {
+        "id": "4d52f8d0-5cb3-42a1-b696-a86741bb85a4",
+        "job_id": "edba840c-d81b-45e7-ac4c-ed6ff10399f4",
+        "status": "SUCCEEDED",
+        "generation": 1,
+        "started_at": "2026-10-24T02:42:05.091555+00:00",
+        "finished_at": "2026-10-24T02:42:05.098071+00:00"
+      },
+      "staleCompletionRejected": true
+    },
+    {
+      "trial": 94,
+      "kind": "worker_sigkill",
+      "outageSeconds": 0.758,
+      "workloadSeed": 1365015664,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-094-worker_sigkill"
+      ],
+      "attemptOutcomes": {
+        "ABANDONED": 1,
+        "SUCCEEDED": 8
+      },
+      "abandonedAttempt": {
+        "id": "c93c958c-f12f-4e54-b09f-977236824352",
+        "job_id": "85b52e6e-6ad4-4e9c-982d-3cb7b38937bf",
+        "status": "ABANDONED",
+        "generation": 0,
+        "started_at": "2026-10-24T02:42:13.629373+00:00",
+        "finished_at": "2026-10-24T02:42:19.684503+00:00"
+      },
+      "replacementAttempt": {
+        "id": "b245e855-83c1-4496-9ea9-47edbd778159",
+        "job_id": "85b52e6e-6ad4-4e9c-982d-3cb7b38937bf",
+        "status": "SUCCEEDED",
+        "generation": 1,
+        "started_at": "2026-10-24T02:42:23.011823+00:00",
+        "finished_at": "2026-10-24T02:42:23.016672+00:00"
+      }
+    },
+    {
+      "trial": 95,
+      "kind": "worker_pause_resume",
+      "outageSeconds": 0.454,
+      "workloadSeed": 1884429696,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-095-worker_pause_resume"
+      ],
+      "attemptOutcomes": {
+        "ABANDONED": 1,
+        "SUCCEEDED": 8
+      },
+      "abandonedAttempt": {
+        "id": "f671bcf9-a967-4b3c-be02-9032d6b29994",
+        "job_id": "fcb8b951-3de9-486d-b639-9c4825915431",
+        "status": "ABANDONED",
+        "generation": 0,
+        "started_at": "2026-10-24T02:42:30.942675+00:00",
+        "finished_at": "2026-10-24T02:42:37.015337+00:00"
+      },
+      "replacementAttempt": {
+        "id": "6e0832e0-e67e-4cc1-b7d2-9188f455a838",
+        "job_id": "fcb8b951-3de9-486d-b639-9c4825915431",
+        "status": "SUCCEEDED",
+        "generation": 1,
+        "started_at": "2026-10-24T02:42:39.05886+00:00",
+        "finished_at": "2026-10-24T02:42:39.062725+00:00"
+      },
+      "staleCompletionRejected": true
+    },
+    {
+      "trial": 96,
+      "kind": "database_sigkill",
+      "outageSeconds": 0.554,
+      "workloadSeed": 396102870,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-096-database_sigkill"
+      ],
+      "attemptOutcomes": {
+        "SUCCEEDED": 8
+      }
+    },
+    {
+      "trial": 97,
+      "kind": "worker_pause_resume",
+      "outageSeconds": 0.458,
+      "workloadSeed": 890262428,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-097-worker_pause_resume"
+      ],
+      "attemptOutcomes": {
+        "ABANDONED": 1,
+        "SUCCEEDED": 8
+      },
+      "abandonedAttempt": {
+        "id": "c6570e75-8225-4fde-bfde-ed3b7a3519b4",
+        "job_id": "59169a21-7e21-454f-b3ce-d1dfdb813985",
+        "status": "ABANDONED",
+        "generation": 0,
+        "started_at": "2026-10-24T02:43:02.741197+00:00",
+        "finished_at": "2026-10-24T02:43:09.086056+00:00"
+      },
+      "replacementAttempt": {
+        "id": "c8e8cb8e-2cb1-41d5-976a-1c573055c9e2",
+        "job_id": "59169a21-7e21-454f-b3ce-d1dfdb813985",
+        "status": "SUCCEEDED",
+        "generation": 1,
+        "started_at": "2026-10-24T02:43:11.058981+00:00",
+        "finished_at": "2026-10-24T02:43:11.063044+00:00"
+      },
+      "staleCompletionRejected": true
+    },
+    {
+      "trial": 98,
+      "kind": "api_sigkill",
+      "outageSeconds": 0.308,
+      "workloadSeed": 1841898953,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-098-api_sigkill"
+      ],
+      "attemptOutcomes": {
+        "SUCCEEDED": 8
+      },
+      "survivingApiIndex": 0
+    },
+    {
+      "trial": 99,
+      "kind": "api_sigkill",
+      "outageSeconds": 0.84,
+      "workloadSeed": 210277578,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-099-api_sigkill"
+      ],
+      "attemptOutcomes": {
+        "SUCCEEDED": 8
+      },
+      "survivingApiIndex": 1
+    },
+    {
+      "trial": 100,
+      "kind": "api_sigkill",
+      "outageSeconds": 0.372,
+      "workloadSeed": 682508700,
+      "passed": true,
+      "acceptedJobs": 8,
+      "accountedJobs": 8,
+      "lostJobs": 0,
+      "incorrectResults": 0,
+      "duplicateSuccessfulAttempts": 0,
+      "workloads": [
+        "trial-100-api_sigkill"
+      ],
+      "attemptOutcomes": {
+        "SUCCEEDED": 8
+      },
+      "survivingApiIndex": 0
+    }
+  ],
+  "scope": "Sequential fault trials with fresh workloads on shared durable services; five repeated fault kinds, not 100 distinct failure modes or statistically independent environments. No host/volume loss or external-side-effect guarantee.",
+  "faultFixture": "Separate 3000 ms delayed worker only for kill/pause timing; no production handler changes or throughput claims",
+  "cleanupVerified": true
+}

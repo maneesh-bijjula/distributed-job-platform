@@ -1,0 +1,67 @@
+{
+  "passed": true,
+  "sourceCommit": "8337a335d3a624e9a5ee0b9ba675229f05fd1b4b",
+  "url": "https://github.com/maneesh-bijjula/distributed-job-platform/actions/runs/40053542696",
+  "javaTests": {
+    "surefire-reports": {
+      "tests": 155,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "failsafe-reports": {
+      "tests": 148,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "pythonTests": 33,
+  "packagedApiWorkflows": 5,
+  "liveDashboardQueries": 17,
+  "dependencyOutagesVerified": true,
+  "boundedLoadJobs": 120,
+  "resilienceJobs": 194,
+  "resilienceScenarios": [
+    "broker_stop_restore",
+    "database_stop_restore",
+    "application_stop_restart",
+    "duplicate_broker_delivery",
+    "worker_sigkill",
+    "worker_pause_resume",
+    "finite_priority_burst",
+    "prefetch_priority_delay",
+    "bounded_admission"
+  ],
+  "releaseScenarios": [
+    "fresh-deployment",
+    "failed-rollout-recovery",
+    "graceful-worker-shutdown",
+    "backup-restored-and-compared",
+    "empty-volume-disaster-restore",
+    "broker-message-loss-repair"
+  ],
+  "ciFaultTrials": 5,
+  "ciFaultJobs": 40,
+  "ciFaultLostJobs": 0,
+  "ciFaultIncorrectResults": 0,
+  "ciFaultDuplicateSuccessfulAttempts": 0,
+  "sourceHashesChecked": 292,
+  "checks": [
+    "Set up job",
+    "Run actions/checkout@v4",
+    "Verify load and recovery harness safety guards",
+    "Unit and integration tests",
+    "Build application image",
+    "Verify packaged lifecycle workflow",
+    "Verify monitoring and outage visibility",
+    "Verify bounded load and real resilience scenarios",
+    "Verify deployment, graceful shutdown, backup and disaster recovery",
+    "Verify actual fault campaign counting and recovery",
+    "Upload test reports",
+    "Clean up services",
+    "Post Run actions/checkout@v4",
+    "Complete job"
+  ],
+  "scope": "This Linux CI regression is separate from local capacity and the full 100-trial local campaign. Python/workflow counts come from the passing unchanged harness suite and workflow; Java/recovery counts are verified from downloaded reports."
+}

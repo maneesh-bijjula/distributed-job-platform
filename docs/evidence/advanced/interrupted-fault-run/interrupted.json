@@ -1,0 +1,9 @@
+{
+  "passed": false,
+  "disposition": "Interrupted; excluded from full-campaign claims",
+  "recordedAt": "2026-10-24T02:15:21.725993+00:00",
+  "completedTrialFiles": 16,
+  "plannedTrials": 100,
+  "lastTrialStarted": 17,
+  "evidence": "Process no longer present; no report.json/failed.json; Docker stopped with test containers left behind. Original journal and all partial artifacts retained. Labeled disposable resources cleaned before a fresh campaign. No partial trial is substituted into the fresh run."
+}

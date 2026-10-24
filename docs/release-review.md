@@ -10,17 +10,17 @@ limits. Public hosting is a separate deployment decision.
 
 | Area | Release check |
 | --- | --- |
-| Application correctness | 279 passing Java tests: 138 unit, 141 integration; no failures, errors or skipped tests (263 at the recorded Phase 6 release) |
-| Harness and recovery safety | 29 Python tests for accounting, isolation, replay identity, offline guards, manifest/archive integrity, safe restore refusal and fault-campaign denominators (18 at the recorded Phase 6 release) |
-| Packaged workflows | Cancellation/retry/results/attempts/history; dead-letter collection/recovery; owner isolation/quotas/revocation |
+| Application correctness | 303 passing Java tests: 155 unit, 148 integration; no failures, errors or skipped tests (263 at the recorded Phase 6 release) |
+| Harness and recovery safety | 33 Python tests for accounting, isolation, replay identity, offline guards, manifest/archive integrity, safe restore refusal and fault-campaign denominators (18 at the recorded Phase 6 release) |
+| Packaged workflows | Cancellation/retry/results/attempts/history; dead-letter collection/recovery; owner isolation/quotas/revocation; real HTTP boundary validation; keyed bulk admission with mixed item outcomes |
 | Operations visibility | Promtool config/rules, 17 live dashboard expressions, real dependency outage checks |
-| Load and failure behavior | Bounded CI load and real resilience suite; [recorded larger comparisons](benchmark-results.md) retain their original source/image identity |
+| Load and failure behavior | Bounded CI load and real resilience suite; [historical comparisons](benchmark-results.md) and [capacity/profiling follow-up](advanced-performance.md) retain their original source/image identity |
 | Fresh deployment | Standalone Compose profile, random mounted secrets, private dependencies, loopback API, packaged lifecycle/access workflows |
 | Graceful shutdown | SIGTERM during an eight-second separate fixture execution, one committed success, normal JVM termination |
 | Failed startup | Deliberately failing application entrypoint; unchanged database; restored compatible image passes readiness/job checks |
 | Database restore | Custom archive restored to scratch database and empty replacement volumes; all 12 public tables and two sequences match before startup |
 | Broker data loss | Queued jobs reconstructed through missing outbox entries, repeat maintenance is a no-op, original results and future schedules preserved |
-| Repeated process/dependency faults | Separate [100-trial campaign](fault-campaign-results.md): 800/800 jobs successful, 80 observed SIGKILLs and 20 worker freezes; complete audited evidence |
+| Repeated process/dependency faults | Separate [100-trial campaign](fault-campaign-results.md): 800/800 jobs successful, 80 observed SIGKILLs and 20 worker freezes; complete audited evidence; [selected-runtime revalidation](evidence/advanced/fault-100/README.md) also passes 100/100 injections and 800/800 correct jobs, with the interrupted predecessor retained separately |
 
 The [deployment guide](deployment.md) supplies reproducible commands and TLS
 guidance. The [recovery runbook](recovery.md) specifies maintenance boundaries,
@@ -29,6 +29,8 @@ backup content, upgrade ordering, restore validation and incident checks.
 evidence-backed wording. CI uploads reports from all workflows as its `test-reports`
 artifact. Credentials, database archives and private diagnostics are excluded from
 that artifact and from the repository.
+
+The [follow-up evidence](evidence/advanced/README.md) includes the selected-runtime test summary, 103000-job capacity audit, fresh 100-fault campaign, original-volume V8 preservation check and five packaged API workflows.
 
 The [Phase 6 evidence](evidence/phase6/README.md) records the tested revision, image
 identity, source SHA-256 values, scenario outcomes and restore counts. It describes

@@ -1,0 +1,18 @@
+{
+  "passed": true,
+  "acceptedBefore": 79.0,
+  "acceptedAfter": 82.0,
+  "dashboardUid": "job-platform",
+  "panelsVerified": 17,
+  "rulesLoaded": true,
+  "scrapeKeyCannotAccessJobsOrAdmin": true,
+  "workflowMetricDeltasVerified": {
+    "jobs_accepted_total": 3,
+    "jobs_started_total": 2,
+    "jobs_succeeded_total": 2,
+    "jobs_cancelled_total": 1,
+    "jobs_retried_total{mode=\"manual\"}": 1,
+    "execution_duration_seconds_count": 2,
+    "queue_delay_seconds_count": 2
+  }
+}

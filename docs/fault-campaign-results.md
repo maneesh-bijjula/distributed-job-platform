@@ -66,3 +66,9 @@ Supported concise wording:
 > Verified zero observed job loss across 100 injected worker, broker, database and
 > API failure trials, with all 800 accepted jobs completing correctly and exactly
 > one successful attempt per job.
+
+## Selected-runtime revalidation — October 23, 2026
+
+The bulk-admission/confirmed-publishing/metric-striping increment repeats the full campaign with seed `20261021`: **100/100 predeclared actual injections passed; 800/800 accepted jobs succeeded correctly with zero observed loss or duplicate successful attempts**. Each of the same five fault kinds occurred 20 times. Runtime candidate `1929ab9a943d0442da9ba880c88cbc992e9b577c` was reused; the run began from clean documentation revision `8337a335d3a624e9a5ee0b9ba675229f05fd1b4b` and all 75 runtime/harness hashes match that revision. The independent audit checks 800 successful and 40 abandoned attempts, 1000 submission records, 960 recovery replays, all 20 stale-write rejections and 871 raw files, plus observed fault states, source identity, credential exclusion and cleanup.
+
+The prior attempt was interrupted after 16 completed trials while starting trial 17, without a final verdict. Its original partial artifacts and truncated sampling stream are retained and excluded from the new campaign's totals. The fresh run starts its own plan and empty isolated database; it does not splice in or replace individual failed trials. See [follow-up overview](evidence/advanced/README.md), [new full report](evidence/advanced/fault-100/report.json), [new audit/checksums](evidence/advanced/fault-100/audit.json) and [original interrupted record](evidence/advanced/interrupted-fault-run/interrupted.json). The historical campaign above keeps its original revision and results. All scope limitations above continue to apply.

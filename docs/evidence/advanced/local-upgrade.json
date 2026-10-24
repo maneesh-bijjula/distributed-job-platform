@@ -1,0 +1,26 @@
+{
+  "passed": true,
+  "recordedAt": "2026-10-24T02:20:14.989709+00:00",
+  "fromSchema": 7,
+  "toSchema": 8,
+  "runtimeSourceCommit": "1929ab9a943d0442da9ba880c88cbc992e9b577c",
+  "privateBackupScratchRestoreVerified": true,
+  "preExistingTablesVerified": 12,
+  "sequencesVerified": 2,
+  "rowsPreserved": {
+    "access_audit": 45,
+    "api_keys": 18,
+    "dead_letters": 12,
+    "flyway_schema_history": 7,
+    "job_attempts": 54,
+    "job_events": 261,
+    "job_metric_counts": 8,
+    "job_metric_timings": 2,
+    "job_outbox": 2,
+    "jobs": 91,
+    "owners": 12,
+    "submission_usage": 12
+  },
+  "legacyMetricStripesZero": true,
+  "comparison": "Canonical JSONB row hashes and sequence values match; stripe is omitted only from the two metric tables and the one new Flyway V8 history row is excluded. API dispatcher disabled and workers stopped throughout comparison. Database contents and backup remain private."
+}

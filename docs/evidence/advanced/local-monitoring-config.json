@@ -1,0 +1,7 @@
+{
+  "passed": true,
+  "configuration": "Prometheus configuration and one rules file valid",
+  "alertRules": 8,
+  "ruleFixtures": "passed",
+  "liveReport": "local-observability.json"
+}

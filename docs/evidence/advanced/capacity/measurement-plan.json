@@ -1,0 +1,61 @@
+{
+  "sourceCandidate": "b8ffe8c",
+  "createdBeforeRemainingRuns": true,
+  "invariants": [
+    "no handler changes",
+    "fsync and synchronous_commit remain enabled",
+    "all accepted jobs correct",
+    "one successful attempt per healthy job",
+    "all failures retained",
+    "compare drain and end-to-end separately"
+  ],
+  "cases": [
+    {
+      "name": "optimized-4",
+      "profiler": true,
+      "jobs": 10000,
+      "workers": 4,
+      "databaseCpus": 1,
+      "batch": 50,
+      "dispatchMs": 250,
+      "mode": "backlog"
+    },
+    {
+      "name": "backlog-db2-1",
+      "jobs": 10000,
+      "workers": 1,
+      "databaseCpus": 2,
+      "batch": 50,
+      "dispatchMs": 250,
+      "mode": "backlog"
+    },
+    {
+      "name": "backlog-db2-4",
+      "jobs": 10000,
+      "workers": 4,
+      "databaseCpus": 2,
+      "batch": 50,
+      "dispatchMs": 250,
+      "mode": "backlog"
+    },
+    {
+      "name": "pipeline-db2-1",
+      "jobs": 10000,
+      "workers": 1,
+      "databaseCpus": 2,
+      "batch": 100,
+      "dispatchMs": 50,
+      "mode": "pipeline"
+    },
+    {
+      "name": "pipeline-db2-4",
+      "jobs": 10000,
+      "workers": 4,
+      "databaseCpus": 2,
+      "batch": 100,
+      "dispatchMs": 50,
+      "mode": "pipeline"
+    }
+  ],
+  "repeatPolicy": "If a 500+ end-to-end candidate is observed, repeat it twice; retain every result and qualify any claimed repeatability."
+}

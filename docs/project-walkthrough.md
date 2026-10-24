@@ -40,7 +40,7 @@ flowchart LR
    operator key. It schedules and cancels a job, manually retries it under a new
    linked ID, replays the retry key, and checks the result, attempts and event pages.
 3. Run `scripts/auth-smoke.py` at the same base URL to demonstrate separate owners,
-   scoped keys, quotas and revocation. It revokes temporary diagnostic keys afterward.
+   scoped keys, quotas and revocation. Run `scripts/batch-smoke.py` to demonstrate keyed bulk jobs, replay identity and mixed per-item quota/conflict outcomes. These workflows revoke temporary diagnostic keys afterward.
 4. Show structured `job_transition` logs for a demo ID and its attempt; then show
    the [operations dashboard](observability.md) if the separate development
    monitoring profile is running. Its counters are committed lifecycle changes,
@@ -69,7 +69,7 @@ Optional measured statements, with scope retained:
 
 - Verified 42,400 jobs across twelve recorded load runs, including four 10,000-job
   preloaded-queue drain comparisons; independently checked results and successful
-  attempt counts. Best recorded preloaded drain was 445.49 jobs/sec.
+  attempt counts. The historical preloaded drain peaked at 445.49 jobs/sec. A later [eleven-case follow-up](advanced-performance.md) verified 103000 measured jobs plus 4436 warm-ups, reaching 798.62 jobs/sec preloaded drain and 293.79 jobs/sec end to end, in single trials per configuration.
 - Improved median completion throughput 2.84× in repeated 300-job mixed scheduled
   pipeline tests through configuration tuning (34.50 to 97.81 jobs/sec).
 - Accounted for 194/194 accepted jobs without observed loss across the recorded
@@ -79,7 +79,7 @@ Optional measured statements, with scope retained:
   20 injections each of worker SIGKILL, worker pause/resume, broker crash, database crash and API crash.
 
 Use whichever details fit the intended description. Tuning improvement is not
-worker-count scaling. Four workers were slower for the measured short-text setup;
+worker-count scaling. The final follow-up measured 1.16x drain scaling and 0.97x end-to-end scaling with four workers;
 500+ jobs/sec end-to-end and 3.4× worker scaling are not supported. The recorded
 100-fault campaign repeats five fault kinds on shared services; it is not 100
 statistically independent environments. See [raw measurements](benchmark-results.md). The
