@@ -30,7 +30,7 @@ docker compose -p job-platform --profile observability stop prometheus grafana
 
 ## Counter and timing definitions
 
-V7 starts durable rollups at migration time. Lifecycle updates and their rollup deltas commit in the same PostgreSQL transaction; failed transactions and idempotent replays do not increment counters. API/worker restarts preserve these totals. Earlier history is retained but is not backfilled into counters or invented timing samples. State gauges include all current rows, including legacy jobs.
+V7 starts durable rollups at migration time. Lifecycle updates and their rollup deltas commit in the same PostgreSQL transaction; failed transactions and idempotent replays do not increment counters. API/worker restarts preserve these totals. V8 distributes new writes across 32 internal job-ID stripes and sums them on export, without adding Prometheus labels; existing V7 totals stay in stripe zero. Earlier history is retained but is not backfilled into counters or invented timing samples. State gauges include all current rows, including legacy jobs.
 
 | Prometheus metric | Definition |
 | --- | --- |
@@ -74,6 +74,7 @@ With no samples in the window, a mean can be absent/NaN. There are no histogram 
 | `job_platform_snapshot_up`, `job_platform_snapshot_age_seconds` | Success of the last DB refresh and age of the last successful snapshot. Failed refreshes retain previous job values. |
 | `job_platform_dependency_up{dependency}` | Last DB snapshot or broker probe success (`postgres` / `rabbitmq`). |
 | `job_platform_broker_snapshot_age_seconds` | Age of the last successful queue probe. |
+| `job_platform_batch_items_total{status}` | Process-local bulk admission item outcomes (200, 202, 400, 409, 429, 500, 503, other). Each API exports its own counter; it resets on restart. Envelope HTTP 207 can contain different item outcomes. |
 | `job_platform_operation_failures_total{operation}` | Process-local failures in `outbox_dispatch`, `execution_recovery`, `snapshot_refresh`, or `broker_probe`; these counters reset on process restart. |
 
 Custom labels are bounded enums. Job IDs, attempt IDs, owner IDs, keys, inputs, and exception messages do not become metric labels. Job IDs and attempt IDs are available in structured lifecycle logs for correlation.
@@ -119,6 +120,6 @@ The following check **temporarily stops only this Compose project's RabbitMQ, re
 python3 scripts/observability-outage-smoke.py --report reports/observability-outages.json
 ```
 
-CI runs the full 258-test Java suite and both monitoring checks against its packaged application, plus the [load/resilience harness](performance.md). Integration coverage includes exact lifecycle/timing semantics, transaction and metric-flush rollback, suspended transactions, mixed-type concurrent batches, restart persistence, bounded tags, sanitized correlated logs, metric snapshot failure, and scrape-key scope/revocation. These operational checks establish the tested behavior, not production availability or a throughput benchmark.
+CI runs the full 303-test Java suite and both monitoring checks against its packaged application, plus the [load/resilience harness](performance.md). Integration coverage includes exact lifecycle/timing semantics, transaction and metric-flush rollback, suspended transactions, mixed-type concurrent batches, restart persistence, bounded tags, sanitized correlated logs, metric snapshot failure, and scrape-key scope/revocation. These operational checks establish the tested behavior, not production availability or a throughput benchmark.
 
 Monitoring scripts create the ignored `reports/` directory on the host for their JSON reports. Java test XML remains under `target/`, which the test container can own on Linux. CI uploads both locations without requiring the host scripts to write into the container-owned directory.

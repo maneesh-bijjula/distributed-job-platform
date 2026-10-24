@@ -1,5 +1,7 @@
 # Recorded load and resilience results
 
+This page preserves the Phase 5 measurements. A separate [October 21 follow-up](advanced-performance.md) records the new bulk/dispatch/metrics work, negative experiments, current-host controls and final warmed capacity cases. Its 687.43/798.62 jobs/sec results are **preloaded drain**, while its end-to-end results are 293.79/285.28. Different warm-up, scheduling and resource settings prevent attributing differences to code alone.
+
 Recorded October 19, 2026. **All 42400 measured jobs across twelve load runs succeeded with correct results, complete lifecycle accounting, and exactly one successful attempt per job.** The repeated 300-job pipeline workload improved from a median **34.50 to 97.81 completed jobs/second (2.84x)** with the evaluated profile. Extra workers did not improve this short-text workload under the tested limits.
 
 The [machine-readable index](evidence/phase5/index.json), per-run request/job/attempt/event ledgers, resource samples, environment records, and [SHA-256 manifest](evidence/phase5/sha256.json) are committed beside this document. Results were checked against independent oracles before payload content was removed. Source hashes were verified against each recorded Git revision. All twelve runs used the same application image; the later revision added the test-only database CPU parameter.

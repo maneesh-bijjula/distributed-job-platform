@@ -2,6 +2,8 @@
 
 The [completion review](completion-review.md) records the final feature checklist and deployment trust boundaries. JSON bodies are capped at 128 KiB by the application as well as the example proxy; see the [API reference](api.md).
 
+For the [V8 metrics upgrade](advanced-performance.md#reproduce-and-operate), stop every older API/worker and back up first. V8 preserves counts/timings while changing their write keys; a pre-V8 application image cannot be rolled back onto that schema. Use a compatible image for rollout recovery or a verified pre-upgrade backup into an empty replacement database.
+
 This profile packages the scoped platform for a Docker host. It has one PostgreSQL
 server, one RabbitMQ node, one API/dispatcher and one worker. It is not a highly
 available deployment. All persistent application data resides on the host's Docker

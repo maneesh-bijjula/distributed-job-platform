@@ -7,6 +7,7 @@ An asynchronous job service built with **Java 21, Spring Boot, PostgreSQL, and R
 ## Features
 
 - REST endpoints for job submission, retrieval, and paginated status filtering.
+- Bounded bulk submission with per-item transactions, idempotency, quota/error outcomes and operational counters.
 - Persistent scheduling with `scheduledAt` and job priorities from 0 to 9.
 - Queued and cooperative running-job cancellation, plus linked idempotent manual retries.
 - Visible running state, durable execution attempts, renewable worker leases, and crash recovery.
@@ -18,10 +19,12 @@ An asynchronous job service built with **Java 21, Spring Boot, PostgreSQL, and R
 - Text handlers for word counting, SHA-256 hashing, and uppercase conversion.
 - PostgreSQL persistence with versioned Flyway migrations.
 - Transactional outbox and confirmed RabbitMQ publishing.
+- Pipelined bounded publisher confirmations on scoped channels, with generation-qualified outbox removal.
 - Idempotent request submission and duplicate delivery handling.
 - Bounded infrastructure retries and a dead-letter queue.
 - Independent API and worker containers, with configurable worker concurrency.
 - Durable job counters and attempt timings, bounded backlog metrics, and correlated JSON logs.
+- Internally striped durable rollups with unchanged exported totals, plus isolated SQL/wait profiling.
 - Optional local Prometheus/Grafana profile with a provisioned dashboard and tested alert rules.
 - Reproducible isolated load tests, raw timing/accounting evidence, and real worker/dependency failure checks.
 - Validated dispatch, prefetch, concurrency, and connection-pool controls with an optional measured tuning profile.
@@ -339,7 +342,7 @@ See the [observability guide](docs/observability.md) for metric definitions, cre
 
 ## Tests
 
-The Java suite contains **138 unit tests and 141 integration tests**. Twenty-nine Python tests check load-harness arithmetic, isolation, replay safety, offline recovery guards and fault-campaign accounting. CI also builds the images, runs all four packaged API regression checks, validates Prometheus rules and live dashboard data, exercises bounded load and real failures, and verifies fresh deployment, graceful shutdown, backup/restore and broker recovery. The [completion review](docs/completion-review.md) maps each planned capability to its evidence and deployment limits.
+The Java suite contains **155 unit tests and 148 integration tests**. Thirty-three Python tests check load-harness arithmetic, isolation, replay safety, offline recovery guards, profiling privacy and fault-campaign accounting. CI also builds the images, runs all five packaged API regression checks, validates Prometheus rules and live dashboard data, exercises bounded load and real failures, and verifies fresh deployment, graceful shutdown, backup/restore and broker recovery. The [completion review](docs/completion-review.md) maps each planned capability to its evidence and deployment limits. See the [advanced capacity follow-up](docs/advanced-performance.md) for bulk admission, profiling, accepted/rejected experiments and explicit end-to-end versus drain measurements.
 
 See the [execution verification matrix](docs/execution-verification.md) for the covered guarantees and limits.
 
@@ -360,6 +363,7 @@ python3 scripts/smoke.py
 python3 scripts/dead-letter-smoke.py
 python3 scripts/auth-smoke.py
 python3 scripts/api-boundary-smoke.py
+python3 scripts/batch-smoke.py
 ```
 
 This creates two inspectable jobs: a cancelled scheduled job and its successful immediate retry. It verifies replay behavior, worker output, persisted execution attempts, history pagination, and conflict responses. Use `--base-url` to select a different application address.

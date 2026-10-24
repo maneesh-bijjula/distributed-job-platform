@@ -96,6 +96,8 @@ The base defaults remain available for comparison. Production capacity depends o
 
 ## CI and measured results
 
+The [advanced follow-up](advanced-performance.md) adds bounded confirmed publishing, internal metrics striping, SQL/wait profiling and bulk admission. Its final cases use an explicit `--warmup-jobs 1000` (the runner's default remains 12), no future scheduling and two database CPUs; those conditions differ from the earlier Phase 5 runs. The best new drain result is 798.62 jobs/sec, excluding admission; the best final end-to-end result is 293.79 jobs/sec. The original end-to-end/scaling targets remain unmet.
+
 CI checks harness arithmetic/isolation/retry guards, the complete Java suite, existing packaged and monitoring checks, a small 120-job two-worker workload, and the real resilience scenarios. It uploads raw reports and invokes guarded cleanup even after failures. CI asserts correctness and accounting, not a hardware-dependent speed threshold.
 
 See [recorded measurements](benchmark-results.md) for the environment, results, interpretation, and technical summary. Numerical performance and recovery claims should include their workload, configuration, scenario count, and supporting raw evidence.
