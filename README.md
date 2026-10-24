@@ -8,7 +8,7 @@ An asynchronous job service built with **Java 21, Spring Boot, PostgreSQL, and R
 
 | Result | Measured achievement | Evidence |
 | --- | --- | --- |
-| **≈800 jobs/sec** | 798.62 jobs/sec processing 10,000 already-queued jobs with four workers | [Capacity results](docs/advanced-performance.md#method-and-final-capacity-cases) |
+| **800 jobs/sec** | 798.62 jobs/sec processing 10,000 already-queued jobs with four workers | [Capacity results](docs/advanced-performance.md#method-and-final-capacity-cases) |
 | **103,000 jobs verified** | Eleven completed capacity runs, plus 4,436 separately verified warm-up jobs | [Workload audit](docs/evidence/advanced/capacity/audit.json) |
 | **100/100 failure trials passed** | 800/800 accepted jobs completed correctly; zero observed job loss or duplicate successful attempts | [Fault-injection results](docs/evidence/advanced/fault-100/README.md) |
 | **336 automated tests passed** | 303 Java tests and 33 Python tests, plus five packaged API workflows | [CI verification](docs/evidence/advanced/implementation-ci.json) |
